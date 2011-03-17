@@ -1,0 +1,6 @@
+[submodule "charango"]
+	path = charango
+	url = ./charango
+[submodule "iris"]
+	path = iris
+	url = ./iris

@@ -1,0 +1,1380 @@
+Calliope 0.3.0:
+
+* Key design elements
+  - separate out views library. I don't like the term views (because it's already a database term),
+    what else to do though?
+    view, n.:
+      "A way of showing or seeing something, as from a particular position or angle: a side view
+       of the house."
+  - write everything in Vala
+  - store everything in tracker, if available, or maybe sqlite with the same interface otherwise?
+  - separate out file parsing? this is a big part of what Calliope does however, and ideally will
+    be extensible through plugins .. then again, the library could have plugins. how does this stuff
+    relate to tracker?
+    -> tracker's miners pull in one type of data from one source. eg. your delicious bookmarks are
+       stored as bookmarks.
+    -> calliope needs something that will find more information about an existing datum from a new
+       source. I think this can be our own stuff for now.
+  - directly use the musicbrainz schema or music ontology ...
+    Music Ontology: looks good, but how does our stuff map onto what's available?
+    
+    What stuff is in what ontologies? MusicOntology gives this example:
+
+
+Other issues:
+  -> 
+
+* Calliope tracker integration:
+  - calliope could provide an extractor for mp3 files & store stuff. libtracker-extract
+    is relevant here.
+  - if no tracker, calliope would just use the miner to populate the sqlite db ..
+
+* The old issue of how to separate the music library from the listener's profile.
+  -> things like play count and rating don't belong with the static metadata, or do they?
+  -> the only advantage of separating is so other users can benefit from your tags, but
+     there are better ways to do this :)
+  -> the idea of sharing the profile without the music db is not such a problem because
+     tracker-store will presumably gain sync one distant day ... ?
+  -> maybe maintain a listener profile in couchdb/a flat file for now just to be safe!
+
+* Need to support storing music metadata into multiple ontologies. I want to use mo and
+  nie:audio at least.
+
+* Calliope components:
+    * 'extractor': again, I don't really want a hard tracker dep, but libtracker-extract
+      seems relevant
+    * everything else as it is already I guess;
+****************************************************************************************************
+
+-> make a libtestutils, and make the test build logic better ..
+
+* gconf gsoc project - use it
+	* last.fm client should wait maybe a second from params changing before it tries connecting,
+	  trying on every letter when a new username is entered is silly.
+	  -> binding with a delay, gsoc project
+	-> possibly it should use gnome-keyring on gnome??
+
+Update web page..
+
+*** APRIL +
+
+-> add unit test for "(artist[name]:album:release:track:recording)/recording[name]"
+
+-> matching extensions is fucked
+
+-> changing files: group change notifications together for speed (ie. hold them back so we don't
+     emit row-changed on the same row 6 times in a row).
+
+* Some bizarre threading issue, where the view is being freed and the import is still going ..
+  - Seems like the weak reference that notify closures hold is not doing what it should.
+
+* Code terminology. You have about 3 different concepts called Node. Write a lexicon.
+  -> 'view config' sucks a bit, something more distinctive would be good, maybe arrangement. 
+
+* Don't steal focus when you start! Esp. in the tests !!!
+
+* Entries not being freed in app on close
+
+Problems that will bite you later on:
+
+  => Problem #9020: I am confused about the removal queue and count_references. See library.c:2054.
+
+  => Problem #9040: When for example composition "Paradise CScity" is merged with "Paradise City",
+       the view has lost an entry so in fact a notification should be emitted here: a removal
+       notification. Basically we need to notify removal on checkin merges. We still don't need
+       to act when added entries are merged, we just don't emit the added signal.
+
+* Make library work without caching.
+  => Problem #9017: query a track from library. Unref it. The recording and file entries hold
+     circular refs and won't be freed, so now you have entries left over. How can you deal with
+     this?
+     -> Entries could track who references them. This is probably a nonstarter.
+     -> You should call entry_destroy when you know the entry is no longer needed. This must only
+        work when ref_count==1, thus it is pointless because with ref loops the ref count will be 2.
+     -> You should call music_source_entry_destroy when you are done with the entry.
+
+     I actually think entries could track who references them. It didn't work last time, but perhaps
+     now I zero the foreign keys in the sources when removing entries it will ... ?
+
+* publicise libiris .. STOP BUNDLING IT you are entering dependency hell!
+
+* update copyright :)
+
+----------------------------------------------------------
+
+Bugs:
+* in problem/ directory (Impulsive!), only 2 of the artists are on a 'va' album
+  -> this is because they have different album years. 
+
+----------------------------------------------------------
+
+* What happens when you call update_entry_property from a notify???
+
+*** Make all idles call gdk lock !!!
+http://live.gnome.org/GdkLock
+
+* Perhaps its me, but the vertical preset tests seem to be going very slow now ...
+  should profile them
+
+* Fix musicsourceview on win32 to defer gtktreeview stuff to gdk thread
+
+--------------------------------------------------------------------------------------------------
+
+#9053
+ - main-test is failing with lots of heisenbugs. I think ..
+     cured: browser's notebook reference problem (due to bad dispose method)
+
+     3. iris_progress_monitor_watch_process_chain: assertion `IRIS_IS_PROCESS (process)' failed
+
+     1. fix entry_notify_action_deltas bug (mostly happens under valgrind), and in main-test
+     2. fix weird weak reference bug 
+ - filesource-test also fails
+     4. cancelling 2: timer never realises cond is signalled (only without debuggers),
+                      using ->stop member fixes it, for some reason
+     5. cancelling 1: segfault on filesource->begin_watch call, even though pointer is not corrupt
+
+ What does it tell us that filesource is affected as well as main !! The problem must be somewhere
+ in the file import code/processes code ...
+ 
+
+* MusicSource concurrency tests ... 
+
+#9054 - doesn't work, can't skip/play during import
+
+#9058 - can't skip tracks any more for some reason
+
+-- now you can stop working on your laptop :)
+
+[Problem #9059]
+
+* Use one permanent mode IrisProgressInfoBar
+
+
+* Test on a bunch of directories, really break poor little calliope !!! On laptop, /windows/media
+
+* can't load another directory after have loaded one
+
+* crashes on exit
+
+* calliope -d with no directory gives a phony 'unable to load playbin' warning
+
+* FIx library .. again
+  -> transactions: read transactions should simply increment a counter of how mnay are
+     open. Write transactions should execute begin; when begun and should block on ending
+     the transaction until the read counter reaches zero (I guess no read locks should be
+     granted while the transaction is trying to commit), and should *then* be committed.
+     So reads can continue while a write transaction is being constructed, because sqlite
+     will not commit anything to the database until the transaction is complete, unlike in
+     genericsource where the 'transaction' in fact just a lock.
+
+* The way we track shadowing seems backwards, should just maintain a list on the entry
+in genericsource... how can this work for library?
+
+* reimplement libraryview  .. some tests are commented out right now
+
+Make Calliope processes & ui all work how they used to. TEST them where you can, things like
+ the add-music dialog ..
+
+* music search should be activity mode process
+
+* Processes should be throttle-able - should the import queue shouldn't have more than about 5000
+  work items in memory at once? it's just a waste, to make the display look better ..
+  the best solution is perhaps twopart, one process which crawls the filesystem/folder for files
+  which have media in (say more than 10 files) and queues them, but with the count of files, and
+  then another which actions them based on a limit ...
+
+* .desktop file
+* make it load .ui files from inst-dir correctly
+-- sort out path handling in calliope. Don't hardcode paths in random places!
+
+* Separate out the import processes. They certainly belong in core. Maybe core/import but I don't
+  really like the term 'import'. What are they like? They are like Tracker's 'miners'.
+
+* Put database in user's home dir and dont allow opening different ones etc.
+
+* This will probably be important in libraryview, I ripped the code out for now ...
+	Reimplement the 'general' flag in a better way:
+
+	/* FIXME: problem!
+	 * So that's the problem the 'general' flag fixes - if the node's tail type is general, the view
+	 * queries the node's children straight away and if there are none, it doesn't show the node after
+	 * all. At the moment this only applies to artist. FIXME: I think any type where more than one
+	 * foreign key points to it should be treated this way, but I'm not sure yet so I decided to use
+	 * an explicit flag instead.
+	 *
+	 * FIXME: we could be cleverer how we deal with this in the sources. For example, if the config
+	 * has artist > (album .)/(recording .) (ie. if every possible foreign key is represented) we
+	 * can once again assume no entry nodes - except for VA and Unknown Artist, who are special
+	 * cases really anyway.
+	 */
+	//extern const gboolean entry_general[ENTRY_TYPE_COUNT];
+
+
+* test insertion, changing & removal in the preset sources tests
+   - removing entries with chaining
+
+* volume sometimes doesn't work, presumably a PA thing
+
+Memory issues:
+    - a memory monitor dialog !!
+	  -> http://www.reddit.com/r/programming/comments/86d72/ask_progreddit_getting_the_amount_of_memory_used/
+	  -> can glib do this? gslice?
+	- concrete limits on memory use - test with a really low limit.	This basically affects
+	  how many pages to keep in memory before we go nuts and free a bunch of them.
+	on this subject:
+		- what pages are best to remove? you could track how long ago a page was accessed - but
+		  this is kind of nuts. Randomly? Every even no.?
+		- track total allowable memory use. Estimate how full node is. Free some pages of
+	  	  root node, until size is okay again!
+		- when could this be triggered? On every 10th page alloc or something? Is there an
+		  easy way to check our own memory use?
+		- or, we could just count how many total nodes are in memory, * it by size of a node.
+		  total memory use of the view will never be more than double this value. every time
+		  it goes over memory allowed/(node size*2), free a bunch of nodes..
+	- you also need to manage sqlite's cache size.
+	  see http://bugzilla.songbirdnest.com/show_bug.cgi?id=14442
+	- on linux, look up 'mallinfo' and 'malloc_info'
+Mem requirements during import to library still seem to be pretty much unbounded
+-> you don't empty any caches
+ - add in simplistic memory management, including cleaning library cache and libraryview pages
+
+Here is an idea: batching file imports. This fixes a few issues:
+	- maintaining the recording cache in libraryview etc adds a lot of expense to imports.
+	  If files were added in batches of 50, say, all those inserts could be done in one go and so
+	  it would be almost 50x faster .. if a method is called, we can just do the batch update
+	  straight away.
+	- how about doing it in increments of MUSIC_SOURCE_VIEW_PAGE_SIZE ...
+	- long imports wouldn't be lost in a crash, just the last 50 or so songs.
+
+* Library & LibraryView: sqlite_prepare all queries.
+
+* recreate library!!
+----
+* Use Gtk 3
+
+* Selection gets messed up when rows are reordered, you should pay attention in MusicView.
+  Shouldn't gtktreeview be able to deal?
+  This is extra important for sorted playback!
+
+
+* use artist[sortname] not artist[name] everywhere!
+
+
+  make Calliope, basically, work.
+  - ie, play through library on shuffle & sorted on all configs
+	Put this into the unit tests!!
+
+
+- store default sort property for each entry type, so they can be more implicit ..
+
+
+g_slice , including hashtables ! How can we do that !!!
+- where?
+
+ * execute in view config dialog crashes calliope, sometimes
+
+
+Little fuckers
+--------------
+seeking has gone back up its own ass.
+- sometimes songs seem to play back silently for no reason.
+-doesn't install a desktop icon on ubuntu
+* skipping problem - seems to skip two when one is broken.
+- when you're playing lots of tracks that it doesn't know the time for, it shouldn't use the
+ previous track's length each time! In fact maybe should not show a length at all.
+
+* unplug h4 while calliope is playing through it - a. why has it decided to play though asio now,
+  and b. why does it fuck up when h4 is disconnected.
+* also, audio outputs so I can play along with the main guitar!
+
+test bjork (weird character encodings) code on linux & unit tests for that sort of thing!
+-> notably: http://comments.gmane.org/gmane.comp.gnome.desktop/42731
+   filenames on UNIX are byte arrays and not UTF8 strings.
+
+change song on shuffle, then change to a different one, and the next played song is the one you
+selected before ...
+
+	* fix last.fm thread lockups on quit. These are caused by libsoup waiting on a port and the thread
+	  not quiting until the function has returned. However, we can't use libsoup asynchrously without
+	  having a glib main loop in scrobblerthread. Which actually is a possibility !!!  Or, pthread
+	  may have a way to cancel threads? Or we have to find a new lib to do non-blocking network io,
+	  or find a way to make libsoup abort when we want it to ..
+	* The solution is rewrite last.fm support using Iris :)
+
+-> unit AND SPPEED tests for new get_id_at_path, and get_value ..
+
+- make skipping faster! it's still pretty sluggish.
+
+get_id_at_iter speed! resizing the columns is really slow for example!
+
+* info should update when id is found, not when path is found.
+
+-cancelling a long load with filesource takes a long time (basically a hang)
+	-> i think this may be fixed now
+
+	* How to change what sources we are playing from. At the moment player has a crazy combo box
+	  which does nothing.
+ fix statusus
+
+
+* Needs a better icon
+
+
+	* Default extensions list - things we need.
+      Allow choosing of what files to search for!
+ 	-> if music is added that is in A but gst can't play, come up with an explanatory dialog ...
+	    or, when it's played.
+	-> unit tests for these too !
+
+* make sure transient parents are given for dialogs everywhere, or they could appear in weird places
+
+- columns should be reorderable ..
+
+
+
+* rename checkin_entry and checkout_entry to check_in_entry and check_out_entry ...
+
+MYSTERY TIME
+
+
+-- test the parser more thoroughly for errors etc.
+- test music_source_view_get_first
+- catch many_to_one flag being written in config in wrong place.
+test intermediate ids more thoroughly ..
+flat/branching should be a flag.
+
+- it would simplify things if an empty config meant view->Config still existed, but with NULL head.
+
+has-child erroneously says orphans have children, you should emit has_child_toggled when adding leaf
+nodes with depth < n_levels.
+/* iter_has_child needs to be able to execute without taking the iter out of freefall. If the iter
+ * is in freefall (ie. it points to an as yet unqueried region of the node) has_child has to guess,
+ * which it does by returning TRUE unless depth==n_levels. For this reason, when reading bits of
+ * partially queried pages, leaf nodes of depth < n_levels need to have has_child_toggled emitted so
+ * they display correctly.
+ */
+
+
+-removing a track should add its file as an orphan to the view, that doesn't happen.
+
+
+----
+
+
+
+
+THINGS TO ADD:
+
+	- we don't emit has-child toggled at the moment - it's not strictly necessary as GtkTreeView
+	  is the only user and it can manage without, but we still should do.
+
+
+Can't access SMB shares on win32 in gtk+ file chooser
+- can you access them under loonix?
+
+* skip count and play count
+-> How does this relate to last.fm's play count?
+   The two cannot be linked too closely b/c plays may come from anywhere, not just calliope.
+   I  guess both measures must be taken into account when deciding popularity etc. but not
+   related in any other ways!
+   - Or you could not keep a play count!
+
+- limit on size of 'now playing' label, and source choose combo box
+-> in fact, what about that combo box?
+
+GtkVolumeButton
+or if not, at least make our button a gtkscale.
+	- on win32 there is a weird bug which makes our popup window get really stuck .. i think its
+	to do with gtkpopup and then alt-tab somehow ..
+	- and the icons are clipped.
+
+- non-debug builds should disable all the asserts etc. for speed.
+	http://svn.gnome.org/viewvc/glib/trunk/docs/macros.txt?view=markup
+- perhaps normal builds shouldn't, but make a seperate 'fast' build which does?
+
+
+* View config dialog (text, sorting, layout, semantics)
+& tree view columns - these should do something like you would expect them to !!
+Right-click on columns should show a show/hide menu
+
+* custom collation function to give natural sort order from db. well and from genericsource.
+
+installer should detect old calliopes and update!
+ Make killing gconf and calliopes in installer a lot more user friendly!
+- Only kill them if they are from our install dir.
+- Present a dialog informing the user!
+http://nsis.sourceforge.net/KillProcDLL_plug-in
+- Make sure they are killed!
+
+* Also, add a 'run program' once calliope is installed.
+  - http://nsis.sourceforge.net/Run_an_application_shortcut_after_an_install
+  -> Can either add a checkbox to 'installing files' page (this looks like I have to make a new .rc
+     file with a replacement dialog somehowe)
+  -> Or pop up a messagebox with "Run now?" (this is the worst way)
+  -> Or add an extra page with "Install complete" and a "run now" checkbox.
+       - nsDialogs: http://nsis.sourceforge.net/Docs/nsDialogs/Readme.html
+  Remember also that an elevated installer should run the program not elevated.
+       - http://discuss.joelonsoftware.com/default.asp?biz.5.466846.9
+
+* Add 'version key'
+  -> http://nsis.sourceforge.net/Docs/Chapter4.html#4.8.3.1
+
+when no song is playing but there is a selection, play should change to the selected song,
+not a random one
+
+replaygain working
+
+* Use normal last.fm client optionally
+
+Still to do:
+	- reload metadata dialog
+	- rganlysis thread priority too high
+
+
+Things for before 0.1 release!
+------------------------------
+
+dir watches
+track my music collection on disk, so new added files are added to db automagically
+  -- watch library dir & automatically a'dd new songs & highlight them - works nicely with bittorrent. Or: add files in a dir automatically, don't move them but highlight/tag so they can be moved at a later date
+
+add helptext to add music dialog, looks kind of confusing. (also work out why its crashing glade)
+
+needs to add to library on drag ..
+
+import should have lower priority, leak less memory
+
+* gconf - crash when some values change
+ -> torture test
+
+
+
+
+
+
+FINAL THINGS BEFORE RELEASE.
+
+- go through all the dialogs and make sure it's all good.
+- merge all the existing updates and go back to db ver 1
+- tidy up this file & docs etc.
+
+--------------------------------- 0.1 release I guess !
+
+
+-> discuss, on like gnome-devel lists and desktop-devel lists and places like that ...
+-> fix more things in 0.1 and release 0.2, and add new features into 0.3 ...
+
+
+
+
+
+
+
+Next, reconsider the PURPOSE of Calliope.
+ * Is it to play back & organise the music on DISK, or to play and organise the user's MUSIC LIBRARY
+   (in which case, tunes could be played from spotify/playdar, youtube, records, etc.). Can it do
+   both?
+
+ * My hope is that Calliope will be able to do both. Key features ....
+  -> Need terminology to distinguish between the user's library of available music, and all of the
+     music they have ever heard (which last.fm and spotify have inconveniently termed the 'library'
+     as well). 
+     -> aura / collection / network / scrapbook / 
+  -> Maybe call one 'collection' and one 'available collection' ?
+  -> or, *profile*
+  -> The calliope *profile* should replicate ... :(
+  -> Maybe the best plan is to store the information on local mp3 files in an sqlite database, as
+     we do, and then put user profiles in a couchdb database.  One database for the whole computer
+     or per-user? I guess per-user, they're not that big. So it can go in the user's home dir.
+ 
+  -> When removing a song/songs, the user should be able to record a reason why they don't like it,
+     then if they come across it again they will know!
+
+  Places that the 'library' exists:
+     -> last.fm profile
+     -> spotify profile
+     -> bookmarks of band websites/myspaces in browser/delicious
+     -> thousands more
+
+Use cases for Calliope & things you can get from there:
+  -> background music
+      - smart playlists etc. allow a good stream of music
+      - visible playlist allows good sort of party mode too where lots
+        of people can queue songs
+  -> foreground modes
+      - discovery: listening to new music etc
+      - sharing: playing people things you found
+
+
+
+
+
+
+
+
+
+
+.. this is the stuff to do before a 1.0 release. There is a lot! Some of it can probably move down
+   to after a 1.0 release, because there isn't that much down there!
+
+
+
+Fix:
+	* player widget is really ugly under the dark ubuntu theme (toolbar is shaded but playbar isn't)
+
+	* i18n :(
+
+	* accessing drive H under Windows on my laptop (H is an ext3 drive which unreadable by ext2ifs,
+	  so unreadable under Windows) causes gtk file chooser to basically lock up.
+
+	* see jaunty bug https://bugs.edge.launchpad.net/ubuntu/+source/linux/+bug/317781 which relates to
+	  loss of data on ext4 when not fsync()'d or fdatasync()'d properly.
+	   - This can't affect our database because sqlite3 syncs properly already.
+	  -> The scrobbler disk cache needs to fsync after write so it stays consistent.
+	  -> Whenever we write tags to a file (which we can't do anyway yet, but still) we need to make sure
+		 gstreamer syncs property.
+	  -> what about using g_file_set_contents(): http://mail.gnome.org/archives/gtk-devel-list/2009-March/msg00082.html
+
+	* insert some space around the textual time indicator because it is changing the size of the bar a lot and that's weird (might have been done i forget)
+
+	* When tracks are removed an album might not be VA any more.
+
+	* THE MERGING PROBLEM:
+	The merging problem is the cause of the recording.initial-file-path and
+	album.inital-release-date properties. The issue is that two entries (for
+	example, two albums) may differ only by a property in a parent, such as the
+	album's release.date. The thing is, an album does need it's 'initial'
+	release highlighted, and a recording needs its highest quality file, for
+	things like the flat musiclist view and for the player. We can't just use
+	a pointer to the entry though, as this is very difficult to add to the db:
+	each entry needs the other's id before it can be added.
+	What to do? I don't know. At the moment it works with the kludges in place.
+	The backpointer entries should be doable if hard. The easiest solution is
+	to mark it as a FIXME for later on !!
+
+	* On shuffle: when a song is jumped to, should we replace the current song in the
+	  order with it, or jump to its position in the order? Should be an option I think.
+
+	* We use time_t for dates & times which i don't like because of 2038 and all that
+	  * perhaps this means use time64_t
+	  Also I dislike how there is date and datetime, should be possible to encode which part of the
+	  info is important in the date/time and have just one entry type, ...
+
+	* Follow fdo dir spec: http://standards.freedesktop.org/basedir-spec/latest/ar01s03.html
+	  This really only affects the scrobbler disk queue.
+
+	* music source entry notifications should make sure watch-only callbacks don't check out anything
+	  or at least don't check out the entry being notified on
+
+	* How should Calliope behave on a suspend?
+	  -> http://bugzilla.gnome.org/show_bug.cgi?id=402863
+
+	* Locking on imports. Currently a file could be imported, then I could edit it, but the changes
+	  could be lost when the tags are read. Or something. I don't think this will actually be much
+	  of an issue.
+
+
+
+Features:
+	* replace gnomevfs with gio/gvfs, and then make cd playing work again. play cds direct !!!
+	  Make sure scratched CD's don't cause unresponsiveness like they used to.
+
+	* Improve formats - eg. 44.10Hz isn't great. "Friendly" date output would be nice (code from gtk file manager or something?)
+	  Enums like file type and channels.
+
+	* Add more smart columns, and improve existing
+
+	* Use windows file chooser? Or, make gtk+ file chooser faster
+
+	* any files which gst can't play we need some sort of info box explaining why. In particular we
+	  should have special ones for eg. mp3's on ubuntu/debian, where the user needs to know why
+	  certain codecs aren't installed.
+
+	* Choosing audio output:
+		http://blog.drinsama.de/erich/en/linux/2008122801-gstreamer-enumeration.html
+
+	* Album categories - live album, ep, bootleg etc.
+	  Should these be tags? for the problem of eg. Vic Ruggiero - Alive at the Ladybug House, which
+	  is predominately new material but still a live album. Allow sorting by these.
+
+	* gapless playback - playbin2
+
+	* unique names for each source - so two with libraries you don't get "copy to music library" and
+	  "copy to music library"
+
+	* What about artists who change their name?? eg black dyke mills band -> black dyke band.
+	  My thought is ARTIST RELATIONS the same way musicbrainz has, which can also be used to link band members to their
+      band and stuff like that !
+
+	* And make notifications non-interrupting like firefox's.
+
+	* Prevent user from using any of these extensions for db when on Windows:
+		http://msdn.microsoft.com/en-us/library/aa378870.aspx
+	  (all the system restore ones)
+	  This is:
+		MSDN - MSDN Library - Win32 and COM Development - Administration and Management -
+		System Configuration and Servicing - System Restore - System Restore Reference - Monitored File Extensions
+	  at the moment (msdn gets reorganised all the time so I don't want to use a URL)
+
+	* A Calliope auto updater, for Windows! Should be an NSIS feature somehow maybe.
+
+	* Might be nice to have a "tidy database" option where songs with no recording, etc. are deleted.
+	  Although there shouldn't be any. I guess this should be a "check database consistency" tool.
+
+ 	* Allow non-gnome build on LInux?? The only real problem is gconf .... who is also a problem
+	  on Windows. Well make it so KDE'ers and whoever need the minimum of deps to build Calliope.
+
+    * HELP for file name filter
+
+	* Use gtkrecent - at least in file-open database dialogs etc
+
+	* This would be good for people who want ipod support:
+	   http://www.floola.com/modules/wiwimod/
+
+	* Playback order. Sorted playback is often used to play one album .. this isn't really right.
+	  There should be a linear album playback mode, so that this is possible without the album
+	  necessarily being together and in order in the view.
+
+	* Youtube mode: would be cool if you could play a song and Calliope would look for the video on
+	  youtube and play that instead, when being used in foreground sort of use cases. also fits in
+	  to the larger picture of 'music from anywhere' (playdar style).
+
+
+
+Instrumentation
+	* The debug window in Pidgin looks useful. Maybe it could be adapted to be a more generic log tracer ...
+
+Document
+	* all of the internals :) A big "how calliope works" document, referenced in comments as relevant,
+	  instead of having docs scattered around. How about using gtk-doc for the actual functions, and leaving
+	  major things to hand-written doc files .. although I don't hugely like gtk-doc
+
+
+Session Management:
+   (this is such a crazy problem that I gave it its own header).
+	Session management. Here are the things I have in mind.
+	  * Remembering window geometry (we do this anyway in a dumb way.)
+	       : At the moment this is supposed to be the window manager's job. However, Windows
+		     doesn't, Metacity doesn't want to (http://blogs.gnome.org/metacity/2008/03/08/session-management/)
+			 and it wouldn't affect the app closing and reopening within the same session anyway.
+			 I definitely think we should manage our window position ourself, which won't be perfect
+			 on UNIX but perhaps one day will be, if GNOME decide to let the app manage its position,
+			 and 100% accuracy isn't vital anyway. If a WM does want to save window position itself, we
+			 should let it however!!
+	  * Remembering open sources and playing song (although don't carry on playing, that's too much.)
+	  * Remembering running processes and continuing them.
+		-> this behaviour is unexpected so maybe should ask first time.
+	  * Allowing more than one Calliope (mainly because, why not, and because I want to listen to music
+		in a different Calliope to the one I'm hacking on, but on the same PC). However, the second
+		instance shouldn't recall state, it should start afresh. Each saves state so that the one closed
+		last is the one whose state persists.
+	  * Persistance of settings!! At the moment gconf manages this but is that the right approach?
+		Should gconf only be for global settings? !!!??? Where does session management end and default
+		settings begin?
+	That's not very complex. How should this be done? Using gnome-session or equivalent and porting that
+	to Windows? Different approaches between *nix and Win32? It's all a very complex business. Dbus is
+	ropey on Windows so far.
+	References:
+	   http://bugzilla.gnome.org/show_bug.cgi?id=552387
+	   http://live.gnome.org/SessionManagement
+	   http://live.gnome.org/SessionManagement/NewGnomeSession
+	   http://live.gnome.org/SessionManagement/GnomeSession
+	   http://live.gnome.org/SessionManagement/SavingState
+	   http://bugzilla.gnome.org/show_bug.cgi?id=79285
+	   http://www.freedesktop.org/wiki/Software/dbus
+	   http://library.gnome.org/devel/libgnomeui/unstable/GnomeClient.html
+	What does Calliope really need from a session manager then?
+	  * X WM's to remember its position (on Windows we can do this ourselves accurately).
+		Or, in the blue sky there is talk of GTK serialising its state for us. That would be nice. It's
+		really a superset of the window geometry functionality, and actually largely unnecessary I
+		reckon (but still worth doing if it's easy). It's actually a pretty hard thing to do because
+		Calliope needs to have its data structures matching GTK+'s state, or the sourceviews etc will do
+		nothing and break. What we can do is use hooks into this imaginary GTK serialisation code to
+		save Calliope's own state in the same place though.
+		* allow more than one calliope, but don't open default libraries in second one (if they're already
+		  open?)
+		http://live.gnome.org/SingleInstanceApps
+
+	Implications of session management:
+	  - no more default library stuff.
+
+
+    STORING DEFAULTS
+    ----------------
+
+    Things that need storing:
+	    - view type - a default for each source type
+	    - playorder - just use last value might be okay?>
+	    - visible columns - do we want these different for each source type ?
+	    - sorting - again, different?
+
+    This is a problem for the future though I think!
+    *** So, the solution. Save our state into gconf, and wait. Implement GtkUnique (and port that to
+	Windows).
+	      - http://live.gnome.org/LibUnique
+	    There was some discussion over why can't you just use dbus to do what libunique does? The fact
+	    is I guess libunique is a) easier than implementing dbus? b) a useful bridge for if dbus doesn't
+	    work on windows (even though we may need it to for gconf 2.24+)
+	    I can write a nice Windows backend for libunique and everything is cool you see.
+
+
+Major Things:
+	* Jumping to songs & filtering views. This all needs designing and implementing. I want to be
+	  able to at minimum jump to any song by typing words.
+
+	* Editing metadata. Writing it to file tags & rearranging filesystem - either as backup of data
+	  in library, or as only output in Filesource.
+
+	* Queuing/editing playorder - perhaps a playlist above the library, muine-style
+
+	* Automatically grab metadata from Musicbrainz (3.0) .. and amazon (album art) ..
+	  and last.fm, one day they will share their metadata I hope. And anywhere else we can go.
+	  How do we store the album art ?
+
+	-> 	Here is a good idea: any songs where there are errors or confusion etc, should
+	be tagged & highlighted for user to see. This means like VA albums with track
+	number clashes (which I guess we could probably sort out by looking at filenames
+	but that's not the point). And songs which can't be played and whatever else.
+
+	* Tagging (web2.0 sense now) albums, and syncing with some of your last.fm tags, and some of
+	  the global tags ...
+
+	* More playorders: shuffle within album, shuffle albums, etc
+
+	* Get it translated! (I doubt internationalisation works at all at the moment. I never remember
+	  to mark strings.)
+
+	* make an intro wizard, to set up library, set up last.fm, import music etc.
+
+	* Sharing:
+	  http://snorp.net/log/tangerine [c# though]
+	  libdaap ??
+ 
+	* You could rewrite most of entry.c using GVariant when it hits GLib I imagine.
+
+	* Plugin API, and EVERY WEB SERVICE INTERFACE SHOULD BE IN A PLUGIN. Would be great if they
+	  could be in JS too. See this old one:
+    * Don't do file parsing, tag reading, musicbrainz connection etc. in C. Let some Guile or JS
+	  code handle the job. I saw a post on Guile being able to read Javascript recently. I'd love to
+	  be able to use Scheme or Javascript to do whatever I feel like with the tags, and let people
+	  create metadata plugins for other services which Calliope can use without a recompile.
+
+	  A tiny bit related to this is the GSoC 2009 idea to improve GST's tag reading. It should be
+	  easily usable from GUILE etc - we could create a binding inside Calliope, but it would be nice
+	  to not have to.
+
+	  Also, since I want Calliope data to be written back out to tags and to the FS, maybe the GUILE
+	  backend can do that. Actually, I think that would introduce too much of a security risk because
+	  suddenly arbitrary scripts can access your FS. So that can still be done in C.
+
+
+
+
+Major Possibilites:
+	* Rating songs/albums/etc somehow by putting them in order of preference
+
+	* EQ on a per-album/per-song basis, plus globally ... really? Don't implement this.
+
+    * CD burning - I consider this a problem of integration rather than implementation because it's
+	  silly for Calliope to reimplement the wheel. On Windows we can integrate with Infra Recorder,
+	  or I guess possibly bundle its core or something? (Which I think is cdrtools anyway).
+	  On Linux we can integrate with everyone, including cdrtools perhaps.
+	  GNOME has Brasero now which exposes an API.
+
+	* CD ripping: https://thomas.apestaart.org/morituri/trac/
+	  best option on linux. it can probably be made to run on win32 too to replace the closed-source
+	  EAC.
+
+	* A 'dislike' button, which won't do anything drastic like delete the file, but kind of
+	  plays it less and less, and you can sometimes clean out your most disliked artists.
+
+
+
+Infrastructure:
+	* find out about distributing Windows binaries with faad and mad (patent issues etc)
+
+	* wscript should run conftool.
+
+	* I really like git commit --amend. Could this be a bazaar plugin ??
+
+	* On that subject, bazaar plugins annoy me, I wish they were merged into core. The ones I 
+	  like to use are: 
+	     -> lessdiff (& colordiff)
+	     -> lesslog
+	     -> textchecker 
+
+	* bring waf up to date, make wscript nice and neat.
+
+	* 'jhbuild shell' doesn't work! And it seems to give some insight into MSYS's ctrl+c problem
+	  when using cmd.exe as terminal.
+
+    * Spin off conftool as its own program .. or, see how easy it would be to replace it with autogen.
+
+	* gconf on Win32 has some weird failures depending on unset environment variables. See:
+	  SYSTEMROOT, PATH  (of course) and TMP and TEMP somehow .. and possibly more ..
+
+	* the typeahead find in gtk open dialogs is really irratiting.
+
+	* Just reduce the huge number of DLL's and the size of them that we have to load on startup.
+	  I guess we could build -lite versions of some of the bigger libs that we don't really use?
+	  I dunno there must be some way to trim the fat.
+
+	* Use shared gtk+ on Windows. Maybe a shared gstreamer too.
+
+	* looks like you can generate marshals automagically!
+        http://www.barisione.org/blog.html/p=136
+		http://cgwalters.livejournal.com/23514.html
+
+	* trunk jhbuild seems to have some win32 modulesets .. I don't know how they work.
+
+	* waf on win32 needs some love. Most of the unit tests fail. Lots of things don't work and lots
+	  of stuff in my wscript is hacks.
+
+	* http://code.google.com/p/omaha
+	  Use this to autoupdate calliope on win32
+
+	* autogenenerate changelog from bzr log when building a tarball
+
+Promote:
+	* Register Calliope's URL with last.fm people.
+
+	* http://en.wikipedia.org/wiki/List_of_GNOME_applications
+
+	* http://www.ogmaciel.com/?p=666
+
+
+Optimise:
+	* Add some /performance tests for views, etc.
+
+	* Speed calliope startup further. speed test it!
+	  - http://www.gnome.org/~federico/hacks/index.html#performance-scripts
+	  - optimise all the gconf interaction; there's loads of wasted energy there.
+	  - make sure sources and views output the minimum of signals possible ..
+
+	* Give libraryview indices: create index on each column used in a where clause
+	  This should be done through library somehow so that it can drop and recreate the indices
+	  on updates ..
+
+	* Optimise signal emissions. Edit the queue. Make sure changed only gets emitted if the entry
+	  actually changed, and we don't emit add and then remove straight after or anything dumb.
+
+	* Make library drop and recreate indices on big updates.
+
+	* Make sure the library cache is as much use as it could be.
+
+	* Just make calliope really fast! Profile it!
+
+	* http://www.sqlite.org/cvstrac/wiki?p=PerformanceTuning and http://www.sqlite.org/cvstrac/wiki?p=PerformanceTuningWindows
+
+	* The unit tests have got to being pretty slow. Speed them up as best you can by optimising the code
+	  they test, but I think some also need scaling down at least when not run with --thorough.
+	  libraryview-test in particular! Why is it so slow!!!
+
+    * add music dialog does searches sequentially. This is actually silly in the case that two searches
+      are on different drives, because the two would run faster concurrently.
+
+	* trace everything the source does during an import some time. It's a crazy amount of stuff! Surely
+	  you could reduce that some how!
+
+	* This is quite a petty optimisation, but it's good to minimise gobject casts. Perhaps it's best
+	  to write a tool to do this automatically.
+
+	* In "artist[name]:recording[name]:file[path]" for example, every time a recording is added, we
+	  get a changed notify on its artist. This is correct, because that recording could have moved in
+	  the list, so we might have to emit rows-reordered for the artist-node ... but, at the moment we
+	  look to see if any of the recordings under artist have moved, one by one (because of the
+	  recursive propagate_forwards). We should really just check the recording that actually changed,
+	  and if that hasn't moved none of the others possibly could have ..
+
+	* Adding things in genericview must be crazy slow .. but it doesn't matter a huge amount
+	  (viewing is the most important).
+
+
+Potential Optimisations:
+	* Lazy views (ie. libraryview) could maybe on idle query the pages either side of current
+	  page, and the next few pages in playorder. We don't want to go crazy and fill RAM up with
+	  stuff we might discard straight away again if memory is tight though. In fact this is probably
+	  best not happening where small memory footprint is more important than performance. I guess
+	  that should be configurable ??? Or not.
+
+	* Make page list in musicsourceview a tree. GSequence is a Btree ...
+	  First, think carefully about how the page list is used - this probably isn't actually a very
+	  good optimisation.
+
+
+Refactor:
+	* It seems you could make ViewNode more of an object (don't actually make it an object) but for
+	  example each node could handle emit notifications in its children and the code might be more
+	  logical in genericview then ..
+
+	* Make the guts of calliope a bit cleaner - every file has to include 'misc.h', surely this
+	  should be 'calliope.h' or something?
+
+	* Should have MusicSourceView implementing a new 'PagedTreeModel' interface, and then a
+	  GtkTreeModelProxy wrapper between it and the GtkTreeView.
+
+	* Use NOT NULL everywhere in Library.
+      http://fishbowl.pastiche.org/2009/01/30/why_null_is_special/
+
+    * Use sqlite's own foreign key constraints etc.
+
+    * Remove music_source_get_loaded - but bear in mind the generic music_source_is_empty needs a
+	  way of knowing if source is loaded so it doesn't return TRUE when there are 0 entries but
+	  the source hasn't loaded yet. Although I guess we need to emit a signal when is-empty toggles
+	  anyway, so whoever calls is_empty could be expected to just watch for that signal. In fact,
+	  you should probably replace is_empty with a property and anyone who needs to know it should
+	  connect to notify::is_empty.
+
+	* Remove the 'Music' prefix from a bunch of the classes? I mean what else are they going to hold
+
+	* Make unit tests code as nice as possible - a set of tidy macros ..
+
+	* Sort out headers, we include all sorts of unnecessary things. You could make a tool to do that
+	  perhaps.
+	  HERE is a useful idea: a tool which can point out which pieces of code are gonna be affected by changing other parts !!
+
+	* rewrite lastfm using Iris library, its messages  etc.
+
+prune all of the dead code
+    - hey you could make a tool to do that to !
+	- tidy all source files
+	* Doesn't follow the GNOME coding standards, although I probably don't want to follow them to the letter
+
+	* Use signal detail (::) in more places.
+
+	* Use g_signal_connect_object everywhere that you should.
+
+	* s/entry/entity/ ???
+
+	* Be consistent about what functions you prefix with _'s. It seems like only private but shared
+	  functions need a _ prefix, static internal functions don't need one, but you like to give them
+	  one anyway :(
+
+	* musicsource probably has a bunch of unnecessary interface.
+
+	* We can never really pass around const Entry *'s, because that prevents functions reffing and
+	  unreffing the entries. It would be nice if there was some way of distinguishing between
+	  entries that can be modified (ie. result of a checkout), and entries that can only be reffed
+	  (and entries that can be reffed but must be unreffed again before call returns if possible as
+	   well - ie. an entry that can't be 'owned' .. although this is awkward. The problem I have
+	   in mind is that in viewconfig.c for example, part of the tree passed to view_config_walk may
+	   be reffed to be returned in an accumulator, because accumulator entries are expected to have
+	   one ref. It would be cool if instead, the accumulator itself was smarter and new what needed
+	   unreffing and what wasn't. This would in fact mean that entries that could not be modified or
+	   preserved (reffed and unreffed) could be const, because we could say you can't ref these
+	   either.).
+
+
+Test:
+	*  flesh out main-test/final
+
+	* Make sure we only have the unit tests we need.
+
+	* make a nice easy way to define entry trees, for unit tests mainly
+
+    * unit tests for last.fm - special chars etc.
+
+	- I reckon should be waf option to enable all of those things!
+
+	* Fix up wscript to stop regressions in the execution speed.
+      -> store results somehow - sqlite? xml? in a year, fulltime working, you waf check say 20
+         times a day, 5 days a week, 48 weeks a year. 4800 data. Or, is there some format that allows
+         easy graph plotting? What do things like GNU graph plotting program or whatever like for input?
+         with: unique machine id (uuid I guess, plus spec)
+         what you need is, a table of measures and tests, automatically updated
+         and a table of results with measure id, current time,
+      -> spin off as a waf plugin, with a tool /script to plot graphs of the reusls
+      -> actually, this should really be part of gtester ..
+
+	* make it so reverse treemodels work - file:recording:track:release:album .. although that's a
+	  pretty useless thing to do, it would test the orphan code to perfection. Actually it wouldn't,
+	  because most of these joins are non-nullable (m+:1) joins. Still, you need to check those work.
+
+    * add speed test for when there are like 1-1000 files per rec.
+
+	* run main-test with custom gconf.
+		http://blogs.gnome.org/tthurman/2008/12/13/i-may-have-posted-about-this-already/#comments
+  	  try this on linux first!
+
+	* test filesource-test with lots of album tagging/naming styles?  This probably requires the
+	  module to be opened up slightly to allow the tests to give mock taglists.
+
+	* valgrind memfault - causes every nth malloc to fail
+
+	* And use valgrind's memcheck to sort out all of our memory leaks !
+	  also, g_slice allocator can do useful stuff like say when things haven't been
+      freed on shutdown, I believe.
+      --> http://live.gnome.org/Valgrind
+      --> https://bugzilla.gnome.org/show_bug.cgi?id=64096
+      --> http://www.mega-nerd.com/erikd/Blog/CodeHacking/house_of_cards.html
+
+	* strace calliope & make sure we don't do too much shit when we should be idle ! Minimise power
+	  use !!
+
+	* test dialogs and changesets and all that nonsense.
+
+	* semantic checks on schema.
+	  -> an entry must have some unique (non-trivial & non-shadow) properties, so merging
+         works
+	  -> no circular links? things like that.
+
+	* g_test_timer is redundant, just make g_test_trap_fork work on win32 .. :)
+
+	* What happens if you remove an album, do its recordings get deleted?
+
+
+
+
+Design:
+	* Make the settings as concise, pretty, intuitive and powerful as possible!
+
+	* What should the selection do when the song changes? I think if the selection is the prev song,
+	  move selection, otherwise do nothing
+
+	* Make the menus logical. Don't have anything in right-click that you can't do in main menu.
+
+	* I'd prefer if we could have one close button for tabs like firefox rather than like,
+      one for each. However, see gnome bug 116650
+
+	* Just make calliope less ugly!! Check against GNOME HIG!
+
+    * some programs, like for example anjuta, have really cool docking interfaces. would be nice if
+	  all of the interface junk in calliope could be rearranged as well. i also like the inform 7
+	  approach of it all being two paned like a book
+
+	* come up with some cool theme to make the whole thing look better and less like every gtk2 app.
+	  make it skinnable using gtk3's CSS theme engine :)
+
+Integrate & standardise:
+	* Calliope's schema should really be an RDF ontology. Maybe there is one we can already
+	  use.. Nepomuk has an 'id3 ontology':
+	    http://www.semanticdesktop.org/ontologies/2007/05/10/nid3/
+	  but this is useless (it has all the same issues as id3, such as one audo file only
+	  being on one album).
+
+	* Then we can integrate with tracker and beagle
+
+	* What else is cool? Zeitgeist, Gnome Shell ..
+
+	* On clever audio platforms (PulseAudio, windows Vista, smarty mac audio thing), surely the
+	  volume controller in Calliope should connect to the application's output volume in the system
+	  mixer? No point using gst 'volume' element when the OS can already our output volume to whatever
+	  level we want. Maybe other pulse/etc. features should be controlled from calliope, like what
+	  speakers the output goes to ... hmm.
+
+
+* Remove the whole database/view backend into a library ... I reckon hydrophone or pyrophone is a
+  good name for it. Build the music-specific sources on top of that.
+
+* Make that whole thing totally ACID.
+
+
+-----------------------------------------------
+1.0 release?? ..   ----------------------------
+-----------------------------------------------
+
+Optimisation
+	* entry-notify signal is emitted a lot, way too much
+	* the g_signal_has_handler_pending() function can save emitting signals with complex
+	  arguments which noone is listening for anyway.
+	* http://www.gnome.org/~federico/news-2006-03.html#timeline-tools
+	* Power usage - don't wake up so much when main window is not visible, for example. No
+	  need to update playback progress if its invisible.
+	* Use G_GNUC_PURE (no side effects) and G_GNUC_CONST (no side effects and a function only
+	  of parameters), and the other available constants.
+	* Make a list of all the hotspots for optimisation, and optimise them all ..
+
+	* Speed up _locate_entry and friends.
+		- Speed up compare-entries somehow
+		- Interpolate? This could take up more cycles than it saves. I think it would only
+		  spare a few iterations so isn't worth doing.
+
+	* Precalculate (sqlite3_prepare_v2) as many queries in Library as possible.
+
+	* Why is calliope.dll > 2MB ??
+
+	* Relevant TODO's in deps. Particularly:
+		- Iris, it's very young
+
+
+General
+	* Tighten all the code so you are sure it all works all the time!
+	* Add unit tests for everything
+	* Why not make an amalgamation version, like SQLite's ? Would be lots faster?
+		could be a generic utility really that does an amalgamated compile ..
+		could be a waf plugin ...
+	* Make info pane a lot more pretty etc.
+	* Make the commandline interface completely usable, for backwards people. More usefully it
+	  will make sure all the ui code is seperated off cleanly enough (even though the core does
+	  depend on gtk due to musicsourceview being a gtktreemodel). I would say for this to work,
+	  switches alone are not enough - calliope needs a set of commands such as import, play,
+	  etc.
+	* It's a dull job, but be consistent with #includes - either each header should include
+	  everything it needs, or nothing that it needs.
+	* How I can I play my iTunes music which has drm ? http://www.el-tunes.com/ !!!
+	  More generally, when Calliope can't play something it should do as much as it can to
+	  help the user download the plugins they need. Should this be a calliope feature, an OS
+	  feature, a gstreamer feature .. ? Does totem, rhythmbox, songbird do this already?
+	  One idea is a central registry online for 'what can play what' .. that way the info
+	  calliope ships with has less danger of becoming stagnant in a really old install.
+	  Points of reference for this:
+	  	- Totem uses PackageKit: http://packagekit.org/
+	  Talking of that:
+	* An autoupdate mechanism on platforms that need it. ie, windows and linux built from source.
+	  I guess you should really just make it disablable for distros with packages etc.
+	* A script that keeps FIXME's sync'ed with a bug tracker ...
+    * i18n :(
+	* All of our caches:
+		http://bugzilla.gnome.org/show_bug.cgi?id=168417
+	* Fix any functions which are more than a couple of pages in length.
+	  -> It would be nice to have a tool which could highlight these functions ..
+	* Fix all of the fixmes ....
+
+	* Plugin architecture?
+	   - http://taschenorakel.de/mathias/2009/01/12/gtkbuilder-based-plugin-system/
+
+    * Fill calliope up with interviews, .. and videos  .....   ???
+
+	* Use xesam [http://xesam.org/main] to our advantage
+
+
+Tiny things:
+	* IrisProgressInfoBar: would be nice if the total progress bar took up the whole of the
+	  expander label area. This would need either a hack or a change to GtkExpander.
+	* playorders: if you play some songs in one playorder (sorted for example) and then switch
+	  to another (say shuffled), it should take into account what you already listened to and
+	  not play them again. Should be easily with v2 playlisting.
+
+Schema:
+    * It would be nice to be able sort classical music by opus, and then list the performances
+	  available.
+
+Refactoring:
+	* why not use gvalue's in entry ???
+
+Radical:
+	* allow zooming in and out of the view. At the smallest zoom all the tracks are there
+	  with lots of details on each one. At the highest zoom its just lists of artists, or
+	  album cover thumbnails, or whatever is appropriate.
+	* fullscreen mode. Also, surely the maximise button should be fullscreen not just maximise.
+
+MusicSource:
+	* adding entries is traumatic. The problem is with adding an entry, and then using that
+	  Entry * object even though its now invalid. Perhaps entries should be able to be marked
+	  as invalid to prevent this.
+
+
+MusicSourceView:
+	* storing the default view configs should be much more granular - at least, one for each
+	  class of musicsource, not just one big everchanging default. Maybe make it configurable
+	  too rather than using the last closed source.
+	* I have used 'relation' to mean 'foreign key' in a bunch of places.
+	* although the default musicsourceview implementation is meant only for small in-memory
+	  collections (eg. one or two directories/albums), it could be optimised a fair bit and
+	  made to not block for hours or use 2gb of virtual memory when it's asked to do too much.
+
+	* it could do with more advanced testing. I am picturing a standard source with two albums,
+	  some orphan tracks, etc. Then a textual description of how it should be displayed:
+	  	"Album 1"
+	  	">	Artist 1"
+	  	">	>	Track 1"
+	  	"Orphan recording 1"
+	  or some such. This would be much more intuitive than the result=gtk_tree_model_* stuff
+	  we do at the moment. And we could give more informative error message. It's quite a big
+	  job to implement though.
+	* we are pretty sloppy about setting the n_ values, since they don't matter to anyone right
+	  now. Still kind of bad though. Really libraryview only this problem.
+
+	* a fill_node_idle - this should be smart and load the pages either side of current, and the
+	  next few pages pointed to by the playorder.
+
+LibraryView:
+	* LIMITs. One day it would make sense when the queries are returning 10 million rows to
+	  LIMIT them each time. At the moment 10M rows is like 640MB. Well if we just stored them
+	  as two ints instead of directly from sqlite, that would be down to like 80MB. LIMITs
+	  will slow things down a lot I believe so I want to hold off on them as long as possible.
+
+UI:
+	* Presets in the view config dialog could be lots better. Should be able to edit them without
+	  having to delete them and readd them and stuff.
+	  Also, you can't tab onto them.
+	* Calliope should be able to be really thin if you want it to!
+
+Processes:
+	* see Nautilus source code b/c it does a similar thing with file ops
+	  Maybe it could use Iris??
+	* Estimated completion time
+	* mathusalem - http://live.gnome.org/Mathusalem
+
+Windows:
+	* as of 2.14, we need to either build our own gtk+ with only the gdi pixbuf loaders, or
+	  have jhbuild get jpeg62.dll and libtiff3.dll :(
+
+	* minimise our dependencies !!!! (well in general as well I guess)
+
+GNOME:
+	* with NetworkManager we can do things when network is up etc. 
+
+	* g_spawn_* has the following checks
+		  if (!standard_input && !standard_output && !standard_error &&
+		  (flags & G_SPAWN_CHILD_INHERITS_STDIN) &&
+		  !(flags & G_SPAWN_STDOUT_TO_DEV_NULL) &&
+		  !(flags & G_SPAWN_STDERR_TO_DEV_NULL) &&
+		  (working_directory == NULL || !*working_directory) &&
+		  (flags & G_SPAWN_LEAVE_DESCRIPTORS_OPEN))
+	  if it's all passed then the cumbersome spawn helper program isn't need. Hack up gconf to
+	  spawn its client this way to increase load time ! Then we can not include g_spawn_helper
+	  as well! Perhaps.
+
+	* improve jhbuild infrastructure - list of things to at:
+	   http://calliope.sourceforge.net/jhbuild-win32.html
+	   In particular, it would be nice to have new versions of packages handled. Say when a newer
+	   version is found than listed, it gave a choice (or uses the default value):
+	    - ignore
+		- use the newest (and change the moduleset accordingly)
+		- run specified unit tests, check that they pass, build with the newest,
+		  run specified unit tests again, and if they now fail flag up the problem present more options:
+		    - go back to old version
+			- leave new version, but optionally go back at a later date.
+        This is a complex thing to implement I realise!
+
+	* patch under mingw fucks up with unix line endings in a patch? or something? there must
+	  be some reason my patch from svn diff mostly failed.
+
+	* be nice if we could use gtester on windows.
+
+	* gcc 4 on windows
+
+	* should we use wasapisink on Vista now ? well gstreamer should choose the best
+	  output automatically of course.
+
+Replay gain:
+	* is calcing rg for the song you are playing the best way? Why not just go all through collection or
+		something? Also process should be pausable to not cane the old cpu ??
+	* support for audiophile/album analysis. This entails finding a single gain for an entire album. The difficultly
+	  is finding out which tracks are from the same rip of the same pressing of the same mix of an album, because
+	  otherwise we're going to get useless results. Options are I guess
+	  	- let the user decide
+	  	- go on
+	  	- do all albums with the second heuristic and let the user point out when it's wrong
+	  	- all three (configurable)
+	  So I guess the difficultly really is just implementing doing all of that. Also there would need to be a way
+	  to select which mode to playback in (although this could be guessed as well, shuffle should play in radio mode
+	  and album shuffle or sorted should play in album mode).
+
+Conftool:
+	* none of the conftool dialogs need to be modal any more but they still are.
+	* we could do away with conftool's dialog building altogether, and reimplement it as
+	  a GLADE plugin using this gtk-builder code. Don't forget the original problems conftool was
+	  partly to solve - such as how difficult it is to make pretty dialogs in gtk-builder.
+	* And, could we rewrite the rest using autogen ???
+
+
+Testing:
+	* it's kind of weird we write tests in seperate files to where they're defined and in a
+	  different place. Especially for simple tests like AddMusicDialog's. Just put it in the
+	  same file and link it with some #define magic or something .. more complex tests could
+	  go in seperate files but still in the same directory.
+
+Other features:
+	* spectrogram
+
+Bugs which are probably due to other things:
+	* songs which are like 17777 minutes long when they're really not.
+
+To read:
+	* http://library.gnome.org/devel/accessibility-devel-guide/
+
+Lib code:
+	* misc.c could have some stuff moved into glib
+
+	* format.c could go in glib, it's useful code and needs good i18n.
+
+Learn from the competition:
+	* Banshee - http://banshee-project.org/
+	* foobar2000 - http://www.foobar2000.org/
+	* iTunes - http://www.apple.com/itunes/
+	* Muine - http://muine-player.org/
+	* Songbird - http://www.songbirdnest.com/
+	* Rhythmbox - http://www.gnome.org/projects/rhythmbox/
+	my del.icio.us tag 'calliope'
+
+	Why write Calliope with all these other players which are much more complete?
+	The main reason is the internal database structure. Absolutely none of these projects
+	show any inclination to do away with the standard metadata of basically artist, title,
+	album, track. Believe me, I check worriedly for another project implementing a new
+	type of internal storage all the time because I don't want to be wasting time doing
+	something which is being done elsewhere. Seems to me there is no danger of this at
+	all right now.
+
+Smart playlisting: (I would love to start playing things much more cleverly. Here's some ideas)
+	* Mark tracks as 'single'; this is hard to define but everyone knows what it means. 'single'
+	  tag shuffle would be good for parties and stuff.
+
+Long term thoughts
+------------------
+- i would love to have an IDE which could dynamically resize the code, basically wrapping it to a
+  set line width using a clever algorithm. bw.
+
+- How could you make Calliope exposable to some sort of DJ-ing app like Traktor? What you want is to
+  give the DJ program access to Calliope's library somehow, but to take the filename instead of
+  letting Calliope play it.
+
+- Turn your crazy database idea into a reality and make it so calliope (even in its present form) can
+  connect & interact to it
+
+- I kind of like the look of Vala. And, because it compiles down to C code a gradual rewrite would
+  be entirely practical I think. Does a tool exist to do a best guess conversion of C code to Vala
+  code? because this seems possible ..
+
+- Calliope has at its core a very flexible heirachical database. The view configurations are
+  essentially queries on this database, in a form useful for displaying. For starters, this
+  means musicsourceview::fill-node's queries should really be handled entirely in the music
+  source, with library generating SQL queries on the fly (or somehow using precalculated ones)
+  and importing doing some of what the sourceview does at the moment.
+
+- In the bigger picture, Calliope's database routines are suitable for managing anything with
+  metadata that forms a heirachy (or doesn't). Photos, movies, writing, bookmarks, anything
+  and everything. Slice them off and make a generic library, which calliope can use as a base.
+  Only do this once you've thought of other uses for the library of course.
+
+- If you do end up using GUILE for something, you could also reimplement view configs using kind of
+  a LISP syntax.
+    ((artist :sort-by name :show-orphans) >
+       (album) : (release :sort-by date :sort-direction desc)
+          ....
+
+- Could rowid vars ever overflow ? sqlite uses long longs for them.
+
+- http://cgwalters.livejournal.com/18523.html
+  This is about making RhythmBox a 'transient' application - which exists largely as a notify
+  icon, and pops up just for you to change the song. I don't really see if that's appropriate
+  for calliope since it wants to do more than that sometimes. ..
+
+- http://mpd.wikia.com/
+  Could calliope just become an mpd client?
+  Personally I am unconvinced of the value of mpd, it's only real use case seems to be if you
+  have a crashy x, you can play music anyway. Since ui is seperate from core we could fairly
+  easily make calliope a daemon or a commandline interface. It seems like several players, such
+  as rhythmbox, kind of operate as a daemon with a dbus interface anyway, maybe we could just
+  go the whole hog and set up calliope in this manner? Although I haven't looked, I imagine
+  mpd would not support everything calliope wants to do without some major work.
+
+
+Known issues
+------------
+
+Creepy little bugs!
+ - a song plays back silently every so often for no apparent reason.
+   -> this maybe affects songbird too - it seems to
+   -> win32 only?
+ - once it fucked up with 'invalid message on scrobbler message bus: #0' or some shit in an infinite
+    loop.
+
+* Playback is shit with high CPU.
+  -> Songbird uses gst on win32 but seems to do much better than calliope. Their secret seems to be
+     a new Directsound sink.
+  -> Bug to merge new sink into gstreamer: https://bugzilla.gnome.org/show_bug.cgi?id=584980
+  -> Songbird's development of the new sink and other attempts to fix the issue:
+       http://getsatisfaction.com/songbird/topics/gstreamer_is_unusable_in_windows
+       http://bugzilla.songbirdnest.com/show_bug.cgi?id=12982

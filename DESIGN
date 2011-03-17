@@ -1,0 +1,49 @@
+Calliope 0.3.0 - design
+-----------------------
+
+Calliope's goal is to be a great interface on to all digital music. The first
+goal is to manage an on-disk collection in the best possible way.
+
+The ideal way to do this is to store the metadata in as standard a way as
+possible: this means an RDF store, which on Gnome means Tracker.
+
+Ontologies exist already for most of what we want to do. The key ones are:
+
+mo - Music Ontology.
+nmm - Nepomuk MultiMedia.
+
+Plus some standard ones:
+  dc - Dublin core (lots of useful stuff)
+  foaf - Generic stuff for describing people, groups etc.
+
+RDF vs. the Real World
+----------------------
+
+Standard properties in a normal form and how they map to RDF, and musicbrainz.
+Note that it's not really practical to mix the ontologies. Nepomuk Multimedia is
+way too limited to be useful for Calliope so support will be limited to pushing
+stuff in that format, optionally.
+
+Artist  =  mo:MusicGroup (nmm:Artist)
+  foaf:name
+
+Composition = (nmm:MusicPiece)
+  dc:title
+  dc:creator -> Artist
+
+Recording  =  (nmm:MusicPiece)
+  dc:title
+  dc:creator -> Artist
+
+File   = mo:AudioFile  (nfo:Audio)
+
+Track  = mo:Track   (nmm:MusicPiece)
+
+Album  = (nmm:MusicAlbum)
+
+Release  (nmm:MusicAlbum)
+
+
+Sources:
+http://wiki.musicontology.com/index.php/Converting_ID3_tags_to_RDF
+http://live.gnome.org/Tracker/Documentation/Examples/SPARQL/Music
