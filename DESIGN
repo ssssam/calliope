@@ -25,7 +25,8 @@ way too limited to be useful for Calliope so support will be limited to pushing
 stuff in that format, optionally.
 
 Artist  =  mo:MusicGroup (nmm:Artist)
-  foaf:name
+  foaf:name, nmm:artistName
+  
 
 Composition = (nmm:MusicPiece)
   dc:title
@@ -44,6 +45,15 @@ Album  = (nmm:MusicAlbum)
 Release  (nmm:MusicAlbum)
 
 
+Sticking points:
+
+* Sort names
+  foaf considered them: http://wiki.foaf-project.org/w/NamesInFoaf
+  OpenVocab has noticed the problem and has a sortLabel property: http://open.vocab.org/docs/sortLabel
+  Musicbrainz has a sort-name property (but no rdf :)
+  for storing normal names we also have nmm:ArtistName, and dc:Title (used by Tracker)
+
 Sources:
 http://wiki.musicontology.com/index.php/Converting_ID3_tags_to_RDF
 http://live.gnome.org/Tracker/Documentation/Examples/SPARQL/Music
+http://ismir2009.dbtune.org/

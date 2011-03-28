@@ -44,6 +44,11 @@ Other issues:
     * 'extractor': again, I don't really want a hard tracker dep, but libtracker-extract
       seems relevant
     * everything else as it is already I guess;
+
+It would be great to use musicbrainz uuids for music ontology entities. What to do when
+there's no internet connection though? just assign our own uuids? can we change them
+once we get hold of the musicbrainz ones? That's the important question.
+-> http://mail.gnome.org/archives/tracker-list/2010-June/msg00042.html
 ****************************************************************************************************
 
 -> make a libtestutils, and make the test build logic better ..
@@ -944,8 +949,6 @@ prune all of the dead code
 
 	* Use g_signal_connect_object everywhere that you should.
 
-	* s/entry/entity/ ???
-
 	* Be consistent about what functions you prefix with _'s. It seems like only private but shared
 	  functions need a _ prefix, static internal functions don't need one, but you like to give them
 	  one anyway :(
@@ -1297,6 +1300,7 @@ Learn from the competition:
 	* Muine - http://muine-player.org/
 	* Songbird - http://www.songbirdnest.com/
 	* Rhythmbox - http://www.gnome.org/projects/rhythmbox/
+	* Beatbox - https://launchpad.net/beat-box
 	my del.icio.us tag 'calliope'
 
 	Why write Calliope with all these other players which are much more complete?
