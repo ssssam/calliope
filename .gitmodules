@@ -1,6 +1,6 @@
 [submodule "charango"]
 	path = charango
-	url = ./charango
+	url = git://github.com/ssssam/charango.git
 [submodule "iris"]
 	path = iris
-	url = ./iris
+	url = git://github.com/ssssam/iris.git
