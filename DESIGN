@@ -26,7 +26,6 @@ stuff in that format, optionally.
 
 Artist  =  mo:MusicGroup (nmm:Artist)
   foaf:name, nmm:artistName
-  
 
 Composition = (nmm:MusicPiece)
   dc:title
@@ -57,3 +56,14 @@ Sources:
 http://wiki.musicontology.com/index.php/Converting_ID3_tags_to_RDF
 http://live.gnome.org/Tracker/Documentation/Examples/SPARQL/Music
 http://ismir2009.dbtune.org/
+
+Calliope architecture
+---------------------
+
+* Generating views on arbitrary RDF data is a complex process and useful for
+  probably much more software. All the basic RDF stuff goes into a seperate
+  library named Charango, which provides:
+    Charango.Store, plus implementations such as Charango.MemoryStorage,
+    Charango.TrackerStorage etc. I also like a Charango.Source class which can
+    provide data from other RDF endpoints eg. musicbrainz!
+

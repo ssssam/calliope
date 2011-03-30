@@ -1,12 +1,10 @@
 Calliope 0.3.0:
 
+To dos:
+- basic metadata extractor and data storage using charango
+- simple console interface, maybe use gapplication? or not :)
+
 * Key design elements
-  - separate out views library. I don't like the term views (because it's already a database term),
-    what else to do though?
-    view, n.:
-      "A way of showing or seeing something, as from a particular position or angle: a side view
-       of the house."
-  - write everything in Vala
   - store everything in tracker, if available, or maybe sqlite with the same interface otherwise?
   - separate out file parsing? this is a big part of what Calliope does however, and ideally will
     be extensible through plugins .. then again, the library could have plugins. how does this stuff
@@ -20,14 +18,37 @@ Calliope 0.3.0:
     
     What stuff is in what ontologies? MusicOntology gives this example:
 
-
-Other issues:
-  -> 
-
 * Calliope tracker integration:
   - calliope could provide an extractor for mp3 files & store stuff. libtracker-extract
     is relevant here.
   - if no tracker, calliope would just use the miner to populate the sqlite db ..
+  -> Seems like we want to be integrated with Tracker, but I don't particularly want
+     a hard dep, to allow portability etc. I think the ideal workflow is this:
+      if no tracker:
+        on initial run, or from a sort of hidden menu item (maybe an 'Admin' dialog?)
+        or command line argument, search whole computer (or subset) for music
+      if tracker:
+        on install, or first run (WHICH?) set off a miner to crawl music directories.
+        It's important to set it up, because tracker defaults to only ~ and a few other
+        locations. This could be configured on first run of Calliope, perhaps, or maybe
+        a dialog on first run of the miner (not sure how Tracker people feel about that
+        happening though)
+      if tracker removed while calliope remains installed:
+        all your data is gone (that was silly). Warn and offer to crawl again
+        using a different backend.
+      if tracker added after calliope:
+        autodetect this if it's not too slow (probably just a dbus lookup). Offer
+        to migrate to tracker storage (simply copy all the triples).
+     of course, none of this is possible until tracker supports music ontology, whic
+     could be a long long time!
+
+   Also need to consider the developer usecase: allow recrawls? purges? maybe a
+   calliope-purge-data script that was not-for-distribution would make my life
+   easier.  Or calliope-extractor could have a version flag, which would recrawl
+   existing data when new versions of the extractor were released. Now that IS
+   a good idea! We also need to track the version of its source, ie. if musicbrainz
+   changes its xml format we should update the version (in case they give us more
+   info) but presumably they have a versioned interface so this will be easy to do
 
 * The old issue of how to separate the music library from the listener's profile.
   -> things like play count and rating don't belong with the static metadata, or do they?
@@ -44,6 +65,12 @@ Other issues:
     * 'extractor': again, I don't really want a hard tracker dep, but libtracker-extract
       seems relevant
     * everything else as it is already I guess;
+
+* Should put a limit on FileSource, make sure people can't load their entire music
+collection without at least a warning that it will eat all of their memory
+
+* Is it better to load the directory slowly, or to load it without the right tags and
+  then rearrange stuff in a buggy and possibly confusing-to-the-user way?
 
 It would be great to use musicbrainz uuids for music ontology entities. What to do when
 there's no internet connection though? just assign our own uuids? can we change them
@@ -500,6 +527,23 @@ Next, reconsider the PURPOSE of Calliope.
      -> spotify profile
      -> bookmarks of band websites/myspaces in browser/delicious
      -> thousands more
+
+ * Here's a good idea: a big slider, which filters based on a bunch of things, but is
+   basically this:
+        
+   100  |   just the good stuff. maybe it could tie in with a mood setting (partially
+        |   built-in, partially tag-based) giving eg party, work etc. music
+        |
+        |   stuff you probably want to here, with maybe some new stuff thrown in
+        |
+        |
+    0 ----- music you collected but haven't listened to, stuff you rarely listen to
+        |
+  -10   |   all music you collected, including stuff you always skip
+  -20   |   all music you ever heard
+
+   (music you actively removed/banned will never be displayed again, unless you
+    explicitly added it back)
 
 Use cases for Calliope & things you can get from there:
   -> background music
