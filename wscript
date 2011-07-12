@@ -6,9 +6,13 @@ bld = 'build'
 # FIXME: waf API inconsistency
 vala_min_version = (0,11,6)
 
-glib_min_version = '2.16.0'
+# 2.26 for GDateTime (Charango)
+glib_min_version = '2.26.0'
 
 redland_min_version = '1.0.10'
+
+# Optional deps
+gtk_min_version = '3.0.0'
 
 test_execution_order = []
 
@@ -25,6 +29,8 @@ def options (opt):
 
 def configure(conf):
 	conf.load ('compiler_c vala glib2')
+
+	# (Charango) ensure sizeof(int) >= 4, or Charango.Value will break
 
 	conf.check_tool ('gcc glib2')
 	conf.check_vala (min_version = vala_min_version)
@@ -49,6 +55,12 @@ def configure(conf):
 	                atleast_version = redland_min_version,
 	                args            = '--cflags --libs',
 	                mandatory       = True)
+
+	conf.check_cfg (package         = 'gtk+-3.0',
+	                uselib_store    = 'GTK',
+	                atleast_version = gtk_min_version,
+	                args            = '--cflags --libs',
+	                mandatory       = False)
 
 	conf.env['GTESTER'] = conf.find_program('gtester')
 
