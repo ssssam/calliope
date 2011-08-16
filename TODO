@@ -19,28 +19,20 @@ To dos:
     What stuff is in what ontologies? MusicOntology gives this example:
 
 * Calliope tracker integration:
-  - calliope could provide an extractor for mp3 files & store stuff. libtracker-extract
-    is relevant here.
-  - if no tracker, calliope would just use the miner to populate the sqlite db ..
-  -> Seems like we want to be integrated with Tracker, but I don't particularly want
-     a hard dep, to allow portability etc. I think the ideal workflow is this:
-      if no tracker:
-        on initial run, or from a sort of hidden menu item (maybe an 'Admin' dialog?)
-        or command line argument, search whole computer (or subset) for music
-      if tracker:
-        on install, or first run (WHICH?) set off a miner to crawl music directories.
-        It's important to set it up, because tracker defaults to only ~ and a few other
-        locations. This could be configured on first run of Calliope, perhaps, or maybe
-        a dialog on first run of the miner (not sure how Tracker people feel about that
-        happening though)
-      if tracker removed while calliope remains installed:
-        all your data is gone (that was silly). Warn and offer to crawl again
-        using a different backend.
-      if tracker added after calliope:
-        autodetect this if it's not too slow (probably just a dbus lookup). Offer
-        to migrate to tracker storage (simply copy all the triples).
-     of course, none of this is possible until tracker supports music ontology, whic
-     could be a long long time!
+  -> need to consider how much functionality Tracker would accept themselves.
+     - directory-based heuristics? - ie. 10 songs with same album - is a VA album;
+       3 jpg's in the directory with 10 MP3's - those are probably album art; etc.
+     - checking metadata against automated services? since calliope will probably
+       want always to store more info than Tracker, the best Tracker can do is
+       give the song a correct eg. Musicbrainz ID to the best of its knowledge
+  -> support running calliope without tracker? seems like if a lot of the filename
+     parsing heuristics etc. ended up in Tracker we wouldn't want to duplicate all
+     that. For windows support though ... you probably want a way of including just
+     the extractor directly in calliope.
+  -> calliope needs to be able to set the tracker miner off manually, and add new
+     directories .. that's easy.
+ 
+  -> perhaps the best idea is to put the media heuristics into a separate library?
 
    Also need to consider the developer usecase: allow recrawls? purges? maybe a
    calliope-purge-data script that was not-for-distribution would make my life
@@ -49,6 +41,26 @@ To dos:
    a good idea! We also need to track the version of its source, ie. if musicbrainz
    changes its xml format we should update the version (in case they give us more
    info) but presumably they have a versioned interface so this will be easy to do
+
+   The NEPOMUK NIE spec makes a number of relevant points !! See:
+     http://www.semanticdesktop.org/ontologies/2007/01/19/nie/#sec-basicdecisions
+   
+     "NIE contains concepts that are directly related to native resources available
+     on a local desktop or in the network. These are mostly files or can be mapped
+     to parts of files. (like calendar entries are parts of a calendar file, contacts
+     are part of an addressbook file etc.) It doesn't contain abstract concepts that
+     don't have their direct representations as sequences of bytes (like 'Person',
+     'Project', 'Publication', 'Job' etc.) These are delegated to other ontologies.
+     It is the task of appropriate tools to map between the 'raw' data and those
+     'high-level' concepts. "
+
+   So the correct way to proceed with calliope would be to have files under NIE, and
+   maybe other useful concepts like albums (group of files) but nothing else (artist
+   shouldn't be, recording/track/composition/etc shouldn't be because these are
+   abstract). I guess we link the Music Ontology to the existing NEPOMUK concepts for
+   the files, just nfo:audio really.
+
+   
 
 * The old issue of how to separate the music library from the listener's profile.
   -> things like play count and rating don't belong with the static metadata, or do they?

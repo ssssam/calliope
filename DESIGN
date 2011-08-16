@@ -66,4 +66,3 @@ Calliope architecture
     Charango.Store, plus implementations such as Charango.MemoryStorage,
     Charango.TrackerStorage etc. I also like a Charango.Source class which can
     provide data from other RDF endpoints eg. musicbrainz!
-
