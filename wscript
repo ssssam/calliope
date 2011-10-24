@@ -4,7 +4,7 @@ top = '.'
 bld = 'build'
 
 # FIXME: waf API inconsistency
-vala_min_version = (0,11,6)
+vala_min_version = (0,14,0)
 
 # 2.26 for GDateTime (Charango)
 glib_min_version = '2.26.0'
