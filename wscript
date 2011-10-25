@@ -56,6 +56,11 @@ def configure(conf):
 	                args            = '--cflags --libs',
 	                mandatory       = True)
 
+	conf.check_cfg (package         = 'raptor2',
+                        uselib_store    = 'RAPTOR',
+                        args            = '--cflags --libs',
+                        mandatory       = True)
+
 	conf.check_cfg (package         = 'gtk+-3.0',
 	                uselib_store    = 'GTK',
 	                atleast_version = gtk_min_version,
