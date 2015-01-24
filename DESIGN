@@ -1,3 +1,62 @@
+Calliope 10000
+--------------
+
+There are two parts. BUCKET and FUNNEL
+
+The BUCKET contains all the stuff I ever listened to. This should be pulled in
+from:
+    - Youtube history
+    - last.fm history
+    - Spotify playlists
+
+The FUNNEL contains stuff I want to hear in the future because someone said it
+was good. This should be pulled in from:
+    - pinboard.in bookmarks tagged to:listen
+    - starred things on Spotiy
+    - local music that Tracker finds on your computer
+
+Storage:
+
+CREATE TABLE listens (
+    id INTEGER UNIQUE AUTOINCREMENT,
+    date DATETIME,
+    item_id INTEGER)
+
+CREATE TABLE items (
+    id INTEGER UNIQUE AUTOINCREMENT,
+    uri STRING,
+    musicbrainz_id STRING,
+)
+
+Logic:
+
+anything in listens goes in BUCKET
+
+CREATE TABLE import_pinboard (
+    account_id,
+    bookmark_id,
+    item_id,
+)
+
+CREATE TABLE import_spotify (
+    account_id,
+    playlist_id,
+    item_id
+)
+
+CREATE TABLE import_tracker (
+    computer_uuid,
+    uri,
+)
+
+CREATE TABLE import_lastfm (
+    /* lastimport.py gives you a bunch of stuff */
+)
+
+CREATE TABLE import_youtube (
+    /* ... */
+)
+
 Calliope 0.3.0 - design
 -----------------------
 
