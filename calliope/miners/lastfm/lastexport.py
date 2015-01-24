@@ -20,11 +20,16 @@ Script for exporting tracks through audioscrobbler API.
 Usage: lastexport.py -u USER [-o OUTFILE] [-p STARTPAGE] [-s SERVER]
 """
 
-import urllib2, urllib, sys, time, re
+import logging
+import sys, time, re
+import urllib.parse
+import urllib.request
 import xml.etree.ElementTree as ET
 from optparse import OptionParser
 
 __version__ = '0.0.4'
+
+log = logging.getLogger(__name__)
 
 def get_options(parser):
     """ Define command line options."""
@@ -79,24 +84,24 @@ def connect_server(server, username, startpage, sleep_func=time.sleep, tracktype
                     page=startpage,
                     limit=200)
 
-    url = baseurl + urllib.urlencode(urlvars)
+    url = baseurl + urllib.parse.urlencode(urlvars)
     for interval in (1, 5, 10, 62):
         try:
-            f = urllib2.urlopen(url)
+            f = urllib.request.urlopen(url)
             break
-        except Exception, e:
+        except Exception as e:
             last_exc = e
-            print "Exception occured, retrying in %ds: %s" % (interval, e)
+            log.warning("Exception occured, retrying in %ds: %s", interval, e)
             sleep_func(interval)
     else:
-        print "Failed to open page %s" % urlvars['page']
+        log.error("Failed to open page %s", urlvars['page'])
         raise last_exc
 
     response = f.read()
     f.close()
 
     #bad hack to fix bad xml
-    response = re.sub('\xef\xbf\xbe', '', response)
+    response = re.sub('\xef\xbf\xbe', '', response.decode())
     return response
 
 def get_pageinfo(response, tracktype='recenttracks'):
@@ -165,7 +170,7 @@ def get_tracks(server, username, startpage=1, sleep_func=time.sleep, tracktype='
         tracks = []
         for trackelement in tracklist:
             # do not export the currently playing track.
-            if not trackelement.attrib.has_key("nowplaying") or not trackelement.attrib["nowplaying"]:
+            if not trackelement.attrib.get('nowplaying', None):
                 tracks.append(parse_track(trackelement))
 
         yield page, totalpages, tracks
@@ -180,7 +185,7 @@ def main(server, username, startpage, outfile, infotype='recenttracks'):
     n = 0
     try:
         for page, totalpages, tracks in get_tracks(server, username, startpage, tracktype=infotype):
-            print "Got page %s of %s.." % (page, totalpages)
+            log.debug("Got page %s of %s..", page, totalpages)
             for track in tracks:
                 if infotype == 'recenttracks':
                     trackdict.setdefault(track[0], track)
@@ -188,7 +193,7 @@ def main(server, username, startpage, outfile, infotype='recenttracks'):
                     #Can not use timestamp as key for loved/banned tracks as it's not unique
                     n += 1
                     trackdict.setdefault(n, track)
-    except ValueError, e:
+    except ValueError as e:
         exit(e)
     except Exception:
         raise
@@ -196,7 +201,7 @@ def main(server, username, startpage, outfile, infotype='recenttracks'):
         with open(outfile, 'a') as outfileobj:
             tracks = sorted(trackdict.values(), reverse=True)
             write_tracks(tracks, outfileobj)
-            print "Wrote page %s-%s of %s to file %s" % (startpage, page, totalpages, outfile)
+            log.debug("Wrote page %s-%s of %s to file %s", startpage, page, totalpages, outfile)
 
 if __name__ == "__main__":
     parser = OptionParser()
