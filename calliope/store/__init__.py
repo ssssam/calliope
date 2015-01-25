@@ -49,3 +49,35 @@ class Store:
                  namespace, len(to_apply))
         to_apply.apply()
         self.db.commit()
+
+    def commit(self):
+        self.db.commit()
+
+    def cursor(self):
+        return self.db.cursor()
+
+    def intern_item(self, uri, musicbrainz_id=None):
+        cursor = self.cursor()
+        find_item_sql = 'SELECT id FROM items WHERE uri=?'
+        row = cursor.execute(find_item_sql, [uri]).fetchone()
+        if row is None:
+            cursor.execute(
+                'INSERT INTO items(uri, musicbrainz_id) VALUES(?, ?)',
+                [uri, musicbrainz_id])
+            item_id = cursor.lastrowid
+        else:
+            item_id = row[0]
+        return item_id
+
+    def intern_play(self, datetime, item_id):
+        cursor = self.cursor()
+        find_play_sql = 'SELECT id FROM plays WHERE datetime=? AND item_id=?'
+        row = cursor.execute(find_play_sql, [datetime, item_id]).fetchone()
+        if row is None:
+            cursor.execute(
+                'INSERT INTO plays(datetime, item_id) VALUES(?, ?)',
+                [datetime, item_id])
+            play_id = cursor.lastrowid
+        else:
+            play_id = row[0]
+        return play_id

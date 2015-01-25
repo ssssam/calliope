@@ -30,7 +30,7 @@ step(
 step(
     'CREATE TABLE plays ('
     '   id INTEGER UNIQUE PRIMARY KEY,'
-    '   date DATETIME NOT NULL,'
+    '   datetime DATETIME NOT NULL,'
     '   item_id INTEGER NOT NULL,'
     '   FOREIGN KEY (item_id) REFERENCES items(id)'
     ')',

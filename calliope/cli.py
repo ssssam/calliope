@@ -37,9 +37,10 @@ class CalliopeCommandLineInterface:
         logging.basicConfig(level=logging.DEBUG)
         print('Loading Calliope store and miners...')
         self.load()
-        print('State of each miner:')
+
         for m in self.miners:
-            print(m.status())
+            print('Syncing %s' % m)
+            m.sync()
 
 
 CalliopeCommandLineInterface().run(sys.argv[1:])
