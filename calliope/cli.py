@@ -17,22 +17,24 @@
 
 
 import argparse
+import datetime
 import logging
 import sys
 
 import miners
 import store
+import views.bucket
 
 
 # FIXME: make this configurable
 STORE_PATH = 'calliope.db'
 
 
-class CalliopeCommandLineInterface:
-    def load(self):
-        self.store = store.Store(STORE_PATH)
-        self.miners = miners.load_all(self.store)
+class AppException:
+    pass
 
+
+class CalliopeCommandLineInterface:
     def create_argparse(self):
         parser = argparse.ArgumentParser(
             description='Calliope commandline interface')
@@ -40,6 +42,14 @@ class CalliopeCommandLineInterface:
         subparsers = parser.add_subparsers()
         parser_sync = subparsers.add_parser('sync')
         parser_sync.set_defaults(func=self.cmd_sync)
+
+        parser_view_bucket = subparsers.add_parser('view-bucket')
+        bucket_subparsers = parser_view_bucket.add_subparsers()
+
+        bucket_neglected = bucket_subparsers.add_parser('neglected')
+        bucket_neglected.set_defaults(func=self.cmd_view_bucket_neglected)
+
+        #parser_view_bucket.set_defaults(func=self.cmd_view_bucket)
 
         return parser
 
@@ -56,11 +66,29 @@ class CalliopeCommandLineInterface:
 
     def cmd_sync(self, args):
         print('Loading Calliope store and miners...')
-        self.load()
+        db = store.Store(STORE_PATH)
+        loaded_miners = miners.load_all(db)
 
-        for m in self.miners:
+        for m in loaded_miners:
             print('Syncing %s' % m)
             m.sync()
+
+    def cmd_view_bucket(self, args):
+        db = store.Store(STORE_PATH)
+        view = views.bucket.BucketView(db)
+
+        if len(args) == 0:
+            # All items in the bucket
+            for item in view:
+                print(item)
+
+    def cmd_view_bucket_neglected(self, args):
+        db = store.Store(STORE_PATH)
+        view = views.bucket.BucketView(db)
+
+        for uri, time_int in view.neglected():
+            time_datetime = datetime.datetime.fromtimestamp(time_int)
+            print('%s\t%s' % (time_datetime.strftime('%c'), uri))
 
 
 CalliopeCommandLineInterface().run(sys.argv[1:])

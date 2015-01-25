@@ -17,21 +17,6 @@ was good. This should be pulled in from:
 
 Storage:
 
-CREATE TABLE listens (
-    id INTEGER UNIQUE AUTOINCREMENT,
-    date DATETIME,
-    item_id INTEGER)
-
-CREATE TABLE items (
-    id INTEGER UNIQUE AUTOINCREMENT,
-    uri STRING,
-    musicbrainz_id STRING,
-)
-
-Logic:
-
-anything in listens goes in BUCKET
-
 CREATE TABLE import_pinboard (
     account_id,
     bookmark_id,
@@ -49,79 +34,15 @@ CREATE TABLE import_tracker (
     uri,
 )
 
-CREATE TABLE import_lastfm (
-    /* lastimport.py gives you a bunch of stuff */
-)
-
 CREATE TABLE import_youtube (
     /* ... */
 )
 
-Calliope 0.3.0 - design
------------------------
+Some ideas for views
+--------------------
 
-Calliope's goal is to be a great interface on to all digital music. The first
-goal is to manage an on-disk collection in the best possible way.
+BUCKET:
 
-The ideal way to do this is to store the metadata in as standard a way as
-possible: this means an RDF store, which on Gnome means Tracker.
+- ... how is this different to the info last.fm gives you?
 
-Ontologies exist already for most of what we want to do. The key ones are:
-
-mo - Music Ontology.
-nmm - Nepomuk MultiMedia.
-
-Plus some standard ones:
-  dc - Dublin core (lots of useful stuff)
-  foaf - Generic stuff for describing people, groups etc.
-
-RDF vs. the Real World
-----------------------
-
-Standard properties in a normal form and how they map to RDF, and musicbrainz.
-Note that it's not really practical to mix the ontologies. Nepomuk Multimedia is
-way too limited to be useful for Calliope so support will be limited to pushing
-stuff in that format, optionally.
-
-Artist  =  mo:MusicGroup (nmm:Artist)
-  foaf:name, nmm:artistName
-
-Composition = (nmm:MusicPiece)
-  dc:title
-  dc:creator -> Artist
-
-Recording  =  (nmm:MusicPiece)
-  dc:title
-  dc:creator -> Artist
-
-File   = mo:AudioFile  (nfo:Audio)
-
-Track  = mo:Track   (nmm:MusicPiece)
-
-Album  = (nmm:MusicAlbum)
-
-Release  (nmm:MusicAlbum)
-
-
-Sticking points:
-
-* Sort names
-  foaf considered them: http://wiki.foaf-project.org/w/NamesInFoaf
-  OpenVocab has noticed the problem and has a sortLabel property: http://open.vocab.org/docs/sortLabel
-  Musicbrainz has a sort-name property (but no rdf :)
-  for storing normal names we also have nmm:ArtistName, and dc:Title (used by Tracker)
-
-Sources:
-http://wiki.musicontology.com/index.php/Converting_ID3_tags_to_RDF
-http://live.gnome.org/Tracker/Documentation/Examples/SPARQL/Music
-http://ismir2009.dbtune.org/
-
-Calliope architecture
----------------------
-
-* Generating views on arbitrary RDF data is a complex process and useful for
-  probably much more software. All the basic RDF stuff goes into a seperate
-  library named Charango, which provides:
-    Charango.Store, plus implementations such as Charango.MemoryStorage,
-    Charango.TrackerStorage etc. I also like a Charango.Source class which can
-    provide data from other RDF endpoints eg. musicbrainz!
+- how about: tracks in order of LAST listen?
