@@ -36,7 +36,7 @@ class AppException:
 
 def display_timestamp(timestamp):
     time_datetime = datetime.datetime.fromtimestamp(timestamp)
-    return time_datetime.strftime('%s')
+    return time_datetime.strftime('%c')
 
 def display_uri(uri):
     # FIXME: this should be pluggable, right now it's a bit of a hack

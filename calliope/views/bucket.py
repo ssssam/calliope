@@ -43,7 +43,7 @@ class BucketView:
         result = cursor.execute(
             'SELECT items.uri, datetime '
             'FROM items, ( '
-            '   SELECT plays.item_id, plays.datetime, MAX(plays.datetime) '
+            '   SELECT plays.item_id, MAX(plays.datetime) AS datetime'
             '   FROM plays '
             '   GROUP BY plays.item_id'
             ') '
