@@ -33,8 +33,28 @@ class CalliopeCommandLineInterface:
         self.store = store.Store(STORE_PATH)
         self.miners = miners.load_all(self.store)
 
+    def create_argparse(self):
+        parser = argparse.ArgumentParser(
+            description='Calliope commandline interface')
+
+        subparsers = parser.add_subparsers()
+        parser_sync = subparsers.add_parser('sync')
+        parser_sync.set_defaults(func=self.cmd_sync)
+
+        return parser
+
     def run(self, args):
         logging.basicConfig(level=logging.DEBUG)
+
+        parser = self.create_argparse()
+        args = parser.parse_args(args)
+
+        if 'func' in args:
+            args.func(args)
+        else:
+            parser.print_help()
+
+    def cmd_sync(self, args):
         print('Loading Calliope store and miners...')
         self.load()
 
