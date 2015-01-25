@@ -34,6 +34,17 @@ class AppException:
     pass
 
 
+def display_timestamp(timestamp):
+    time_datetime = datetime.datetime.fromtimestamp(timestamp)
+    return time_datetime.strftime('%s')
+
+def display_uri(uri):
+    # FIXME: this should be pluggable, right now it's a bit of a hack
+    if uri.startswith('lastfm://'):
+        parts = uri.strip('lastfm://').split('/')
+        return 'http://last.fm/music/%s/_/%s' % (parts[0], '/'.join(parts[1:]))
+
+
 class CalliopeCommandLineInterface:
     def create_argparse(self):
         parser = argparse.ArgumentParser(
@@ -86,9 +97,8 @@ class CalliopeCommandLineInterface:
         db = store.Store(STORE_PATH)
         view = views.bucket.BucketView(db)
 
-        for uri, time_int in view.neglected():
-            time_datetime = datetime.datetime.fromtimestamp(time_int)
-            print('%s\t%s' % (time_datetime.strftime('%c'), uri))
+        for uri, timestamp in view.neglected():
+            print('%s\t%s' % (display_timestamp(timestamp), display_uri(uri)))
 
 
 CalliopeCommandLineInterface().run(sys.argv[1:])
