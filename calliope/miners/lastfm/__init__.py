@@ -57,9 +57,10 @@ class LastfmMiner:
             'SELECT plays.datetime ' \
             'FROM imports_lastfm INNER JOIN plays ' \
             'WHERE plays.id = imports_lastfm.play_id ' \
-            'ORDER BY plays.datetime ' \
+            'ORDER BY plays.datetime DESC ' \
             'LIMIT 1'
-        newest_play = cursor.execute(newest_play_sql).fetchone()[0] or 0
+        newest_play_results = cursor.execute(newest_play_sql).fetchone()
+        newest_play = newest_play_results[0] if newest_play_results else 0
         log.debug("Newest play: %i", newest_play)
 
         gen = lastexport.get_tracks('last.fm', USERNAME,
@@ -67,25 +68,32 @@ class LastfmMiner:
 
         page_size = None
         for page, total_pages, tracks in gen:
-            log.debug("Received page %i/%i", page, total_pages)
             top_datetime = int(tracks[0][0])
+            log.debug("Received page %i/%i", page, total_pages)
 
             page_size = page_size or len(tracks)
 
             if top_datetime < newest_play:
-                if stored_plays >= page_size * total_pages:
-                    log.debug(
-                        "Scrobble %i is older than newest play. We have %i "
-                        "stored plays and lastfm seems to have %i total "
-                        "plays. This non-full import is complete.",
-                        top_datetime, stored_plays, page_size * total_pages)
-                    break
+                log.debug("Caught up with stored plays.")
+                break
 
             for scrobble in tracks:
                 self.intern_scrobble(scrobble)
             self.store.commit()
 
-        self.store.commit()
+        last_stored_page = stored_plays / page_size
+        if last_stored_page < total_pages - 1:
+            log.debug('Processing missing history from page %i/%i',
+                      last_stored_page, total_pages)
+            gen = lastexport.get_tracks('last.fm', USERNAME,
+                                        tracktype='recenttracks',
+                                        startpage=last_stored_page)
+
+            for page, total_pages, tracks in gen:
+                log.debug("Received page %i/%i", page, total_pages)
+                for scrobble in tracks:
+                    self.intern_scrobble(scrobble)
+                self.store.commit()
 
     def intern_scrobble(self, play_info):
         datetime, trackname, artistname, albumname, trackmbid, artistmbid, \
