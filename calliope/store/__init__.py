@@ -21,6 +21,7 @@ import logging
 import os
 import re
 import sqlite3
+import time
 
 
 log = logging.getLogger(__name__)
@@ -51,7 +52,19 @@ class Store:
         self.db.commit()
 
     def commit(self):
-        self.db.commit()
+        retries = 3
+        for i in range(0, retries):
+            try:
+                self.db.commit()
+                break
+            except sqlite3.OperationalError as e:
+                # Probably 'database is locked', we should retry a few times.
+                logging.debug("%s, try %i of %i", e, i, retries)
+                if i == retries:
+                    raise
+                else:
+                    time.sleep(0.1)
+                    pass
 
     def cursor(self):
         return self.db.cursor()
