@@ -46,3 +46,26 @@ BUCKET:
 - ... how is this different to the info last.fm gives you?
 
 - how about: tracks in order of LAST listen?
+
+Use cases
+---------
+
+Collecting a bunch of tunes with similar characteristics. TAGGING!
+
+At the commandline:
+  - ball ache
+
+GUI:
+  - list of tunes: ALL
+  - button to create tag
+  - list of tags
+
+
+Thoughts
+--------
+
+I dislike how "model view controller" clouds thinking here. The actual parts are:
+
+database   (store, or "model" in old parlance)
+SELECT query  ("view" in old parlance)
+user interface (widget) ("view" + "controller")

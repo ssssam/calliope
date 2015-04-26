@@ -42,6 +42,23 @@ class LastfmMiner:
     def migrations_dir(self):
         return os.path.join(os.path.dirname(__file__), 'migrations')
 
+    def _count_stored_plays(self, cursor):
+        stored_plays_sql = 'SELECT COUNT(id) FROM imports_lastfm'
+        return cursor.execute(stored_plays_sql).fetchone()[0]
+
+    def _get_newest_play_datetime(self, cursor):
+        newest_play_sql = \
+            'SELECT plays.datetime ' \
+            'FROM imports_lastfm INNER JOIN plays ' \
+            'WHERE plays.id = imports_lastfm.play_id ' \
+            'ORDER BY plays.datetime ' \
+            'LIMIT 1'
+        result = cursor.execute(newest_play_sql).fetchone()
+        if result:
+            return result[0]
+        else:
+            return 0
+
     def sync(self, full=False):
         # FIXME: This currently won't take any notice if a track is *removed*
         # from the user's last.fm history. The 'full' sync mode needs to check
@@ -50,26 +67,25 @@ class LastfmMiner:
 
         cursor = self.store.cursor()
 
-        stored_plays_sql = 'SELECT COUNT(id) FROM imports_lastfm'
-        stored_plays = cursor.execute(stored_plays_sql).fetchone()[0]
+        stored_plays = self._count_stored_plays(cursor)
+        newest_play = self._get_newest_play_datetime(cursor)
 
-        newest_play_sql = \
-            'SELECT plays.datetime ' \
-            'FROM imports_lastfm INNER JOIN plays ' \
-            'WHERE plays.id = imports_lastfm.play_id ' \
-            'ORDER BY plays.datetime DESC ' \
-            'LIMIT 1'
-        newest_play_results = cursor.execute(newest_play_sql).fetchone()
-        newest_play = newest_play_results[0] if newest_play_results else 0
         log.debug("Newest play: %i", newest_play)
 
         gen = lastexport.get_tracks('last.fm', USERNAME,
                                     tracktype='recenttracks')
 
         page_size = None
+        timeouts = 0
         for page, total_pages, tracks in gen:
-            top_datetime = int(tracks[0][0])
+            if tracks is None:
+                # This can happen when a fetch request times out.
+                # The 'lastexport' will eventually raise an exception
+                # after retrying a few times.
+                continue
+
             log.debug("Received page %i/%i", page, total_pages)
+            top_datetime = int(tracks[0][0])
 
             page_size = page_size or len(tracks)
 

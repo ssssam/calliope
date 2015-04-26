@@ -28,6 +28,11 @@ class BucketView:
         self.store = store
 
     def __iter__(self):
+        '''Iterate through the URI of every item in the bucket.
+
+        This function is for testing only.
+
+        '''
         cursor = self.store.cursor()
         result = cursor.execute(
             'SELECT DISTINCT items.uri '
