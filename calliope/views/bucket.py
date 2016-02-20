@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import urllib.parse
+
 import store
 
 
@@ -38,8 +40,16 @@ class BucketView:
             'SELECT DISTINCT items.uri '
             'FROM plays INNER JOIN items '
             'WHERE plays.item_id = items.id')
+
+        context = {
+            'music:': 'http://musicontology.com/specification/#',
+        }
+
         for row in result:
-            yield row[0]
+            yield context, {
+                '@id': row[0],
+                '@type': 'music:Recording',
+            }
 
     def neglected(self):
         '''What hasn't been listened to for the longest time?'''
@@ -55,5 +65,24 @@ class BucketView:
             'WHERE items.id = item_id '
             'ORDER BY datetime'
         )
+
+        context = {
+            'music:': 'http://musicontology.com/specification/#',
+            'counter:': 'http://purl.org/ontology/co/core#',
+            'playback:': 'http://purl.org/ontology/pbo/core#',
+            'event:': 'http://purl.org/NET/c4dm/event.owl#',
+            'time:': 'http://www.w3.org/2006/time#',
+        }
+
         for row in result:
-            yield row[0], row[1]
+            yield context, {
+                '@id': row[0],
+                '@type': 'music:Recording',
+                'playback:media_scrobble_object': {
+                    'rdf:type': 'counter:ScrobbleEvent',
+                    'event:time': {
+                        'rdf:type': 'time:Instant',
+                        'time:inXSDDateTime': row[1]
+                    }
+                }
+            }

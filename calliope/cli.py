@@ -18,6 +18,7 @@
 
 import argparse
 import datetime
+import json
 import logging
 import sys
 
@@ -46,7 +47,7 @@ def display_uri(uri):
 
 
 class CalliopeCommandLineInterface:
-    def create_argparse(self):
+    def argument_parser(self):
         parser = argparse.ArgumentParser(
             description='Calliope commandline interface')
 
@@ -55,6 +56,7 @@ class CalliopeCommandLineInterface:
         parser_sync.set_defaults(func=self.cmd_sync)
 
         parser_view_bucket = subparsers.add_parser('view-bucket')
+
         bucket_subparsers = parser_view_bucket.add_subparsers()
 
         bucket_neglected = bucket_subparsers.add_parser('neglected')
@@ -67,7 +69,7 @@ class CalliopeCommandLineInterface:
     def run(self, args):
         logging.basicConfig(level=logging.DEBUG)
 
-        parser = self.create_argparse()
+        parser = self.argument_parser()
         args = parser.parse_args(args)
 
         if 'func' in args:
@@ -97,8 +99,19 @@ class CalliopeCommandLineInterface:
         db = store.Store(STORE_PATH)
         view = views.bucket.BucketView(db)
 
-        for uri, timestamp in view.neglected():
-            print('%s\t%s' % (display_timestamp(timestamp), display_uri(uri)))
+        count = 0
+        items = []
+        for context, item in view.neglected():
+            count += 1
+            items.append(item)
+            if count > 10:
+                break
+
+        data = {
+            '@context': context,
+            '@graph': items
+        }
+        print(json.dumps(data, indent=4))
 
 
 CalliopeCommandLineInterface().run(sys.argv[1:])
