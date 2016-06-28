@@ -1,71 +1,57 @@
-Calliope 10000
---------------
+Calliope 9999
+-------------
 
-There are two parts. BUCKET and FUNNEL
+Think of this as a set of tool which operates on playlists or collections of
+music.
 
-The BUCKET contains all the stuff I ever listened to. This should be pulled in
-from:
-    - Youtube history
-    - last.fm history
-    - Spotify playlists
+Obviously that's a bit shit for the average user, but hopefully it's the
+building blocks of cool stuff.
 
-The FUNNEL contains stuff I want to hear in the future because someone said it
-was good. This should be pulled in from:
-    - pinboard.in bookmarks tagged to:listen
-    - starred things on Spotiy
-    - local music that Tracker finds on your computer
+The canonical representation of a playlist or collection will be a YAML file
+containing a list of identifiers for artists, albums and/or songs.
 
-Storage:
+There will be several tools that operate on this data.
 
-CREATE TABLE import_pinboard (
-    account_id,
-    bookmark_id,
-    item_id,
-)
+  calliope-tracker:
+    - optionally takes playlist or collection as input
+    - can output:
+        - playlist with actual file:/// URIs for tracks that don't have them.
+        - total file size
+        - list of files that couldn't be located
+    - can also dump the whole local collection
+    - or filter by tag
 
-CREATE TABLE import_spotify (
-    account_id,
-    playlist_id,
-    item_id
-)
+  calliope-lastfm:
+    - syncs last.fm listening history to a local database
+    - outputs top artists, albums, or songs, in playlist/collection format
 
-CREATE TABLE import_tracker (
-    computer_uuid,
-    uri,
-)
+  calliope-spotify:
+    - outputs spotify playlists in playlist/collection format
+    - I guess you should be able to modify existing ones too really!
 
-CREATE TABLE import_youtube (
-    /* ... */
-)
+  calliope-daap:
+    - like calliope-tracker but using a remote DAAP server
+    -> is that really useful ?
 
-Some ideas for views
---------------------
+  Other ideas: calliope-youtube, calliope-mixcloud
 
-BUCKET:
+To do interesting stuff, you can combine and compare playlists using jq and
+y2j, perhaps.
 
-- ... how is this different to the info last.fm gives you?
+Examples of cool stuff you can do.
 
-- how about: tracks in order of LAST listen?
+* Browse your music collection by *familiarity*. Order songs on your
+  PC (as returned by calliope-tracker) by most-listened, or least-listened.
 
-Use cases
----------
+* Shuffle your music; you could add a duration limit to calliope-tracker's
+  playlist output, and a --shuffle option.
 
-Collecting a bunch of tunes with similar characteristics. TAGGING!
+----
 
-At the commandline:
-  - ball ache
+As a separate tool, Charango could provide a GUI view of this sort of thing.
+It could maybe even play the playlists... no that's too crazy
 
-GUI:
-  - list of tunes: ALL
-  - button to create tag
-  - list of tags
-
-
-Thoughts
---------
-
-I dislike how "model view controller" clouds thinking here. The actual parts are:
-
-database   (store, or "model" in old parlance)
-SELECT query  ("view" in old parlance)
-user interface (widget) ("view" + "controller")
+Main purpose would be to make tagging easier: that's a pain in the ass from the
+commandline. Or you could write a separate CLI tagging tool .... 'accordion' is
+a nice name that I want to use for something :-) Attaching notes to tunes would
+also be nice.
