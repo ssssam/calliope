@@ -169,7 +169,10 @@ class TrackerClient():
                 'location': songs_with_releases.get_string(0)[0]
             })
 
-        return yaml.dump(result)
+        if len(result) > 0:
+            return yaml.dump(result)
+        else:
+            return ''
 
 
 def expand(tracker, item):
