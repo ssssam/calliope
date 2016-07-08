@@ -140,14 +140,14 @@ def expand(tracker, item):
 
     artist = tracker.artist(item['artist'])
     if artist is None:
-        sys.stderr.write("Did not find any music for artist: %s\n" % item['artist'])
-        return
+        return "# Did not find any music for artist: %s\n" % item['artist']
 
     if 'song' in item:
         # Get just the song
         pass
     else:
-        print(list(tracker.songs_for_artist(artist)))
+        return '\n'.join(
+            ['- location: %s' % uri for uri in tracker.songs_for_artist(artist)])
 
 
 def main():
@@ -169,16 +169,11 @@ def main():
     else:
         input_playlists = (yaml.safe_load(open(playlist, 'r')) for playlist in args.playlist)
 
-    for playlist in input_playlists:
-        data = None
-        if 'collection' in playlist:
-            data = playlist['collection']
-        elif 'list' in playlist:
-            data = playlist['list']
-        else:
-            raise RuntimeError ("Expected 'list' or 'collection' entry")
-
-        for item in data:
+    # FIXME: should be a collection if any inputs are collections, otherwise a
+    # playlist
+    print('collection:')
+    for playlist_data in input_playlists:
+        for item in calliope.Playlist(playlist_data):
             if 'location' in item:
                 # This already has a URI!
                 pass

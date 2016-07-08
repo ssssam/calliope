@@ -28,5 +28,13 @@ class Playlist(object):
     isn't important.
 
     '''
-    # nothing here yet
-    pass
+    def __init__(self, yaml_parsed):
+        if 'collection' in yaml_parsed:
+            self.items = yaml_parsed['collection']
+        elif 'list' in yaml_parsed:
+            self.items = yaml_parsed['list']
+        else:
+            raise RuntimeError ("Expected 'list' or 'collection' entry")
+
+    def __iter__(self):
+        return iter(self.items)
