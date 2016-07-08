@@ -20,6 +20,14 @@ This module contains the core parts of Calliope.
 
 '''
 
+import urllib.parse
+
+
+def uri_to_path(uri):
+    '''Convert a file:/// URI to a path.'''
+    return urllib.parse.unquote(
+        urllib.parse.urlsplit(uri).path)
+
 
 class Playlist(object):
     '''A playlist is a set of songs.

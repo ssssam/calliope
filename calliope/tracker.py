@@ -55,10 +55,20 @@ class TrackerClient():
         logging.debug("Query: %s" % query)
         return self._conn.query(query)
 
-    def artist(self, artist_name):
+    def artist_id(self, artist_name):
         '''Return the Tracker URN for a given artist.'''
         query_artist_urn = "SELECT ?u { ?u a nmm:Artist ; dc:title \"%s\" }"
         result = self.query(query_artist_urn % artist_name)
+
+        if result.next():
+            return result.get_string(0)[0]
+        else:
+            return None
+
+    def artist_name(self, artist_id):
+        '''Return the name of a given artist.'''
+        query_artist_name = "SELECT ?name { <%s> a nmm:Artist ; dc:title ?name }"
+        result = self.query(query_artist_name % artist_id)
 
         if result.next():
             return result.get_string(0)[0]
@@ -84,7 +94,7 @@ class TrackerClient():
             print("%s: %s" % (artist_name, n_songs))
 
 
-    def songs_for_artist(self, artist_id):
+    def songs_for_artist(self, artist_id, artist_name=None):
         '''Return all songs for a given artist.
 
         These are grouped into their respective releases. Any tracks that
@@ -124,12 +134,42 @@ class TrackerClient():
         songs_with_releases = self.query(query_songs_with_releases % artist_id)
         songs_without_releases = self.query(query_songs_without_releases % artist_id)
 
-        songs = []
+        if not artist_name:
+            artist_name = self.artist_name(artist_id)
+
+        result = []
+        prev_album_name = None
+        album_tracks = None
         while songs_with_releases.next():
-            songs.append(songs_with_releases.get_string(0)[0])
+            album_name = songs_with_releases.get_string(1)[0]
+            if album_name != prev_album_name:
+                album_tracks = []
+                result.append(
+                    {'artist': artist_name,
+                     'album': album_name,
+                     'tracks': album_tracks,
+                })
+                prev_album_name = album_name
+
+            album_tracks.append({
+                'track': songs_with_releases.get_string(2)[0],
+                'location': songs_with_releases.get_string(0)[0]
+            })
+
+        catchall_tracks = None
         while songs_without_releases.next():
-            songs.append(songs_with_releases.get_string(0)[0])
-        return songs
+            if not catchall_tracks:
+                catchall_tracks = []
+                result.append(
+                    {'artist': artist_name,
+                     'tracks': catchall_tracks
+                })
+            catchall_tracks.append({
+                'track': songs_with_releases.get_string(2)[0],
+                'location': songs_with_releases.get_string(0)[0]
+            })
+
+        return yaml.dump(result)
 
 
 def expand(tracker, item):
@@ -138,7 +178,7 @@ def expand(tracker, item):
         raise RuntimeError ('All items must specify at least "artist": got %s'
                             % item)
 
-    artist = tracker.artist(item['artist'])
+    artist = tracker.artist_id(item['artist'])
     if artist is None:
         return "# Did not find any music for artist: %s\n" % item['artist']
 
@@ -146,8 +186,7 @@ def expand(tracker, item):
         # Get just the song
         pass
     else:
-        return '\n'.join(
-            ['- location: %s' % uri for uri in tracker.songs_for_artist(artist)])
+        return tracker.songs_for_artist(artist)
 
 
 def main():
