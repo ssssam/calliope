@@ -28,6 +28,7 @@ import argparse
 import itertools
 import logging
 import sys
+import warnings
 
 import calliope
 
@@ -42,7 +43,8 @@ def argument_parser():
                         help="enable verbose debug output")
 
     parser.add_argument('--top', choices=['artists'],
-                        help="show the top artists (by number of songs)")
+                        help="show the top artists by number of songs in the "
+                             "Tracker collection")
 
     return parser
 
@@ -94,7 +96,7 @@ class TrackerClient():
             print("%s: %s" % (artist_name, n_songs))
 
 
-    def songs_for_artist(self, artist_id, artist_name=None):
+    def songs(self, artist_name=None, album_name=None):
         '''Return all songs for a given artist.
 
         These are grouped into their respective releases. Any tracks that
@@ -102,6 +104,23 @@ class TrackerClient():
         appear on multiple releases will appear multiple times.
 
         '''
+        if not artist_name and not album_name:
+            raise RuntimeError("Please limit by either artist or album")
+
+        if artist_name:
+            artist_id = self.artist_id(artist_name)
+            artist_pattern = """
+                ?track nmm:performer <%s> .
+            """ % artist_id
+        else:
+            artist_pattern = ""
+        if album_name:
+            album_pattern = """
+                ?album nie:title ?albumTitle .
+                FILTER (LCASE(?albumTitle) = "%s")
+            """  % Tracker.sparql_escape_string(album_name.lower())
+        else:
+            album_pattern = ""
 
         query_songs_with_releases = """
         SELECT
@@ -109,33 +128,35 @@ class TrackerClient():
             nmm:albumTitle(?album)
             nie:title(?track)
         WHERE {
-            ?album a nmm:MusicAlbum ;
-                nmm:albumArtist <%s> .
+            ?album a nmm:MusicAlbum .
             ?track a nmm:MusicPiece ;
-                nmm:musicAlbum ?album
+                nmm:musicAlbum ?album .
+            %s %s
         } ORDER BY
             nmm:albumTitle(?album)
             nmm:trackNumber(?track)
-        """
+        """ % (artist_pattern, album_pattern)
 
-        query_songs_without_releases = """
-        SELECT
-            nie:url(?track)
-            nie:title(?track)
-        WHERE {
-            ?track a nmm:MusicPiece ;
-                nmm:performer <%s> .
-            OPTIONAL { ?track nmm:musicAlbum ?album }
-            FILTER (! bound (?album))
-        } ORDER BY
-            nie:title(?track)
-        """
+        songs_with_releases = self.query(query_songs_with_releases)
 
-        songs_with_releases = self.query(query_songs_with_releases % artist_id)
-        songs_without_releases = self.query(query_songs_without_releases % artist_id)
+        if not album_name:
+            query_songs_without_releases = """
+            SELECT
+                nie:url(?track)
+                nie:title(?track)
+            WHERE {
+                ?track a nmm:MusicPiece ;
+                    nmm:performer <%s> .
+                OPTIONAL { ?track nmm:musicAlbum ?album }
+                FILTER (! bound (?album))
+            } ORDER BY
+                nie:title(?track)
+            """ % artist_id
 
-        if not artist_name:
-            artist_name = self.artist_name(artist_id)
+            songs_without_releases = self.query(
+                query_songs_without_releases)
+        else:
+            songs_without_releases = None
 
         result = []
         prev_album_name = None
@@ -157,39 +178,55 @@ class TrackerClient():
             })
 
         catchall_tracks = None
-        while songs_without_releases.next():
-            if not catchall_tracks:
-                catchall_tracks = []
-                result.append(
-                    {'artist': artist_name,
-                     'tracks': catchall_tracks
+        if songs_without_releases:
+            while songs_without_releases.next():
+                if not catchall_tracks:
+                    catchall_tracks = []
+                    result.append(
+                        {'artist': artist_name,
+                        'tracks': catchall_tracks
+                    })
+                catchall_tracks.append({
+                    'track': songs_with_releases.get_string(2)[0],
+                    'location': songs_with_releases.get_string(0)[0]
                 })
-            catchall_tracks.append({
-                'track': songs_with_releases.get_string(2)[0],
-                'location': songs_with_releases.get_string(0)[0]
-            })
 
         if len(result) > 0:
-            return yaml.dump(result)
+            return result
         else:
-            return ''
+            return []
 
 
 def expand(tracker, item):
-    if 'artist' not in item:
+    if 'artist' not in item and 'album' not in item:
         # This restriction may become annoying, hopefully we can relax it.
-        raise RuntimeError ('All items must specify at least "artist": got %s'
-                            % item)
+        raise RuntimeError (
+            "All items must specify at least 'artist' or 'album#: got %s" %
+            item)
 
-    artist = tracker.artist_id(item['artist'])
-    if artist is None:
-        return "# Did not find any music for artist: %s\n" % item['artist']
+    albums = []
+    if 'albums' in item:
+        if 'album' in item:
+            raise RuntimeError("Only one of 'album' and 'albums' may be "
+                                "specified.")
+        albums = item['albums']
+    elif 'album' in item:
+        albums = [item['album']]
 
-    if 'song' in item:
-        # Get just the song
-        pass
+    result = []
+
+    if albums:
+        for album in albums:
+            result.extend(
+                tracker.songs(artist_name=item.get('artist'), album_name=str(album)))
     else:
-        return tracker.songs_for_artist(artist)
+        result = tracker.songs(artist_name=item['artist'])
+
+    if len(result) > 0:
+        return yaml.dump(result)
+    else:
+        warnings.warn("No results found for %s" % item)
+        return "# No results found for %s" % item
 
 
 def main():
@@ -222,6 +259,12 @@ def main():
             else:
                 print(expand(tracker, item))
 
+
+def pretty_warnings(message, category, filename, lineno,
+                    file=None, line=None):
+    return 'WARNING: %s\n' % (message)
+
+warnings.formatwarning = pretty_warnings
 
 try:
     main()

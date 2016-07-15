@@ -46,15 +46,23 @@ def argument_parser():
 
 def measure_size(playlists):
     '''Measure the total size of the files listed.'''
+    def measure_one(item):
+        path = urllib.parse.unquote(urllib.parse.urlsplit(item['location']).path)
+        try:
+            return os.stat(path).st_size
+        except FileNotFoundError as e:
+            warnings.warn("Did not find file %s" % path)
+            return 0
+
     size = 0
     for playlist_data in playlists:
         for item in calliope.Playlist(playlist_data):
             if 'location' in item:
-                path = urllib.parse.unquote(urllib.parse.urlsplit(item['location']).path)
-                try:
-                    size += os.stat(path).st_size
-                except FileNotFoundError as e:
-                    warnings.warn("Did not find file %s" % path)
+                size += measure_one(item)
+            elif 'tracks' in item:
+                for track in item['tracks']:
+                    if 'location' in track:
+                        size += measure_one(track)
     print("Total size: %i MB" % (size / 1024 / 1024.0))
 
 

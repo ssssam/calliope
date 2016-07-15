@@ -24,6 +24,7 @@ import argparse
 import itertools
 import logging
 import os
+import subprocess
 import sys
 import warnings
 
@@ -77,6 +78,15 @@ class TranscodeToMP3Operation(Operation):
                 'audioconvert ! lamemp3enc quality=0 ! id3mux ! '
                 'filesink location="%s"' % (self.source_path, self.dest_path))
 
+    def run(self):
+        if not os.path.exists(os.path.dirname(self.dest_path)):
+            os.makedirs(os.path.dirname(self.dest_path))
+        subprocess.check_call(['gst-launch-1.0', '-t', 'filesrc',
+                               'location="%s"' % self.source_path, '!',
+                               'decodebin', '!', 'audioconvert', '!',
+                               'lamemp3enc', 'quality=0', '!', 'id3mux', '!'
+                               'filesink', 'location="%s"' % self.dest_path])
+
 
 class CopyOperation(Operation):
     '''Represents a simple file copy.'''
@@ -84,7 +94,12 @@ class CopyOperation(Operation):
         self.source_path, self.dest_path = source_path, dest_path
 
     def __str__(self):
-        return 'cp %s %s' % (self.source_path, self.dest_path)
+        return 'rsync --archive %s %s' % (self.source_path, self.dest_path)
+
+    def run(self):
+        if not os.path.exists(os.path.dirname(self.dest_path)):
+            os.makedirs(os.path.dirname(self.dest_path))
+        subprocess.check_call(['rsync', '--times', self.source_path, self.dest_path])
 
 
 def ensure_number(filename, number):
@@ -97,7 +112,7 @@ def ensure_number(filename, number):
 
 
 def make_dirname(*items):
-    return '_'.join(items)
+    return '_'.join(filter(None, items))
 
 
 def sync_track(location, target, allow_formats=['any'], target_dirname=None,
@@ -182,6 +197,8 @@ def main():
         for operation in operations:
             print(operation)
     else:
+        for operation in operations:
+            operation.run()
         raise NotImplementedError("Only --dry-run implemented so far")
 
 
