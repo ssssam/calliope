@@ -1,3 +1,21 @@
 Importing playlists from Spotify into Rhythmbox
 -----------------------------------------------
 
+
+Copying a collection onto a device
+----------------------------------
+
+1. Write your playlist as a YAML list.
+
+     collection:
+     - artist: The Smiths
+       track: This Charming Man
+
+
+2. Find all of the tracks:
+
+     calliope-tracker ./first.collection > ./first.collection.files
+
+3. Once that works with no errors, copy them to your device:
+
+     calliope-sync ./first.collection.files --target /path/to/device
