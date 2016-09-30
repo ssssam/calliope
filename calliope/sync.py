@@ -118,7 +118,7 @@ def make_dirname(*items):
     return '_'.join(filter(None, items))
 
 
-def sync_track(location, target, allow_formats=['any'], target_dirname=None,
+def sync_track(location, target, allow_formats=['all'], target_dirname=None,
                target_filename=None):
     path = calliope.uri_to_path(location)
 
@@ -126,26 +126,27 @@ def sync_track(location, target, allow_formats=['any'], target_dirname=None,
     # quickest method but not the most reliable.
     filetype = os.path.splitext(path)[1].lstrip('.')
 
-    if not target_dirname:
-        target_dirname = os.path.dirname(path)
+    if target_dirname:
+        target_dirname = os.path.join(target, target_dirname)
+    else:
+        target_dirname = target
     if not target_filename:
         target_filename = os.path.basename(path)
 
-    if 'any' in allow_formats or filetype in allow_formats:
-        sync_operation = CopyOperation(path, os.path.join(target, target_dirname, target_filename))
+    if 'all' in allow_formats or filetype in allow_formats:
+        sync_operation = CopyOperation(path, os.path.join(target_dirname, target_filename))
     else:
         if 'mp3' not in allow_formats:
             raise NotImplementedError(
                 "File %s needs to be transcoded to an allowed format, but "
                 "only transcoding to MP3 is supported right now, and MP3 "
                 "doesn't seem to be allowed. Please allow MP3 files, or "
-                "improve this tool.")
+                "improve this tool." % target_filename)
         else:
             if not target_filename.endswith('.mp3'):
                 target_filebasename = os.path.splitext(path)[0]
                 target_filename = target_filebasename + '.mp3'
-            sync_operation = TranscodeToMP3Operation(path, os.path.join(target,
-                                                                        target_dirname,
+            sync_operation = TranscodeToMP3Operation(path, os.path.join(target_dirname,
                                                                         target_filename))
     return sync_operation
 
@@ -196,10 +197,20 @@ def main():
                         else:
                             dirname = None  # use existing
 
+                        if filename:
+                            target_filename = normalize_path(filename)
+                        else:
+                            target_filename = None
+
+                        if dirname:
+                            target_dirname = normalize_path(dirname)
+                        else:
+                            target_dirname = None
+
                         operations.append(
                             sync_track(track_item['location'], args.target,
-                                       args.allow_formats, target_filename=normalize_path(filename),
-                                       target_dirname=normalize_path(dirname)))
+                                       args.allow_formats, target_filename=target_filename,
+                                       target_dirname=target_dirname))
 
     if args.dry_run:
         for operation in operations:
