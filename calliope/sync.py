@@ -24,6 +24,7 @@ import argparse
 import itertools
 import logging
 import os
+import string
 import subprocess
 import sys
 import warnings
@@ -81,11 +82,12 @@ class TranscodeToMP3Operation(Operation):
     def run(self):
         if not os.path.exists(os.path.dirname(self.dest_path)):
             os.makedirs(os.path.dirname(self.dest_path))
-        subprocess.check_call(['gst-launch-1.0', '-t', 'filesrc',
-                               'location="%s"' % self.source_path, '!',
-                               'decodebin', '!', 'audioconvert', '!',
-                               'lamemp3enc', 'quality=0', '!', 'id3mux', '!'
-                               'filesink', 'location="%s"' % self.dest_path])
+        if not os.path.exists(self.dest_path):
+            subprocess.check_call(['gst-launch-1.0', '-t', 'filesrc',
+                                   'location="%s"' % self.source_path, '!',
+                                   'decodebin', '!', 'audioconvert', '!',
+                                   'lamemp3enc', 'quality=0', '!', 'id3mux', '!'
+                                   'filesink', 'location="%s"' % self.dest_path])
 
 
 class CopyOperation(Operation):
@@ -99,7 +101,8 @@ class CopyOperation(Operation):
     def run(self):
         if not os.path.exists(os.path.dirname(self.dest_path)):
             os.makedirs(os.path.dirname(self.dest_path))
-        subprocess.check_call(['rsync', '--times', self.source_path, self.dest_path])
+        if not os.path.exists(self.dest_path):
+            subprocess.check_call(['rsync', '--times', self.source_path, self.dest_path])
 
 
 def ensure_number(filename, number):
@@ -147,6 +150,11 @@ def sync_track(location, target, allow_formats=['any'], target_dirname=None,
     return sync_operation
 
 
+def normalize_path(path):
+    allowed = string.ascii_letters + string.digits + '._'
+    return ''.join([char if char in allowed else '_' for char in path])
+
+
 def main():
     args = argument_parser().parse_args()
     if args.debug:
@@ -190,16 +198,16 @@ def main():
 
                         operations.append(
                             sync_track(track_item['location'], args.target,
-                                       args.allow_formats, target_filename=filename,
-                                       target_dirname=dirname))
+                                       args.allow_formats, target_filename=normalize_path(filename),
+                                       target_dirname=normalize_path(dirname)))
 
     if args.dry_run:
         for operation in operations:
             print(operation)
     else:
         for operation in operations:
+            logging.debug(str(operation))
             operation.run()
-        raise NotImplementedError("Only --dry-run implemented so far")
 
 
 try:

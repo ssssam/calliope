@@ -40,6 +40,8 @@ def argument_parser():
 
     parser.add_argument('--size', '-s', action='store_true',
                         help="show the size of the input playlist")
+    parser.add_argument('--duration', '-d', action='store_true',
+                        help="show the total duration of the input playlist")
 
     return parser
 
@@ -78,6 +80,8 @@ def main():
 
     if args.size:
         measure_size(input_playlists)
+    elif args.duration:
+        measure_duration(input_playlists)
     else:
         print("Please select a mode; --size is currently the only mode.")
 

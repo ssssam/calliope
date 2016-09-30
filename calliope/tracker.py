@@ -59,8 +59,13 @@ class TrackerClient():
 
     def artist_id(self, artist_name):
         '''Return the Tracker URN for a given artist.'''
-        query_artist_urn = "SELECT ?u { ?u a nmm:Artist ; dc:title \"%s\" }"
-        result = self.query(query_artist_urn % artist_name)
+        query_artist_urn = """
+        SELECT ?u {
+            ?u a nmm:Artist ;
+                dc:title ?name .
+            FILTER (LCASE(?name) = "%s")
+        }"""
+        result = self.query(query_artist_urn % artist_name.lower())
 
         if result.next():
             return result.get_string(0)[0]
