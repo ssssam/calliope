@@ -101,16 +101,17 @@ class TrackerClient():
             print("%s: %s" % (artist_name, n_songs))
 
 
-    def songs(self, artist_name=None, album_name=None):
-        '''Return all songs for a given artist.
+    def songs(self, artist_name=None, album_name=None, track_name=None):
+        '''Return all songs matching specific search criteria.
 
         These are grouped into their respective releases. Any tracks that
         aren't present on any releases will appear last. Any tracks that
         appear on multiple releases will appear multiple times.
 
         '''
-        if not artist_name and not album_name:
-            raise RuntimeError("Please limit by either artist or album")
+        if not artist_name and not album_name and not track_name:
+            raise RuntimeError("Please limit by either artist, album or track "
+                               "name.")
 
         if artist_name:
             artist_id = self.artist_id(artist_name)
@@ -126,6 +127,13 @@ class TrackerClient():
             """  % Tracker.sparql_escape_string(album_name.lower())
         else:
             album_pattern = ""
+        if track_name:
+            track_pattern = """
+                ?track nie:title ?trackTitle .
+                FILTER (LCASE(?trackTitle) = "%s")
+            """  % Tracker.sparql_escape_string(track_name.lower())
+        else:
+            track_pattern = ""
 
         query_songs_with_releases = """
         SELECT
@@ -136,11 +144,11 @@ class TrackerClient():
             ?album a nmm:MusicAlbum .
             ?track a nmm:MusicPiece ;
                 nmm:musicAlbum ?album .
-            %s %s
+            %s %s %s
         } ORDER BY
             nmm:albumTitle(?album)
             nmm:trackNumber(?track)
-        """ % (artist_pattern, album_pattern)
+        """ % (artist_pattern, album_pattern, track_pattern)
 
         songs_with_releases = self.query(query_songs_with_releases)
 
@@ -152,11 +160,12 @@ class TrackerClient():
             WHERE {
                 ?track a nmm:MusicPiece ;
                     nmm:performer <%s> .
+                %s
                 OPTIONAL { ?track nmm:musicAlbum ?album }
                 FILTER (! bound (?album))
             } ORDER BY
                 nie:title(?track)
-            """ % artist_id
+            """ % (artist_id, track_pattern)
 
             songs_without_releases = self.query(
                 query_songs_without_releases)
@@ -202,25 +211,44 @@ class TrackerClient():
             return []
 
 
-def expand(tracker, item):
-    if 'artist' not in item and 'album' not in item:
+def add_location(tracker, item):
+    if 'artist' not in item and 'album' not in item and 'track' not in item:
         # This restriction may become annoying, hopefully we can relax it.
         raise RuntimeError (
-            "All items must specify at least 'artist' or 'album#: got %s" %
+            "All items must specify at least 'artist', 'album' or 'track': got %s" %
             item)
 
     albums = []
+    tracks = []
     if 'albums' in item:
         if 'album' in item:
             raise RuntimeError("Only one of 'album' and 'albums' may be "
-                                "specified.")
+                               "specified.")
+        if 'tracks' in item or 'track' in item:
+            raise RuntimeError("You cannot use 'track' or 'tracks' with "
+                               "'albums'")
         albums = item['albums']
     elif 'album' in item:
+        if 'tracks' in item or 'track' in item:
+            raise RuntimeError("You cannot use 'track' or 'tracks' with "
+                               "'album'")
         albums = [item['album']]
+
+    if 'tracks' in item:
+        if 'track' in item:
+            raise RuntimeError("Only one of 'track' and 'tracks' may be "
+                               "specified.")
+        tracks = item['tracks']
+    elif 'track' in item:
+        tracks = [item['track']]
 
     result = []
 
-    if albums:
+    if tracks:
+        for track in tracks:
+            result.extend(
+                tracker.songs(artist_name=item.get('artist'), track_name=str(track)))
+    elif albums:
         for album in albums:
             result.extend(
                 tracker.songs(artist_name=item.get('artist'), album_name=str(album)))
@@ -262,7 +290,10 @@ def main():
                 # This already has a URI!
                 pass
             else:
-                print(expand(tracker, item))
+                try:
+                    print(add_location(tracker, item))
+                except RuntimeError as e:
+                    raise RuntimeError("%s\nItem: %s" % (e, item))
 
 
 def pretty_warnings(message, category, filename, lineno,
