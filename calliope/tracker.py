@@ -32,6 +32,24 @@ import warnings
 import calliope
 
 
+class OneShotResultsTable():
+    '''A class for wrapping a generator that contains data.'''
+
+    def __init__(self, headings, generator):
+        self.headings = headings
+        self.generator = generator
+
+    def headings(self):
+        return self.headings
+
+    def display(self):
+        for row in self.generator:
+            if len(row) != len(self.headings):
+                warnings.warn("Number of columns doesn't match number of "
+                              "headings!")
+            print("\t".join(row))
+
+
 def argument_parser():
     parser = argparse.ArgumentParser(
         description="Create playlists from your local music collection, using "
@@ -81,7 +99,7 @@ class TrackerClient():
         else:
             return None
 
-    def artists_by_number_of_songs(self, limit=1):
+    def artists_by_number_of_songs(self, limit=None):
         '''Return a list of artists by number of songs known.'''
         query_artists_by_number_of_songs = """
         SELECT ?artist_name (COUNT(?song) as ?songs)
@@ -95,16 +113,21 @@ class TrackerClient():
             query = query_artists_by_number_of_songs + " LIMIT %i" % limit
         else:
             query = query_artists_by_number_of_songs
-        result = self.query(query)
 
-        while result.next():
-            artist_name = result.get_string(0)[0]
-            n_songs = result.get_string(1)[0]
+        result_cursor = self.query(query)
 
-            print("%s: %s" % (artist_name, n_songs))
+        def result_generator_fn(cursor):
+            while cursor.next():
+                artist_name = cursor.get_string(0)[0]
+                n_songs = cursor.get_string(1)[0]
+                yield artist_name, n_songs
+
+        return OneShotResultsTable(headings=['Artist', 'Number of Songs'],
+                                   generator=result_generator_fn(result_cursor))
 
 
-    def songs(self, artist_name=None, album_name=None, track_name=None):
+    def songs(self, artist_name=None, album_name=None, track_name=None,
+              limit=None):
         '''Return all songs matching specific search criteria.
 
         These are grouped into their respective releases. Any tracks that
@@ -112,16 +135,14 @@ class TrackerClient():
         appear on multiple releases will appear multiple times.
 
         '''
-        if not artist_name and not album_name and not track_name:
-            raise RuntimeError("Please limit by either artist, album or track "
-                               "name.")
-
         if artist_name:
             artist_id = self.artist_id(artist_name)
+            artist_select = ""
             artist_pattern = """
                 ?track nmm:performer <%s> .
             """ % artist_id
         else:
+            artist_select = "nmm:artistName(nmm:performer(?track))"
             artist_pattern = ""
         if album_name:
             album_pattern = """
@@ -143,6 +164,7 @@ class TrackerClient():
             nie:url(?track)
             nmm:albumTitle(?album)
             nie:title(?track)
+            %s
         WHERE {
             ?album a nmm:MusicAlbum .
             ?track a nmm:MusicPiece ;
@@ -151,7 +173,7 @@ class TrackerClient():
         } ORDER BY
             nmm:albumTitle(?album)
             nmm:trackNumber(?track)
-        """ % (artist_pattern, album_pattern, track_pattern)
+        """ % (artist_select, artist_pattern, album_pattern, track_pattern)
 
         songs_with_releases = self.query(query_songs_with_releases)
 
@@ -160,15 +182,15 @@ class TrackerClient():
             SELECT
                 nie:url(?track)
                 nie:title(?track)
-            WHERE {
-                ?track a nmm:MusicPiece ;
-                    nmm:performer <%s> .
                 %s
+            WHERE {
+                ?track a nmm:MusicPiece .
+                %s %s
                 OPTIONAL { ?track nmm:musicAlbum ?album }
                 FILTER (! bound (?album))
             } ORDER BY
                 nie:title(?track)
-            """ % (artist_id, track_pattern)
+            """ % (artist_select, artist_pattern, track_pattern)
 
             songs_without_releases = self.query(
                 query_songs_without_releases)
@@ -180,6 +202,8 @@ class TrackerClient():
         album_tracks = None
         while songs_with_releases.next():
             album_name = songs_with_releases.get_string(1)[0]
+            if artist_select:
+                artist_name = songs_with_releases.get_string(3)[0]
             if album_name != prev_album_name:
                 album_tracks = []
                 result.append(
@@ -197,6 +221,8 @@ class TrackerClient():
         catchall_tracks = None
         if songs_without_releases:
             while songs_without_releases.next():
+                if artist_select:
+                    artist_name = songs_with_releases.get_string(3)[0]
                 if not catchall_tracks:
                     catchall_tracks = []
                     result.append(
@@ -265,6 +291,16 @@ def add_location(tracker, item):
         return "# No results found for %s" % item
 
 
+def print_table(result_table):
+    result_table.display()
+
+
+def print_collection(result):
+    print('collection:')
+    for item in result:
+        print(yaml.dump(item))
+
+
 def main():
     args = argument_parser().parse_args()
     if args.debug:
@@ -274,13 +310,14 @@ def main():
 
     if args.top != None:
         if args.top == 'artists':
-            tracker.artists_by_number_of_songs(limit=None)
+            print_table(tracker.artists_by_number_of_songs(limit=None))
             return None
         else:
             raise RuntimeError("Unknown type: %s" % args.top)
 
-    if args.playlist == None:
-        input_playlists = yaml.safe_load_all(sys.stdin)
+    if len(args.playlist) == 0:
+        print_collection(tracker.songs())
+        return None
     else:
         input_playlists = (yaml.safe_load(open(playlist, 'r')) for playlist in args.playlist)
 
