@@ -15,7 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-'''calliope-tracker'''
+'''calliope-tracker
+
+Provides a commandline interface for querying the music files stored on this
+computer, using the 'Tracker' indexing tool.
+'''
 
 import gi
 gi.require_version('Tracker', '1.0')
@@ -33,21 +37,39 @@ import calliope
 
 
 class OneShotResultsTable():
-    '''A class for wrapping a generator that contains data.'''
+    '''A class for wrapping a generator that contains data.
+
+    This is a way of returning a database cursor, without dumping it straight
+    to stdout, and without reading the whole thing in to memory. The catch is
+    that only one method which reads the cursor can ever be called, because we
+    can't rewind the cursor afterwards.
+
+    '''
 
     def __init__(self, headings, generator):
+        '''Create a results table holder.
+
+        The generator should return a single row for each call to next(). Each
+        row should be a list of N elements, and there must also be N headings.
+
+        '''
         self.headings = headings
         self.generator = generator
+        self.dead = False
 
     def headings(self):
         return self.headings
 
     def display(self):
+        '''Print the held data to stdout. Can only be called once.'''
+        if self.dead:
+            raise RuntimeError("Results table has already been used.")
         for row in self.generator:
             if len(row) != len(self.headings):
                 warnings.warn("Number of columns doesn't match number of "
                               "headings!")
             print("\t".join(row))
+        self.dead = True
 
 
 def argument_parser():
@@ -63,14 +85,20 @@ def argument_parser():
                         help="show the top artists by number of songs in the "
                              "Tracker collection")
 
+    # The default behaviour, if no input playlists are given and no actions are
+    # given, is to print the entire collection to stdout.
+
     return parser
 
 
 class TrackerClient():
+    '''Helper functions for querying from the user's Tracker database.'''
+
     def __init__(self):
         self._conn = Tracker.SparqlConnection.get(None)
 
     def query(self, query):
+        '''Run a single SPARQL query.'''
         logging.debug("Query: %s" % query)
         return self._conn.query(query)
 
@@ -126,8 +154,7 @@ class TrackerClient():
                                    generator=result_generator_fn(result_cursor))
 
 
-    def songs(self, artist_name=None, album_name=None, track_name=None,
-              limit=None):
+    def songs(self, artist_name=None, album_name=None, track_name=None):
         '''Return all songs matching specific search criteria.
 
         These are grouped into their respective releases. Any tracks that
@@ -242,7 +269,6 @@ class TrackerClient():
 
 def add_location(tracker, item):
     if 'artist' not in item and 'album' not in item and 'track' not in item:
-        # This restriction may become annoying, hopefully we can relax it.
         raise RuntimeError (
             "All items must specify at least 'artist', 'album' or 'track': got %s" %
             item)
