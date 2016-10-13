@@ -25,7 +25,6 @@ from gi.repository import Tracker
 import yaml
 
 import argparse
-import itertools
 import logging
 import sys
 import warnings
