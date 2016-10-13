@@ -89,10 +89,14 @@ class TrackerClient():
           { ?artist a nmm:Artist ;
                 dc:title ?artist_name .
             ?song nmm:performer ?artist }
-        GROUP BY ?artist ORDER BY DESC(?songs)
-        LIMIT %i
+        GROUP BY ?artist ORDER BY DESC(?songs) ?artist_name
         """
-        result = self.query(query_artists_by_number_of_songs % limit)
+
+        if limit is not None:
+            query = query_artists_by_number_of_songs + " LIMIT %i" % limit
+        else:
+            query = query_artists_by_number_of_songs
+        result = self.query(query)
 
         while result.next():
             artist_name = result.get_string(0)[0]
@@ -271,7 +275,7 @@ def main():
 
     if args.top != None:
         if args.top == 'artists':
-            tracker.artists_by_number_of_songs(limit=100)
+            tracker.artists_by_number_of_songs(limit=None)
             return None
         else:
             raise RuntimeError("Unknown type: %s" % args.top)
