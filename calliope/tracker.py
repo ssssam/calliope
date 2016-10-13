@@ -307,6 +307,9 @@ warnings.formatwarning = pretty_warnings
 
 try:
     main()
+except BrokenPipeError:
+    # This happens when we're piped to `less` or something, it's harmless
+    pass
 except RuntimeError as e:
     sys.stderr.write("ERROR: %s\n" % e)
     sys.exit(1)
