@@ -36,42 +36,6 @@ import warnings
 import calliope
 
 
-class OneShotResultsTable():
-    '''A class for wrapping a generator that contains data.
-
-    This is a way of returning a database cursor, without dumping it straight
-    to stdout, and without reading the whole thing in to memory. The catch is
-    that only one method which reads the cursor can ever be called, because we
-    can't rewind the cursor afterwards.
-
-    '''
-
-    def __init__(self, headings, generator):
-        '''Create a results table holder.
-
-        The generator should return a single row for each call to next(). Each
-        row should be a list of N elements, and there must also be N headings.
-
-        '''
-        self.headings = headings
-        self.generator = generator
-        self.dead = False
-
-    def headings(self):
-        return self.headings
-
-    def display(self):
-        '''Print the held data to stdout. Can only be called once.'''
-        if self.dead:
-            raise RuntimeError("Results table has already been used.")
-        for row in self.generator:
-            if len(row) != len(self.headings):
-                warnings.warn("Number of columns doesn't match number of "
-                              "headings!")
-            print("\t".join(row))
-        self.dead = True
-
-
 def argument_parser():
     parser = argparse.ArgumentParser(
         description="Create playlists from your local music collection, using "
@@ -150,8 +114,9 @@ class TrackerClient():
                 n_songs = cursor.get_string(1)[0]
                 yield artist_name, n_songs
 
-        return OneShotResultsTable(headings=['Artist', 'Number of Songs'],
-                                   generator=result_generator_fn(result_cursor))
+        return calliope.OneShotResultsTable(
+            headings=['Artist', 'Number of Songs'],
+            generator=result_generator_fn(result_cursor))
 
 
     def songs(self, artist_name=None, album_name=None, track_name=None):
