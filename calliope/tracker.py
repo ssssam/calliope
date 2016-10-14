@@ -191,18 +191,20 @@ class TrackerClient():
 
         result = []
         prev_album_name = None
-        album_tracks = None
+        album_tracks = []
         while songs_with_releases.next():
             album_name = songs_with_releases.get_string(1)[0]
             if artist_select:
                 artist_name = songs_with_releases.get_string(3)[0]
+            if not prev_album_name:
+                prev_album_name = album_name
             if album_name != prev_album_name:
+                yield {
+                    'artist': artist_name,
+                    'album': album_name,
+                    'tracks': album_tracks,
+                }
                 album_tracks = []
-                result.append(
-                    {'artist': artist_name,
-                     'album': album_name,
-                     'tracks': album_tracks,
-                })
                 prev_album_name = album_name
 
             album_tracks.append({
@@ -217,19 +219,14 @@ class TrackerClient():
                     artist_name = songs_with_releases.get_string(3)[0]
                 if not catchall_tracks:
                     catchall_tracks = []
-                    result.append(
-                        {'artist': artist_name,
+                    yield {
+                        'artist': artist_name,
                         'tracks': catchall_tracks
-                    })
+                    }
                 catchall_tracks.append({
                     'track': songs_with_releases.get_string(2)[0],
                     'location': songs_with_releases.get_string(0)[0]
                 })
-
-        if len(result) > 0:
-            return result
-        else:
-            return []
 
 
 def add_location(tracker, item):
@@ -267,13 +264,13 @@ def add_location(tracker, item):
     if tracks:
         for track in tracks:
             result.extend(
-                tracker.songs(artist_name=item.get('artist'), track_name=str(track)))
+                list(tracker.songs(artist_name=item.get('artist'), track_name=str(track))))
     elif albums:
         for album in albums:
             result.extend(
-                tracker.songs(artist_name=item.get('artist'), album_name=str(album)))
+                list(tracker.songs(artist_name=item.get('artist'), album_name=str(album))))
     else:
-        result = tracker.songs(artist_name=item['artist'])
+        result = list(tracker.songs(artist_name=item['artist']))
 
     if len(result) > 0:
         return yaml.dump(result)
