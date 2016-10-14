@@ -173,6 +173,7 @@ class TrackerClient():
             query_songs_without_releases = """
             SELECT
                 nie:url(?track)
+                ?album
                 nie:title(?track)
                 %s
             WHERE {
@@ -181,8 +182,9 @@ class TrackerClient():
                 OPTIONAL { ?track nmm:musicAlbum ?album }
                 FILTER (! bound (?album))
             } ORDER BY
+                %s
                 nie:title(?track)
-            """ % (artist_select, artist_pattern, track_pattern)
+            """ % (artist_select, artist_pattern, track_pattern, artist_select)
 
             songs_without_releases = self.query(
                 query_songs_without_releases)
@@ -190,43 +192,69 @@ class TrackerClient():
             songs_without_releases = None
 
         result = []
-        prev_album_name = None
+
+        # The artist name may be returned as None if it's unknown to Tracker,
+        # so we can't use None as an 'undefined' value. int(-1) will work,
+        # as any artist named "-1" would be returned as str("-1").
+        prev_artist_name = -1
+        prev_album_name = -1
+
         album_tracks = []
         while songs_with_releases.next():
-            album_name = songs_with_releases.get_string(1)[0]
             if artist_select:
                 artist_name = songs_with_releases.get_string(3)[0]
-            if not prev_album_name:
+            album_name = songs_with_releases.get_string(1)[0]
+
+            if prev_artist_name is -1:
+                prev_artist_name = artist_name
+            if prev_album_name is -1:
                 prev_album_name = album_name
+
             if album_name != prev_album_name:
                 yield {
-                    'artist': artist_name,
-                    'album': album_name,
+                    'artist': prev_artist_name,
+                    'album': prev_album_name,
                     'tracks': album_tracks,
                 }
                 album_tracks = []
+                prev_artist_name = artist_name
                 prev_album_name = album_name
 
             album_tracks.append({
                 'track': songs_with_releases.get_string(2)[0],
                 'location': songs_with_releases.get_string(0)[0]
             })
+        if len(album_tracks) > 0:
+            yield {
+                'artist': artist_name,
+                'album': album_name,
+                'tracks': album_tracks,
+            }
 
-        catchall_tracks = None
+        prev_artist_name = -1
+        catchall_tracks = []
         if songs_without_releases:
             while songs_without_releases.next():
                 if artist_select:
-                    artist_name = songs_with_releases.get_string(3)[0]
-                if not catchall_tracks:
-                    catchall_tracks = []
+                    artist_name = songs_without_releases.get_string(3)[0]
+                if prev_artist_name is -1:
+                    prev_artist_name = artist_name
+                if prev_artist_name != artist_name:
                     yield {
-                        'artist': artist_name,
+                        'artist': prev_artist_name,
                         'tracks': catchall_tracks
                     }
+                    prev_artist_name = artist_name
+                    catchall_tracks = []
                 catchall_tracks.append({
-                    'track': songs_with_releases.get_string(2)[0],
-                    'location': songs_with_releases.get_string(0)[0]
+                    'track': songs_without_releases.get_string(2)[0],
+                    'location': songs_without_releases.get_string(0)[0]
                 })
+            if len(catchall_tracks) > 0:
+                yield {
+                    'artist': artist_name,
+                    'tracks': catchall_tracks
+                }
 
 
 def add_location(tracker, item):
