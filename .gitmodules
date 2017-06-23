@@ -4,3 +4,6 @@
 [submodule "iris"]
 	path = iris
 	url = git://github.com/ssssam/iris.git
+[submodule "tracker"]
+	path = subprojects/tracker
+	url = git://git.gnome.org/tracker/
