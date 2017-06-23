@@ -1,3 +1,16 @@
+Calliope 9998:
+
+  Listen history is the plan:
+
+    calliope-listen-history
+        --media-source local
+        --last-listen-date never
+        --history-source lastfm
+    | calliope-playlist
+        --order shuffle
+        --length '1 hour'
+        --output-format m3u
+
 Calliope 0.3.0:
 
 To dos:

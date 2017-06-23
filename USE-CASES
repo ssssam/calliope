@@ -19,3 +19,7 @@ Copying a collection onto a device
 3. Once that works with no errors, copy them to your device:
 
      calliope-sync ./first.collection.files --target /path/to/device
+
+
+Playlists from your last.fm history
+-----------------------------------
