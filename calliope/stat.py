@@ -35,7 +35,7 @@ def argument_parser():
         description="Information about playlists & collections")
     parser.add_argument('playlist', nargs='*',
                         help="playlist file")
-    parser.add_argument('-d', '--debug', action='store_true',
+    parser.add_argument('--debug', action='store_true',
                         help="enable verbose debug output")
 
     parser.add_argument('--size', '-s', action='store_true',
