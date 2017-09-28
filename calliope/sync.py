@@ -161,13 +161,13 @@ def main():
     if args.debug:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-    if args.playlist is None:
+    playlist_args = list(args.playlist)
+    if len(playlist_args) == 0:
         input_playlists = yaml.safe_load_all(sys.stdin)
     else:
-        input_playlists = (yaml.safe_load(open(playlist, 'r')) for playlist in args.playlist)
+        input_playlists = (yaml.safe_load(open(playlist, 'r')) for playlist in playlist_args)
 
     operations = []
-
     for playlist_data in input_playlists:
         for item_number, item in enumerate(calliope.Playlist(playlist_data)):
             if 'location' in item:
