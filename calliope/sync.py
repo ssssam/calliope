@@ -108,7 +108,7 @@ class CopyOperation(Operation):
 def ensure_number(filename, number):
     '''Ensure filename begins with 'number'.'''
     existing_number = ''.join(itertools.takewhile(str.isdigit, filename))
-    if len(existing_number) == 0 or int(existing_number) != number:
+    if len(existing_number) == 0 or str(existing_number) != str(number):
         return '%03i_%s' % (number, filename)
     else:
         return filename
@@ -171,9 +171,14 @@ def main():
     for playlist_data in input_playlists:
         for item_number, item in enumerate(calliope.Playlist(playlist_data)):
             if 'location' in item:
+                path = calliope.uri_to_path(item['location'])
+                if args.number_files:
+                    filename = ensure_number(os.path.basename(path), item_number + 1)
+                else:
+                    filename = None  # use existing
                 operations.append(
-                    sync_track(item['location'], args.target,
-                               args.allow_formats))
+                    sync_track(item['location'], args.target, args.allow_formats,
+                               target_filename=filename))
             elif 'tracks' in item:
                 for track_number, track_item in enumerate(item['tracks']):
                     if 'location' in track_item:
