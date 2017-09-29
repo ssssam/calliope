@@ -47,7 +47,7 @@ def argument_parser():
                         help="path to target device's filesystem")
 
     parser.add_argument('--allow-formats', '-f', action='append',
-                        choices=['all', 'mp3'], default=['all'],
+                        choices=['all', 'mp3'], default=[],
                         help="specify formats that the target device can read;"
                              " transcoding can be done if needed.")
 
@@ -167,6 +167,8 @@ def main():
     else:
         input_playlists = (yaml.safe_load(open(playlist, 'r')) for playlist in playlist_args)
 
+    allow_formats = args.allow_formats or ['all']
+
     operations = []
     for playlist_data in input_playlists:
         for item_number, item in enumerate(calliope.Playlist(playlist_data)):
@@ -177,7 +179,7 @@ def main():
                 else:
                     filename = None  # use existing
                 operations.append(
-                    sync_track(item['location'], args.target, args.allow_formats,
+                    sync_track(item['location'], args.target, allow_formats,
                                target_filename=filename))
             elif 'tracks' in item:
                 for track_number, track_item in enumerate(item['tracks']):
@@ -214,7 +216,8 @@ def main():
 
                         operations.append(
                             sync_track(track_item['location'], args.target,
-                                       args.allow_formats, target_filename=target_filename,
+                                       allow_formats,
+                                       target_filename=target_filename,
                                        target_dirname=target_dirname))
 
     if args.dry_run:
