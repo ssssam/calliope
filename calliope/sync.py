@@ -144,7 +144,7 @@ def sync_track(location, target, allow_formats=['all'], target_dirname=None,
                 "improve this tool." % target_filename)
         else:
             if not target_filename.endswith('.mp3'):
-                target_filebasename = os.path.splitext(path)[0]
+                target_filebasename = os.path.splitext(target_filename)[0]
                 target_filename = target_filebasename + '.mp3'
             sync_operation = TranscodeToMP3Operation(path, os.path.join(target_dirname,
                                                                         target_filename))
