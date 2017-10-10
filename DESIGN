@@ -55,3 +55,15 @@ Main purpose would be to make tagging easier: that's a pain in the ass from the
 commandline. Or you could write a separate CLI tagging tool .... 'accordion' is
 a nice name that I want to use for something :-) Attaching notes to tunes would
 also be nice.
+
+-----
+
+What about writing rhythmbox plugins with various different views?
+
+ - world map (shuffle play artists from a given place)
+ - ...
+
+Or simple last.fm/whatever sites?
+
+ - your artists ranked by global popularity ... i.e. what artists you listen
+   to that everyone else does. Mainstream finder.
