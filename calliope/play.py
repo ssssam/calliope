@@ -36,6 +36,9 @@ import sys
 import calliope
 
 
+GST_NANOSECONDS = 1 * 1000 * 1000 * 1000
+
+
 def argument_parser():
     parser = argparse.ArgumentParser(
         description="Play a Calliope playlist or collection")
@@ -65,12 +68,27 @@ def set_element_state_sync(pipeline, target_state):
     logging.debug("Got to state %s", target_state)
 
 
+def update_item_from_timestamp(item, timestamp):
+    item['start-time'] = timestamp / GST_NANOSECONDS
+    return item
+
+
+def update_item_from_tags(item, tags):
+    _, artist = tags.get_string('artist')
+    if artist:
+        item['artist'] = artist
+    return item
+
+
 def play(playlists):
     '''Play playlists.'''
+    output_playlist = []
+
     file_uris = []
     for playlist_data in playlists:
         for item in calliope.Playlist(playlist_data):
             file_uris.append(item['location'])
+            output_playlist.append(item)
     file_uris = list(reversed(file_uris))
 
     pipeline = Gst.Pipeline.new()
@@ -110,9 +128,30 @@ def play(playlists):
 
     bus = pipeline.get_bus()
 
+    stream_state = {
+        'track-index': -1,
+        'time': 0
+    }
+
     try:
         set_element_state_sync(pipeline, Gst.State.PLAYING)
 
+        def sync_message_handler(bus, message, _stream_state):
+            # We use the sync message handler to get the exact timestamp that
+            # each new track begins at.
+            if message.type == Gst.MessageType.STREAM_START:
+                result, timestamp = pipeline.query_position(Gst.Format.TIME)
+                stream_state['track-index'] += 1
+                index = stream_state['track-index']
+                logging.debug("New stream started. Now at track %i; timestamp %s", index, timestamp)
+                update_item_from_timestamp(output_playlist[index], stream_state['time'])
+                stream_state['time'] += timestamp
+
+        bus.enable_sync_message_emission()
+        bus.connect('sync-message', sync_message_handler, stream_state)
+
+        # This loop processes messages from the GStreamer pipeline while it
+        # renders the music.
         while True:
             message = bus.timed_pop(1 * 1000 * 1000 * 1000)
             if message:
@@ -122,9 +161,16 @@ def play(playlists):
                     raise(error.gerror)
                 elif message.type == Gst.MessageType.EOS:
                     break
+                elif message.type == Gst.MessageType.TAG:
+                    taglist = message.parse_tag()
+                    index = stream_state['track-index']
+                    logging.debug("Got new taglist %s at index %i", taglist, index)
+                    #logging.debug("Content: %s", taglist.to_string())
+                    update_item_from_tags(output_playlist[index], taglist)
     finally:
         logging.debug("Complete")
         set_element_state_sync(pipeline, Gst.State.NULL)
+    logging.warn(yaml.dump(output_playlist))
 
 
 def main():
@@ -138,7 +184,7 @@ def main():
         input_playlists = (yaml.safe_load(open(playlist, 'r'))
                            for playlist in args.playlist)
 
-    Gst.init()
+    Gst.init([])
 
     play(input_playlists)
 
