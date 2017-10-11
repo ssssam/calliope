@@ -46,6 +46,8 @@ def argument_parser():
                         help="playlist file")
     parser.add_argument('-d', '--debug', action='store_true',
                         help="enable verbose debug output")
+    parser.add_argument('-o', '--output', metavar='FILE', required=True,
+                        help="location to write the audio output")
 
     return parser
 
@@ -80,7 +82,7 @@ def update_item_from_tags(item, tags):
     return item
 
 
-def play(playlists):
+def play(playlists, audio_output):
     '''Play playlists.'''
     output_playlist = []
 
@@ -96,14 +98,14 @@ def play(playlists):
     rgvolume = Gst.ElementFactory.make('rgvolume', 'rgvolume')
     audioconvert = Gst.ElementFactory.make('audioconvert', 'audioconvert')
     wavenc = Gst.ElementFactory.make('wavenc', 'wavenc')
-    fdsink = Gst.ElementFactory.make('fdsink', 'fdsink')
+    filesink = Gst.ElementFactory.make('filesink', 'filesink')
 
-    for element in [concat, rgvolume, audioconvert, wavenc, fdsink]:
+    for element in [concat, rgvolume, audioconvert, wavenc, filesink]:
         pipeline.add(element)
 
     concat.link(audioconvert)
     audioconvert.link(wavenc)
-    wavenc.link(fdsink)
+    wavenc.link(filesink)
 
     def enqueue_songs(uri_list, i=0):
         uri = uri_list.pop()
@@ -124,7 +126,7 @@ def play(playlists):
 
     enqueue_songs(file_uris)
 
-    fdsink.set_property('fd', sys.stdout.fileno())
+    filesink.set_property('location', audio_output)
 
     bus = pipeline.get_bus()
 
@@ -170,7 +172,8 @@ def play(playlists):
     finally:
         logging.debug("Complete")
         set_element_state_sync(pipeline, Gst.State.NULL)
-    logging.warn(yaml.dump(output_playlist))
+
+    return output_playlist
 
 
 def main():
@@ -186,7 +189,8 @@ def main():
 
     Gst.init([])
 
-    play(input_playlists)
+    output_playlist = play(input_playlists, args.output)
+    sys.stdout.write(yaml.dump(output_playlist))
 
 
 try:
