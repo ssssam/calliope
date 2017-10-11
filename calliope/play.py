@@ -77,6 +77,7 @@ def update_item_from_timestamp(item, timestamp):
 
 def update_item_from_tags(item, tags):
     _, artist = tags.get_string('artist')
+
     if artist:
         item['artist'] = artist
     return item
@@ -162,18 +163,20 @@ def play(playlists, audio_output):
                     logging.debug(error.debug)
                     raise(error.gerror)
                 elif message.type == Gst.MessageType.EOS:
+                    index = stream_state['track-index'] + 1
+                    update_item_from_timestamp(output_playlist[index], stream_state['time'])
                     break
                 elif message.type == Gst.MessageType.TAG:
                     taglist = message.parse_tag()
-                    index = stream_state['track-index']
-                    logging.debug("Got new taglist %s at index %i", taglist, index)
-                    #logging.debug("Content: %s", taglist.to_string())
-                    update_item_from_tags(output_playlist[index], taglist)
+                    index = stream_state['track-index'] + 1
+                    if index < len(output_playlist):
+                        update_item_from_tags(output_playlist[index], taglist)
+
     finally:
         logging.debug("Complete")
         set_element_state_sync(pipeline, Gst.State.NULL)
 
-    return output_playlist
+    return {'list': output_playlist}
 
 
 def main():
