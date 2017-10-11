@@ -20,6 +20,7 @@ This module contains the core parts of Calliope.
 
 '''
 
+import enum
 import urllib.parse
 
 
@@ -29,7 +30,12 @@ def uri_to_path(uri):
         urllib.parse.urlsplit(uri).path)
 
 
-class Playlist(object):
+class PlaylistKind(enum.Enum):
+    COLLECTION = 0
+    PLAYLIST = 1
+
+
+class Playlist():
     '''A playlist is a set of songs.
 
     A 'collection' is also considered to be a playlist, but one where order
@@ -38,8 +44,10 @@ class Playlist(object):
     '''
     def __init__(self, yaml_parsed):
         if 'collection' in yaml_parsed:
+            self.kind = PlaylistKind.COLLECTION
             self.items = yaml_parsed['collection']
         elif 'list' in yaml_parsed:
+            self.kind = PlaylistKind.PLAYLIST
             self.items = yaml_parsed['list']
         else:
             raise RuntimeError ("Expected 'list' or 'collection' entry")
