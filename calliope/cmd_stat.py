@@ -15,9 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-'''calliope-stat'''
 
-
+import click
 import yaml
 
 import argparse
@@ -28,22 +27,6 @@ import urllib.parse
 import warnings
 
 import calliope
-
-
-def argument_parser():
-    parser = argparse.ArgumentParser(
-        description="Information about playlists & collections")
-    parser.add_argument('playlist', nargs='*',
-                        help="playlist file")
-    parser.add_argument('--debug', action='store_true',
-                        help="enable verbose debug output")
-
-    parser.add_argument('--size', '-s', action='store_true',
-                        help="show the size of the input playlist")
-    parser.add_argument('--duration', '-d', action='store_true',
-                        help="show the total duration of the input playlist")
-
-    return parser
 
 
 def measure_size(playlists):
@@ -68,26 +51,26 @@ def measure_size(playlists):
     print("Total size: %i MB" % (size / 1024 / 1024.0))
 
 
-def main():
-    args = argument_parser().parse_args()
-    if args.debug:
+@calliope.cli.command(name='stat')
+@click.option('-d', '--debug', is_flag=True)
+@click.option('--duration', '-d', is_flag=True,
+              help="show the total duration of the playlist")
+@click.option('--size', '-s', is_flag=True,
+              help="show the total size on disk of the playlist contents")
+@click.argument('playlist', nargs=-1, type=click.Path(exists=True))
+def run(debug, duration, size, playlist):
+    '''Information about the contents of a playlist'''
+    if debug:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-    if args.playlist == None:
+    if playlist == None:
         input_playlists = yaml.safe_load_all(sys.stdin)
     else:
-        input_playlists = (yaml.safe_load(open(playlist, 'r')) for playlist in args.playlist)
+        input_playlists = (yaml.safe_load(open(p, 'r')) for p in playlist)
 
-    if args.size:
+    if size:
         measure_size(input_playlists)
-    elif args.duration:
+    elif duration:
         measure_duration(input_playlists)
     else:
-        print("Please select a mode; --size is currently the only mode.")
-
-
-try:
-    main()
-except RuntimeError as e:
-    sys.stderr.write("ERROR: %s\n" % e)
-    sys.exit(1)
+        print("Please select a mode.")

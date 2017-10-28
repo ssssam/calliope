@@ -20,8 +20,16 @@ This module contains the core parts of Calliope.
 
 '''
 
+import click
+
 import enum
 import urllib.parse
+
+
+@click.group()
+def cli():
+    '''Calliope is a set of tools for processing playlists.'''
+    pass
 
 
 def uri_to_path(uri):
@@ -46,11 +54,18 @@ class Playlist():
         if 'collection' in yaml_parsed:
             self.kind = PlaylistKind.COLLECTION
             self.items = yaml_parsed['collection']
+        elif 'playlist' in yaml_parsed:
+            self.kind = PlaylistKind.PLAYLIST
+            self.items = yaml_parsed['playlist']
         elif 'list' in yaml_parsed:
             self.kind = PlaylistKind.PLAYLIST
             self.items = yaml_parsed['list']
         else:
-            raise RuntimeError ("Expected 'list' or 'collection' entry")
+            raise RuntimeError ("Expected 'playlist' or 'collection' entry")
+
+        for i, item in enumerate(self.items):
+            if isinstance(item, str):
+                self.items[i] = {'track': item}
 
     def __iter__(self):
         return iter(self.items)
@@ -90,3 +105,11 @@ class OneShotResultsTable():
                               "headings!")
             print("\t".join(row))
         self.dead = True
+
+
+from . import cmd_export
+from . import cmd_import
+from . import cmd_play
+from . import cmd_stat
+from . import cmd_sync
+from . import cmd_tracker

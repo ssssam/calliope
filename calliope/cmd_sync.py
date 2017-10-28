@@ -227,10 +227,3 @@ def main():
         for operation in operations:
             logging.debug(str(operation))
             operation.run()
-
-
-try:
-    main()
-except RuntimeError as e:
-    sys.stderr.write("ERROR: %s\n" % e)
-    sys.exit(1)

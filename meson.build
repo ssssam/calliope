@@ -11,4 +11,7 @@ python_version = python_version_check.stdout()
 python_name = 'python' + python_version
 python_site_packages_dir = join_paths(get_option('prefix'), get_option('libdir'), python_name, 'site-packages')
 
+cdata = configuration_data()
+cdata.set('pythondir', python_site_packages_dir)
+
 subdir('calliope')

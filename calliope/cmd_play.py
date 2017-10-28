@@ -16,17 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-'''calliope-play
-
-Turns a playlist into sounds!
-
-'''
-
-
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 
+import click
 import yaml
 
 import argparse
@@ -37,19 +31,6 @@ import calliope
 
 
 GST_NANOSECONDS = 1 * 1000 * 1000 * 1000
-
-
-def argument_parser():
-    parser = argparse.ArgumentParser(
-        description="Play a Calliope playlist or collection")
-    parser.add_argument('playlist', nargs='*',
-                        help="playlist file")
-    parser.add_argument('-d', '--debug', action='store_true',
-                        help="enable verbose debug output")
-    parser.add_argument('-o', '--output', metavar='FILE', required=True,
-                        help="location to write the audio output")
-
-    return parser
 
 
 def set_element_state_sync(pipeline, target_state):
@@ -90,6 +71,9 @@ def play(playlists, audio_output):
     file_uris = []
     for playlist_data in playlists:
         for item in calliope.Playlist(playlist_data):
+            if 'location' not in item:
+                raise RuntimeError("All tracks must have the 'location' "
+                                   "property set in order to render audio.")
             file_uris.append(item['location'])
             output_playlist.append(item)
     file_uris = list(reversed(file_uris))
@@ -179,25 +163,21 @@ def play(playlists, audio_output):
     return {'list': output_playlist}
 
 
-def main():
-    args = argument_parser().parse_args()
-    if args.debug:
+@calliope.cli.command(name='play')
+@click.option('-d', '--debug', is_flag=True)
+@click.option('-o', '--output', type=click.File('wb'), required=True)
+@click.argument('playlist', nargs=-1, type=click.Path(exists=True))
+def run(debug, output, playlist):
+    '''Render a Calliope playlist to an audio file'''
+    if debug:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-    if len(args.playlist) == 0:
+    if len(playlist) == 0:
         input_playlists = yaml.safe_load_all(sys.stdin)
     else:
-        input_playlists = (yaml.safe_load(open(playlist, 'r'))
-                           for playlist in args.playlist)
+        input_playlists = (yaml.safe_load(open(p, 'r')) for p in playlist)
 
     Gst.init([])
 
-    output_playlist = play(input_playlists, args.output)
+    output_playlist = play(input_playlists, output)
     sys.stdout.write(yaml.dump(output_playlist))
-
-
-try:
-    main()
-except RuntimeError as e:
-    sys.stderr.write("ERROR: %s\n" % e)
-    sys.exit(1)

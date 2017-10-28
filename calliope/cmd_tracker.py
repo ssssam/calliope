@@ -15,44 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-'''calliope-tracker
-
-Provides a commandline interface for querying the music files stored on this
-computer, using the 'Tracker' indexing tool.
-'''
-
 import gi
 gi.require_version('Tracker', '1.0')
 
 from gi.repository import Tracker
 
+import click
 import yaml
 
-import argparse
 import logging
 import sys
 import warnings
 
 import calliope
-
-
-def argument_parser():
-    parser = argparse.ArgumentParser(
-        description="Create playlists from your local music collection, using "
-                    "the Tracker database")
-    parser.add_argument('playlist', nargs='*',
-                        help="playlist file")
-    parser.add_argument('-d', '--debug', action='store_true',
-                        help="enable verbose debug output")
-
-    parser.add_argument('--top', choices=['artists'],
-                        help="show the top artists by number of songs in the "
-                             "Tracker collection")
-
-    # The default behaviour, if no input playlists are given and no actions are
-    # given, is to print the entire collection to stdout.
-
-    return parser
 
 
 class TrackerClient():
@@ -317,25 +292,31 @@ def print_collection(result):
         print(yaml.dump(item))
 
 
-def main():
-    args = argument_parser().parse_args()
-    if args.debug:
+@calliope.cli.command(name='tracker')
+@click.option('-d', '--debug', is_flag=True)
+@click.option('--top', type=click.Choice(['artists']),
+              help="show artists with the most tracks in the local collection")
+@click.argument('playlist', nargs=-1, type=click.Path(exists=True))
+def run(debug, top, playlist):
+    '''Query music files on the local machine'''
+
+    if debug:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
     tracker = TrackerClient()
 
-    if args.top != None:
-        if args.top == 'artists':
+    if top != None:
+        if top == 'artists':
             print_table(tracker.artists_by_number_of_songs(limit=None))
             return None
         else:
-            raise RuntimeError("Unknown type: %s" % args.top)
+            raise RuntimeError("Unknown type: %s" % top)
 
-    if len(args.playlist) == 0:
+    if len(playlist) == 0:
         print_collection(tracker.songs())
         return None
     else:
-        input_playlists = (yaml.safe_load(open(playlist, 'r')) for playlist in args.playlist)
+        input_playlists = (yaml.safe_load(open(p, 'r')) for p in playlist)
 
     # FIXME: should be a collection if any inputs are collections, otherwise a
     # playlist
@@ -350,19 +331,3 @@ def main():
                     print(add_location(tracker, item))
                 except RuntimeError as e:
                     raise RuntimeError("%s\nItem: %s" % (e, item))
-
-
-def pretty_warnings(message, category, filename, lineno,
-                    file=None, line=None):
-    return 'WARNING: %s\n' % (message)
-
-warnings.formatwarning = pretty_warnings
-
-try:
-    main()
-except BrokenPipeError:
-    # This happens when we're piped to `less` or something, it's harmless
-    pass
-except RuntimeError as e:
-    sys.stderr.write("ERROR: %s\n" % e)
-    sys.exit(1)

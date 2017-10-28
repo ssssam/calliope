@@ -15,32 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-'''calliope-export
 
-Convert playlists and collections into different serialization formats.
+import click
 
-'''
-
-import argparse
 import logging
 import sys
 import yaml
 
 import calliope
-
-
-def argument_parser():
-    parser = argparse.ArgumentParser(
-        description="Convert a Calliope playlist or collection into a "
-                    "different format")
-    parser.add_argument('playlist', nargs='*',
-                        help="playlist file")
-    parser.add_argument('-d', '--debug', action='store_true',
-                        help="enable verbose debug output")
-    parser.add_argument('-f', '--format', choices=['cue'], default='cue',
-                        help="output format")
-
-    return parser
 
 
 def convert_to_cue(playlist):
@@ -54,34 +36,34 @@ def convert_to_cue(playlist):
             output_text.append("    TITLE \"%s\"" % item['track'])
         if 'artist' in item:
             output_text.append("    PERFORMER \"%s\"" % item['artist'])
-        timestamp = item['start-time']
+        if 'start-time' in item:
+            timestamp = item['start-time']
+        else:
+            if i == 0:
+                timestamp = 0
+            else:
+                raise RuntimeError("The 'start-time' field must be set for all entries "
+                                   "in order to create a CUE sheet")
         output_text.append("  INDEX 01 %02i:%02i:00" % (int(timestamp / 60), int(timestamp % 60)))
     return '\n'.join(output_text)
 
-def main():
-    args = argument_parser().parse_args()
 
-    if args.debug:
+@calliope.cli.command(name='export')
+@click.option('-d', '--debug', is_flag=True)
+@click.option('-f', '--format', type=click.Choice(['cue']), default='cue')
+@click.argument('playlist', nargs=-1, type=click.Path(exists=True))
+def run(debug, format, playlist):
+    '''Convert to a different playlist format'''
+    if debug:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-    if len(args.playlist) == 0:
+    if len(playlist) == 0:
         input_playlists = yaml.safe_load_all(sys.stdin)
     else:
-        input_playlists = (yaml.safe_load(open(playlist, 'r'))
-                           for playlist in args.playlist)
+        input_playlists = (yaml.safe_load(open(p, 'r')) for p in playlist)
 
-    if args.format == 'cue':
+    if format == 'cue':
         for playlist_dict in input_playlists:
             print(convert_to_cue(calliope.Playlist(playlist_dict)))
     else:
-        raise NotImplementedError("Unsupport format: %s" % args.format)
-
-
-try:
-    main()
-except BrokenPipeError:
-    # This happens when we're piped to `less` or something, it's harmless
-    pass
-except RuntimeError as e:
-    sys.stderr.write("ERROR: %s\n" % e)
-    sys.exit(1)
+        raise NotImplementedError("Unsupport format: %s" % format)

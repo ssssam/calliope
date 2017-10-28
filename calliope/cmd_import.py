@@ -21,10 +21,14 @@ Convert playlists and collections from different serialization formats.
 
 '''
 
+import click
+
 import configparser
 import logging
 import sys
 import yaml
+
+import calliope
 
 
 def guess_format(text):
@@ -55,8 +59,12 @@ def parse_pls(text):
     return {'list': entries}
 
 
-def main():
-    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+@calliope.cli.command(name='import')
+@click.option('-d', '--debug', is_flag=True)
+def run(debug):
+    '''Import playlists from other formats'''
+    if debug:
+        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
     text = sys.stdin.read()
 
@@ -67,13 +75,3 @@ def main():
         playlist = parse_pls(text)
     #print(parser.sections())
     print(yaml.dump(playlist))
-
-
-try:
-    main()
-except BrokenPipeError:
-    # This happens when we're piped to `less` or something, it's harmless
-    pass
-except RuntimeError as e:
-    sys.stderr.write("ERROR: %s\n" % e)
-    sys.exit(1)
