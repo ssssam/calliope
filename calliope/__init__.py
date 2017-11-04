@@ -106,10 +106,12 @@ class OneShotResultsTable():
             print("\t".join(row))
         self.dead = True
 
+from . import config
 
 from . import cmd_export
 from . import cmd_import
 from . import cmd_play
+from . import cmd_spotify
 from . import cmd_stat
 from . import cmd_sync
 from . import cmd_tracker
