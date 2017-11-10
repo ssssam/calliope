@@ -88,8 +88,10 @@ def play(playlists, audio_output):
     for element in [concat, rgvolume, audioconvert, wavenc, filesink]:
         pipeline.add(element)
 
+    output_caps = Gst.Caps.from_string("audio/x-raw,format=S16LE")
+
     concat.link(audioconvert)
-    audioconvert.link(wavenc)
+    audioconvert.link_filtered(wavenc, output_caps)
     wavenc.link(filesink)
 
     def enqueue_songs(uri_list, i=0):
