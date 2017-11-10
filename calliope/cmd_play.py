@@ -165,7 +165,7 @@ def play(playlists, audio_output):
 
 @calliope.cli.command(name='play')
 @click.option('-d', '--debug', is_flag=True)
-@click.option('-o', '--output', type=click.File('wb'), required=True)
+@click.option('-o', '--output', type=click.Path(), required=True)
 @click.argument('playlist', nargs=-1, type=click.Path(exists=True))
 def run(debug, output, playlist):
     '''Render a Calliope playlist to an audio file'''
