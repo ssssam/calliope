@@ -56,6 +56,12 @@ def test_play(cli):
 def test_spotify(cli):
     result = cli.run(['spotify'])
     assert result.exit_code == 0
+    result = cli.run(['spotify', 'annotate'])
+    assert result.exit_code == 0
+    result = cli.run(['spotify', 'export'])
+    assert result.exit_code == 0
+    result = cli.run(['spotify', 'import'])
+    assert result.exit_code == 0
 
 
 def test_stat(cli):
