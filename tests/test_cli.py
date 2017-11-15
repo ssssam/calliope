@@ -18,6 +18,8 @@
 import click.testing
 import pytest
 
+import os
+
 import calliope
 
 
@@ -54,6 +56,7 @@ def test_play(cli):
 
 
 def test_spotify(cli):
+    os.environ['CALLIOPE_TEST_ONLY'] = '1'
     result = cli.run(['spotify'])
     assert result.exit_code == 0
     result = cli.run(['spotify', 'annotate'])

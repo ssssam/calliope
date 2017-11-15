@@ -23,6 +23,7 @@ import click
 import yaml
 
 import logging
+import os
 import sys
 import warnings
 
@@ -75,6 +76,9 @@ def spotify_cli(context, user):
         raise RuntimeError("Please specify a username.")
 
     context.obj.user = user
+
+    if 'CALLIOPE_TEST_ONLY' in os.environ:
+        sys.exit(0)
 
     client_id = calliope.config.get('spotify', 'client-id')
     client_secret = calliope.config.get('spotify', 'client-secret')
