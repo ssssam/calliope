@@ -78,6 +78,9 @@ def play(playlists, audio_output):
             output_playlist.append(item)
     file_uris = list(reversed(file_uris))
 
+    if len(file_uris) == 0:
+        return
+
     pipeline = Gst.Pipeline.new()
     concat = Gst.ElementFactory.make('concat', 'concat')
     rgvolume = Gst.ElementFactory.make('rgvolume', 'rgvolume')

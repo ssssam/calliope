@@ -15,3 +15,11 @@ cdata = configuration_data()
 cdata.set('pythondir', python_site_packages_dir)
 
 subdir('calliope')
+
+pytest = find_program('pytest-3')
+
+pytest_env = environment()
+pytest_env.prepend('PYTHONPATH', meson.current_source_dir())
+test('pytest', pytest,
+    env: pytest_env,
+    workdir: meson.current_source_dir())
