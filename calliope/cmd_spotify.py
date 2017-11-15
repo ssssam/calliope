@@ -61,9 +61,6 @@ def spotify_cli(context, user):
 def export(context):
     '''Query user playlists from the Spotify streaming service'''
 
-    if context.obj.debug:
-        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-
     client_id = calliope.config.get('spotify', 'client-id')
     client_secret = calliope.config.get('spotify', 'client-secret')
     redirect_uri = calliope.config.get('spotify', 'redirect-uri')

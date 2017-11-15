@@ -148,9 +148,6 @@ def run(context, dry_run, target, allow_formats, album_per_dir,
         number_dirs, number_files, playlist):
     '''Copy playlists & collections between devices'''
 
-    if context.obj.debug:
-        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-
     if len(playlist) == 0:
         input_playlists = yaml.safe_load_all(sys.stdin)
     else:

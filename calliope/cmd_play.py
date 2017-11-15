@@ -174,8 +174,6 @@ def play(playlists, audio_output):
 @click.pass_context
 def run(context, output, playlist):
     '''Render a Calliope playlist to an audio file'''
-    if context.obj.debug:
-        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
     if len(playlist) == 0:
         input_playlists = yaml.safe_load_all(sys.stdin)

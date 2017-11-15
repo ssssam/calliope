@@ -54,8 +54,6 @@ def convert_to_cue(playlist):
 @click.pass_context
 def run(context, format, playlist):
     '''Convert to a different playlist format'''
-    if context.obj.debug:
-        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
     if len(playlist) == 0:
         input_playlists = yaml.safe_load_all(sys.stdin)

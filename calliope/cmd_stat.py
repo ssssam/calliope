@@ -60,8 +60,6 @@ def measure_size(playlists):
 @click.pass_context
 def run(context, duration, size, playlist):
     '''Information about the contents of a playlist'''
-    if context.obj.debug:
-        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
     if playlist == None:
         input_playlists = yaml.safe_load_all(sys.stdin)

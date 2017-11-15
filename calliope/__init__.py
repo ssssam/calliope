@@ -23,6 +23,8 @@ This module contains the core parts of Calliope.
 import click
 
 import enum
+import logging
+import sys
 import urllib.parse
 
 
@@ -36,7 +38,11 @@ class App:
 @click.pass_context
 def cli(context, **kwargs):
     '''Calliope is a set of tools for processing playlists.'''
+
     context.obj = App(**kwargs)
+
+    if context.obj.debug:
+        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 
 def uri_to_path(uri):

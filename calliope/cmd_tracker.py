@@ -303,9 +303,6 @@ def print_collection(result):
 def run(context, top, playlist):
     '''Query music files on the local machine'''
 
-    if context.obj.debug:
-        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-
     tracker = TrackerClient()
 
     if top != None:
