@@ -44,27 +44,33 @@ def print_spotify_playlist(playlist, tracks):
             print('  location: %s' % location)
 
 
-
-@calliope.cli.command(name='spotify')
-@click.option('-d', '--debug', is_flag=True)
+@calliope.cli.group(name='spotify')
 @click.option('--user',
               help="show playlists for the given Spotify user")
-def run(debug, user):
+@click.pass_context
+def spotify_cli(context, user):
+    if not user:
+        user = calliope.config.get('spotify', 'user')
+    if not user:
+        raise RuntimeError("Please specify a username.")
+    context.obj.user = user
+
+
+@spotify_cli.command()
+@click.pass_context
+def export(context):
     '''Query user playlists from the Spotify streaming service'''
 
-    if debug:
+    if context.obj.debug:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
     client_id = calliope.config.get('spotify', 'client-id')
     client_secret = calliope.config.get('spotify', 'client-secret')
     redirect_uri = calliope.config.get('spotify', 'redirect-uri')
 
-    if not user:
-        user = calliope.config.get('spotify', 'user')
-    if not user:
-        raise RuntimeError("Please specify a username.")
 
     scope = ''
+    user = context.obj.user
     try:
         token = util.prompt_for_user_token(user, scope, client_id=client_id,
                                            client_secret=client_secret,

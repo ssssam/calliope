@@ -60,10 +60,10 @@ def parse_pls(text):
 
 
 @calliope.cli.command(name='import')
-@click.option('-d', '--debug', is_flag=True)
-def run(debug):
+@click.pass_context
+def run(context):
     '''Import playlists from other formats'''
-    if debug:
+    if context.obj.debug:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
     text = sys.stdin.read()

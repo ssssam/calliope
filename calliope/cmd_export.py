@@ -49,12 +49,12 @@ def convert_to_cue(playlist):
 
 
 @calliope.cli.command(name='export')
-@click.option('-d', '--debug', is_flag=True)
 @click.option('-f', '--format', type=click.Choice(['cue']), default='cue')
 @click.argument('playlist', nargs=-1, type=click.Path(exists=True))
-def run(debug, format, playlist):
+@click.pass_context
+def run(context, format, playlist):
     '''Convert to a different playlist format'''
-    if debug:
+    if context.obj.debug:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
     if len(playlist) == 0:

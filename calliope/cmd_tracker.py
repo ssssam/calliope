@@ -296,14 +296,14 @@ def print_collection(result):
 
 
 @calliope.cli.command(name='tracker')
-@click.option('-d', '--debug', is_flag=True)
 @click.option('--top', type=click.Choice(['artists']),
               help="show artists with the most tracks in the local collection")
 @click.argument('playlist', nargs=-1, type=click.Path(exists=True))
-def run(debug, top, playlist):
+@click.pass_context
+def run(context, top, playlist):
     '''Query music files on the local machine'''
 
-    if debug:
+    if context.obj.debug:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
     tracker = TrackerClient()

@@ -52,15 +52,15 @@ def measure_size(playlists):
 
 
 @calliope.cli.command(name='stat')
-@click.option('-d', '--debug', is_flag=True)
 @click.option('--duration', '-d', is_flag=True,
               help="show the total duration of the playlist")
 @click.option('--size', '-s', is_flag=True,
               help="show the total size on disk of the playlist contents")
 @click.argument('playlist', nargs=-1, type=click.Path(exists=True))
-def run(debug, duration, size, playlist):
+@click.pass_context
+def run(context, duration, size, playlist):
     '''Information about the contents of a playlist'''
-    if debug:
+    if context.obj.debug:
         logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
     if playlist == None:

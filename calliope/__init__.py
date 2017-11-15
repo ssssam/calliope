@@ -26,10 +26,17 @@ import enum
 import urllib.parse
 
 
+class App:
+    def __init__(self, debug=False):
+        self.debug = debug
+
+
 @click.group()
-def cli():
+@click.option('-d', '--debug', is_flag=True)
+@click.pass_context
+def cli(context, **kwargs):
     '''Calliope is a set of tools for processing playlists.'''
-    pass
+    context.obj = App(**kwargs)
 
 
 def uri_to_path(uri):
