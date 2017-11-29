@@ -2,6 +2,9 @@ project('calliope')
 
 python = find_program('python3', required: true)
 
+# We need to check for Python dependencies; but it's not possible with
+# Meson until https://github.com/mesonbuild/meson/issues/2377 is fixed
+
 python_version_check = run_command(python, '-c', 'import sys; sys.stdout.write("%d.%d" % (sys.version_info[0], sys.version_info[1]))')
 if python_version_check.returncode() != 0
   error('Unable to detect Python version: ' + result.stdout() + result.stderr())
