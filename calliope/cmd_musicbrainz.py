@@ -26,13 +26,20 @@ import warnings
 import calliope
 
 
+# FIXME: we need to cache requests and responses.
+# How about
+# https://github.com/jaraco/jaraco.net/blob/master/jaraco/net/http/caching.py ?
+
 def add_musicbrainz_artist(item):
     artist = item['artist']
     result = musicbrainzngs.search_artists(artist=artist)['artist-list']
     if len(result) == 0:
         print("# Unable to find %s on musicbrainz" % artist)
     else:
-        item['musicbrainz.artist'] = result[0]['id']
+        artist = result[0]
+        item['musicbrainz.artist'] = artist['id']
+        if 'country' in artist:
+            item['musicbrainz.artist.country'] = artist['country']
     return item
 
 
