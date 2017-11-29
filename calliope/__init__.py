@@ -117,6 +117,7 @@ from . import config
 
 from . import cmd_export
 from . import cmd_import
+from . import cmd_musicbrainz
 from . import cmd_play
 from . import cmd_spotify
 from . import cmd_stat

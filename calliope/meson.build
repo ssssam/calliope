@@ -4,6 +4,7 @@ sources = [
   'config.py',
   'cmd_export.py',
   'cmd_import.py',
+  'cmd_musicbrainz.py',
   'cmd_play.py',
   'cmd_spotify.py',
   'cmd_stat.py',
