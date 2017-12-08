@@ -55,6 +55,11 @@ def test_play(cli):
     assert result.exit_code == 0
 
 
+def test_shuffle(cli):
+    result = cli.run(['shuffle'])
+    assert result.exit_code == 0
+
+
 def test_spotify(cli):
     os.environ['CALLIOPE_TEST_ONLY'] = '1'
     result = cli.run(['spotify'])
