@@ -67,3 +67,19 @@ Or simple last.fm/whatever sites?
 
  - your artists ranked by global popularity ... i.e. what artists you listen
    to that everyone else does. Mainstream finder.
+
+General and some specific goals
+-------------------------------
+
+ * Build open tools that you can play with and understand; unlike the opaque
+   recommendation algorithms provided by YouTube and Spotify
+
+ * Create a feedback loop for new music that you've found so that things
+   don't "fall between the cracks"
+
+ * Find new music by exploring similarities from artists you already like,
+   e.. same location, same tag, same record label.
+
+ * Organize a mess of MP3 files on disk into something neat; and allow
+   creating symlink indexes
+
