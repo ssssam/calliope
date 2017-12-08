@@ -21,6 +21,7 @@ This module contains the core parts of Calliope.
 '''
 
 import click
+import yaml
 
 import enum
 import logging
@@ -95,6 +96,11 @@ class Playlist():
 
     def append(self, playlist):
         self.items += playlist.items
+
+    def dump(self, stream):
+        kind_name = 'collection' if self.kind == PlaylistKind.COLLECTION else 'playlist'
+        document = { kind_name: self.items }
+        yaml.safe_dump(document, sys.stdout, default_flow_style=False)
 
 
 class OneShotResultsTable():
