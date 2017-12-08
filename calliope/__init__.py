@@ -56,6 +56,22 @@ class PlaylistKind(enum.Enum):
     PLAYLIST = 1
 
 
+def process_playlist(yaml_parsed):
+    if 'collection' in yaml_parsed:
+        kind = PlaylistKind.COLLECTION
+        items = yaml_parsed['collection'] or []
+    elif 'playlist' in yaml_parsed:
+        kind = PlaylistKind.PLAYLIST
+        items = yaml_parsed['playlist'] or []
+    elif 'list' in yaml_parsed:
+        kind = PlaylistKind.PLAYLIST
+        items = yaml_parsed['list'] or []
+    else:
+        raise RuntimeError ("Expected 'playlist' or 'collection' entry")
+
+    return kind, items
+
+
 class Playlist():
     '''A playlist is a set of songs.
 
@@ -63,18 +79,12 @@ class Playlist():
     isn't important.
 
     '''
-    def __init__(self, yaml_parsed):
-        if 'collection' in yaml_parsed:
-            self.kind = PlaylistKind.COLLECTION
-            self.items = yaml_parsed['collection']
-        elif 'playlist' in yaml_parsed:
+    def __init__(self, yaml_parsed=None):
+        if not yaml_parsed:
             self.kind = PlaylistKind.PLAYLIST
-            self.items = yaml_parsed['playlist']
-        elif 'list' in yaml_parsed:
-            self.kind = PlaylistKind.PLAYLIST
-            self.items = yaml_parsed['list']
+            self.items = []
         else:
-            raise RuntimeError ("Expected 'playlist' or 'collection' entry")
+            self.kind, self.items = process_playlist(yaml_parsed)
 
         for i, item in enumerate(self.items):
             if isinstance(item, str):
@@ -82,6 +92,9 @@ class Playlist():
 
     def __iter__(self):
         return iter(self.items)
+
+    def append(self, playlist):
+        self.items += playlist.items
 
 
 class OneShotResultsTable():
@@ -125,6 +138,7 @@ from . import cmd_export
 from . import cmd_import
 from . import cmd_musicbrainz
 from . import cmd_play
+from . import cmd_shuffle
 from . import cmd_spotify
 from . import cmd_stat
 from . import cmd_sync
