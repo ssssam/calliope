@@ -5,26 +5,32 @@
 <html>
 <head>
   <title>{{ title }}</title>
+  <style>
+    .item {
+      display: grid;
+      grid-template-columns: 100px auto;
+    }
+
+    .image {
+      grid-column: 0;
+    }
+
+    .name {
+      grid-column: 2;
+    }
+  </style>
 </head>
 
 <body>
 Playlist
 
 <div class="collection">
-  <div class="track">
-      <div class="image">Track pic</div>
-      <div class="name">Artist - Track Title</div>
+  {% for item in items %}
+  <div class="item">
+      <div class="image">{{ item.image }}</div>
+      <div class="name">{{ item.name }}</div>
   </div>
-
-  <div class="artist">
-      <div class="image">Artist pic</div>
-      <div class="name">Artist name</div>
-  </div>
-
-  <div class="album">
-      <div class="image">Album pic</div>
-      <div class="name">Artist - Album Title</div>
-  </div>
+  {% endfor %}
 </div>
 
 </body>

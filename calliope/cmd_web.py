@@ -34,12 +34,24 @@ def render_html(playlists, template_filename):
     with open(template_filename, 'r') as f:
         template = jinja2.Template(f.read())
 
-    #file_uris = []
-    #for playlist_data in playlists:
-        #for item in calliope.Playlist(playlist_data):
-            #print(item)
+    items = []
+    for playlist_data in playlists:
+        for item_in in calliope.Playlist(playlist_data):
+            item = {}
+            item['image'] = 'Image'
 
-    return template.render()
+            name_parts = []
+            if 'artist' in item_in:
+                name_parts.append(item_in['artist'])
+            if 'track' in item_in:
+                name_parts.append(item_in['track'])
+            elif 'album' in item_in:
+                name_parts.append(item_in['album'])
+            item['name'] = ' - '.join(name_parts)
+
+            items.append(item)
+
+    return template.render(items=items)
 
 
 @calliope.cli.command(name='web')
