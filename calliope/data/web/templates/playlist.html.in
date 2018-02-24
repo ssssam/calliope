@@ -1,0 +1,31 @@
+{#
+  Template for rendering Calliope collections and playlists as HTML.
+#}
+
+<html>
+<head>
+  <title>{{ title }}</title>
+</head>
+
+<body>
+Playlist
+
+<div class="collection">
+  <div class="track">
+      <div class="image">Track pic</div>
+      <div class="name">Artist - Track Title</div>
+  </div>
+
+  <div class="artist">
+      <div class="image">Artist pic</div>
+      <div class="name">Artist name</div>
+  </div>
+
+  <div class="album">
+      <div class="image">Album pic</div>
+      <div class="name">Artist - Album Title</div>
+  </div>
+</div>
+
+</body>
+</html>

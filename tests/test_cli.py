@@ -85,3 +85,8 @@ def test_sync(cli):
 def test_tracker(cli):
     result = cli.run(['tracker'])
     assert result.exit_code == 0
+
+
+def test_web(cli):
+    result = cli.run(['web'])
+    assert result.exit_code == 0

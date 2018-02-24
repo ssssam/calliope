@@ -1,4 +1,3 @@
-
 sources = [
   '__init__.py',
   'config.py',
@@ -11,6 +10,7 @@ sources = [
   'cmd_stat.py',
   'cmd_sync.py',
   'cmd_tracker.py',
+  'cmd_web.py',
 ]
 
 install_data(
@@ -22,3 +22,5 @@ configure_file(
     output: 'cpe',
     configuration: cdata,
     install_dir: get_option('bindir'))
+
+subdir('data/web/templates')

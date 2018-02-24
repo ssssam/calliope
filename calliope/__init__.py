@@ -25,8 +25,13 @@ import yaml
 
 import enum
 import logging
+import os
 import sys
 import urllib.parse
+
+
+def datadir():
+    return os.path.join(os.path.dirname(__file__), 'data')
 
 
 class App:
@@ -149,3 +154,4 @@ from . import cmd_spotify
 from . import cmd_stat
 from . import cmd_sync
 from . import cmd_tracker
+from . import cmd_web
