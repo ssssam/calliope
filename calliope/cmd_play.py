@@ -79,7 +79,7 @@ def play(playlists, audio_output):
     file_uris = list(reversed(file_uris))
 
     if len(file_uris) == 0:
-        return
+        return None
 
     pipeline = Gst.Pipeline.new()
     concat = Gst.ElementFactory.make('concat', 'concat')
@@ -165,7 +165,7 @@ def play(playlists, audio_output):
         logging.debug("Complete")
         set_element_state_sync(pipeline, Gst.State.NULL)
 
-    return {'list': output_playlist}
+    return calliope.Playlist({'list': output_playlist})
 
 
 @calliope.cli.command(name='play')
@@ -183,4 +183,5 @@ def run(context, output, playlist):
     Gst.init([])
 
     output_playlist = play(input_playlists, output)
-    sys.stdout.write(yaml.dump(output_playlist))
+    if output_playlist:
+        output_playlist.dump(sys.stdout)

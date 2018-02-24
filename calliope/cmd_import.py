@@ -56,7 +56,7 @@ def parse_pls(text):
             'track': parser.get('playlist', 'Title%i' % i)
         }
         entries.append(entry)
-    return {'list': entries}
+    return calliope.Playlist({'list': entries})
 
 
 @calliope.cli.command(name='import')
@@ -72,4 +72,5 @@ def run(context):
     elif playlist_format == 'pls':
         playlist = parse_pls(text)
     #print(parser.sections())
-    print(yaml.dump(playlist))
+
+    playlist.dump(sys.stdout)
