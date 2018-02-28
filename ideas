@@ -1,0 +1,44 @@
+Things to make:
+
+* List your local music collection by your last.fm listening history
+
+  - Show most listened, least listened, and unlistened tracks.
+
+* Browse your local music collection by tag
+
+  - Could fork gnome-music for this ?
+
+* Browse your local music collection by last.fm tags
+
+  - Sync last.fm tags with Tracker tags also kind of related -- not
+    sure I want it?
+
+* Explore music geographically -- find bands from the same area that
+  you know or that are related to bands you know
+
+* Explore music by record label -- find other bands on the same label
+  as bands you know
+
+* Import Spotify playlists locally (doesn't need to be with Tracker
+   though -- m3u files are fine.)
+
+    https://github.com/watsonbox/exportify ? (JS)
+
+  - 2-way sync would be even better.
+
+
+Other thoughts:
+
+- Add these as features to gnome-music ?
+
+- What about remote music? i.e. DAAP shares from a media server.
+
+   - gnome-music uses Grilo, so if you can add a DAAP grilo plugin you
+     should do OK. Some level of caching in the DAAP plugin would be pretty
+     handy.
+
+   - for tracker-specific code... you really would need to import the
+     DAAP data into the tracker-store somehow, as a kind of removable
+     device.
+
+      -> probably the app itself should handle this.
