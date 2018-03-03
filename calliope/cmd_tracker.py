@@ -18,7 +18,7 @@
 import gi
 
 gi.require_version('Tracker', '2.0')
-from gi.repository import Tracker
+from gi.repository import GLib, Tracker
 
 import click
 import trackerappdomain
@@ -353,13 +353,29 @@ def cmd_annotate(context, playlist):
 
 
 @tracker_cli.command(name='scan')
-@click.argument('path', nargs=-1, type=click.Path(exists=True))
+@click.argument('path', nargs=1, type=click.Path(exists=True))
 @click.pass_context
-def cmd_scan(context):
+def cmd_scan(context, path):
     '''Scan all media files under a particular path and update a Tracker database.
 
     This is only possible when `--domain=app`.'''
-    pass
+    app_domain = context.obj.app_domain
+
+    if not app_domain:
+        raise RuntimeError("Scanning specific directories is only possible when "
+                           "using the app-specific Tracker domain.")
+
+    loop = GLib.MainLoop.new(None, 0)
+
+    def progress_callback(status, progress, remaining_time):
+        print("{}, {}, {}".format(status, progress, remaining_time))
+
+    def idle_callback():
+        loop.quit()
+
+    with trackerappdomain.glib_excepthook(loop):
+        app_domain.index_location_async(path, progress_callback, idle_callback)
+        loop.run()
 
 
 @tracker_cli.command(name='show')
