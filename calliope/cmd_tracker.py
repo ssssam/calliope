@@ -17,10 +17,7 @@
 
 import gi
 
-try:
-    gi.require_version('Tracker', '2.0')
-except ValueError:
-    gi.require_version('Tracker', '1.0')
+gi.require_version('Tracker', '2.0')
 from gi.repository import Tracker
 
 import click
