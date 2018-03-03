@@ -368,7 +368,7 @@ def cmd_scan(context, path):
     loop = GLib.MainLoop.new(None, 0)
 
     def progress_callback(status, progress, remaining_time):
-        print("{}, {}, {}".format(status, progress, remaining_time))
+        sys.stderr.write("Status: {}, {}, {}\n".format(status, progress, remaining_time))
 
     def idle_callback():
         loop.quit()
