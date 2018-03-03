@@ -1,5 +1,7 @@
 project('calliope')
 
+subproject('tracker-app-domain')
+
 python = find_program('python3', required: true)
 
 # We need to check for Python dependencies; but it's not possible with

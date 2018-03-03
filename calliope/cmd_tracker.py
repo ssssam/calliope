@@ -24,20 +24,26 @@ except ValueError:
 from gi.repository import Tracker
 
 import click
+import trackerappdomain
 import yaml
 
 import logging
+import os
 import sys
 import warnings
+import xdg.BaseDirectory
 
 import calliope
+
+
+DEFAULT_APP_DOMAIN_DIR = os.path.join(xdg.BaseDirectory.xdg_data_home, 'calliope', 'tracker')
 
 
 class TrackerClient():
     '''Helper functions for querying from the user's Tracker database.'''
 
-    def __init__(self):
-        self._conn = Tracker.SparqlConnection.get(None)
+    def __init__(self, connection):
+        self._conn = connection
 
     def query(self, query):
         '''Run a single SPARQL query.'''
@@ -295,25 +301,41 @@ def print_collection(result):
         print(yaml.dump(item))
 
 
-@calliope.cli.command(name='tracker')
-@click.option('--top', type=click.Choice(['artists']),
-              help="show artists with the most tracks in the local collection")
+@calliope.cli.group(name='tracker')
+@click.option('--domain', type=str, default='app',
+              help="Tracker domain to use. Specify 'app' for a private domain, "
+                   "or 'session' for the session-wide Tracker instance. (Default: 'app')")
+@click.option('--app-domain-dir', type=str, default=DEFAULT_APP_DOMAIN_DIR,
+              help="when --domain=app, store data in DIR (default: {})".format(DEFAULT_APP_DOMAIN_DIR))
+@click.pass_context
+def tracker_cli(context, domain, app_domain_dir):
+    if domain == 'app':
+        # It seems messy calling the tracker_app_domain() context manager
+        # directly here... but I'm not sure how else to get Click to run
+        # the cleanup function.
+        mgr = trackerappdomain.tracker_app_domain('uk.me.afuera.calliope', app_domain_dir)
+        tracker_app_domain = mgr.__enter__()
+        def cleanup():
+            mgr.__exit__(None, None, None)
+        context.call_on_close(cleanup)
+
+        context.obj.app_domain = tracker_app_domain
+        context.obj.tracker_client = TrackerClient(tracker_app_domain.connection())
+    else:
+        context.obj.app_domain = None
+        if domain != 'session':
+            Tracker.SparqlConnection.set_domain(domain)
+        context.obj.tracker_client = TrackerClient(Tracker.SparqlConnection.get())
+
+
+@tracker_cli.command(name='annotate')
 @click.argument('playlist', nargs=-1, type=click.Path(exists=True))
 @click.pass_context
-def run(context, top, playlist):
-    '''Query music files on the local machine'''
-
-    tracker = TrackerClient()
-
-    if top != None:
-        if top == 'artists':
-            print_table(tracker.artists_by_number_of_songs(limit=None))
-            return None
-        else:
-            raise RuntimeError("Unknown type: %s" % top)
+def cmd_annotate(context, playlist):
+    '''Add information stored in a Tracker database to items in a playlist.'''
+    tracker = context.obj.tracker_client
 
     if len(playlist) == 0:
-        print_collection(tracker.songs())
         return None
     else:
         input_playlists = (yaml.safe_load(open(p, 'r')) for p in playlist)
@@ -331,3 +353,31 @@ def run(context, top, playlist):
                     print(add_location(tracker, item))
                 except RuntimeError as e:
                     raise RuntimeError("%s\nItem: %s" % (e, item))
+
+
+@tracker_cli.command(name='scan')
+@click.argument('path', nargs=-1, type=click.Path(exists=True))
+@click.pass_context
+def cmd_scan(context):
+    '''Scan all media files under a particular path and update a Tracker database.
+
+    This is only possible when `--domain=app`.'''
+    pass
+
+
+@tracker_cli.command(name='show')
+@click.pass_context
+def cmd_show(context):
+    '''Show all files that have metadata stored in a Tracker database.
+
+    This is only possible when `--domain=app`.'''
+    tracker = context.obj.tracker_client
+    print_collection(tracker.songs())
+
+
+@tracker_cli.command(name='top-artists')
+@click.pass_context
+def cmd_top_artists(context):
+    '''Query the top artists in a Tracker database'''
+    tracker = context.obj.tracker_client
+    print_table(tracker.artists_by_number_of_songs(limit=None))
