@@ -304,7 +304,8 @@ def print_collection(result):
         print(yaml.dump(item))
 
 
-@calliope.cli.group(name='tracker')
+@calliope.cli.group(name='tracker',
+                    help="Query and manage the Tracker media database")
 @click.option('--domain', type=str, default='app',
               help="Tracker domain to use. Specify 'app' for a private domain, "
                    "or 'session' for the session-wide Tracker instance. (Default: 'app')")

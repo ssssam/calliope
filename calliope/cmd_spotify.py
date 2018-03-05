@@ -65,7 +65,8 @@ def print_spotify_playlist(playlist, tracks):
             print('  location: %s' % location)
 
 
-@calliope.cli.group(name='spotify')
+@calliope.cli.group(name='spotify',
+                    help="Interface to the Spotify online streaming service")
 @click.option('--user',
               help="show playlists for the given Spotify user")
 @click.pass_context
