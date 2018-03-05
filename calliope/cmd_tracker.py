@@ -100,7 +100,7 @@ class TrackerClient():
             generator=result_generator_fn(result_cursor))
 
 
-    def songs(self, artist_name=None, album_name=None, track_name=None):
+    def songs(self, artist_name=None, album_name=None, track_name=None, track_search_text=None):
         '''Return all songs matching specific search criteria.
 
         These are grouped into their respective releases. Any tracks that
@@ -125,10 +125,16 @@ class TrackerClient():
         else:
             album_pattern = ""
         if track_name:
+            assert track_search_text is None, "Cannot pass both track_name and track_search_text"
             track_pattern = """
                 ?track nie:title ?trackTitle .
                 FILTER (LCASE(?trackTitle) = "%s")
             """  % Tracker.sparql_escape_string(track_name.lower())
+        elif track_search_text:
+            track_pattern = """
+                ?track nie:title ?trackTitle .
+                FILTER (fn:contains(LCASE(?trackTitle), "%s"))
+            """  % Tracker.sparql_escape_string(track_search_text.lower())
         else:
             track_pattern = ""
 
@@ -376,6 +382,15 @@ def cmd_scan(context, path):
     with trackerappdomain.glib_excepthook(loop):
         app_domain.index_location_async(path, progress_callback, idle_callback)
         loop.run()
+
+
+@tracker_cli.command(name='search')
+@click.argument('text', nargs=1, type=str)
+@click.pass_context
+def cmd_search(context, text):
+    '''Search track titles in the Tracker database.'''
+    tracker = context.obj.tracker_client
+    print_collection(tracker.songs(track_search_text=text))
 
 
 @tracker_cli.command(name='show')
