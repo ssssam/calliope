@@ -152,6 +152,7 @@ from . import cmd_play
 from . import cmd_shuffle
 from . import cmd_spotify
 from . import cmd_stat
+from . import cmd_suggest
 from . import cmd_sync
 from . import cmd_tracker
 from . import cmd_web

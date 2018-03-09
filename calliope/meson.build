@@ -8,6 +8,7 @@ sources = [
   'cmd_shuffle.py',
   'cmd_spotify.py',
   'cmd_stat.py',
+  'cmd_suggest.py',
   'cmd_sync.py',
   'cmd_tracker.py',
   'cmd_web.py',

@@ -77,6 +77,11 @@ def test_stat(cli):
     assert result.exit_code == 0
 
 
+def test_suggest(cli):
+    result = cli.run(['suggest'])
+    assert result.exit_code == 0
+
+
 def test_sync(cli):
     result = cli.run(['sync'])
     assert result.exit_code == 0
