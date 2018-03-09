@@ -23,6 +23,7 @@ This module contains the core parts of Calliope.
 import click
 import yaml
 
+import copy
 import enum
 import logging
 import os
@@ -106,6 +107,18 @@ class Playlist():
         kind_name = 'collection' if self.kind == PlaylistKind.COLLECTION else 'playlist'
         document = { kind_name: self.items }
         yaml.safe_dump(document, sys.stdout, default_flow_style=False)
+
+    def tracks(self):
+        for item in self.items:
+            if 'track' in item:
+                yield item
+            elif 'album' in item and 'tracks' in item:
+                for track in item['tracks']:
+                    track_merged = copy.copy(track)
+                    track_merged['album'] = item['album']
+                    if item.get('artist') and 'artist' not in track_merged:
+                        track_merged['artist'] = item['artist']
+                    yield track_merged
 
 
 class OneShotResultsTable():

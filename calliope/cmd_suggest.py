@@ -25,6 +25,7 @@ see its documentation at: http://lyst.github.io/lightfm/docs/home.html
 
 import click
 import lightfm
+import numpy
 import yaml
 
 import logging
@@ -57,4 +58,25 @@ def suggest_cli(context):
 def tracks(context, from_, count, training_input):
     '''Suggest tracks from a collection based on the given training inputs.'''
 
-    input_collection = yaml.safe_load(open(from_, 'r'))
+    # First we need a 'user-item' interaction matrix. Each 'item' is a track in
+    # the input collection. Each 'user' is one of the input playlists.
+
+    input_collection = calliope.Playlist(yaml.safe_load(open(from_, 'r')))
+
+    interaction_matrix = []
+
+    for path, weight in training_input:
+        input_playlists = [calliope.Playlist(data) for data in yaml.safe_load_all(open(path, 'r'))]
+
+        # Set all interactions to zeros
+        interaction_list = [0.0] * input_collection.track_count()
+
+        for input_playlist in input_playlists:
+            for track in input_playlist.tracks():
+                track_id = input_collection.track_index(track)
+                if track_id:
+                    interaction_list[track_id] = weight
+        interaction_matrix.append(interaction_list)
+
+    interaction_matrix = numpy.matrix(interaction_matrix)
+    print(interaction_matrix)
