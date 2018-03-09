@@ -24,7 +24,11 @@ subdir('calliope')
 pytest = find_program('pytest-3')
 
 pytest_env = environment()
-pytest_env.prepend('PYTHONPATH', meson.current_source_dir())
+# FIXME: doing 'prepend' twice seems to lose one of the values; possibly a
+# bug in Meson 0.44.1..
+pytest_env.prepend('PYTHONPATH', '@0@:@1@'.format(
+    meson.current_source_dir(),
+    join_paths(meson.current_source_dir(), 'subprojects', 'tracker-app-domain')))
 test('pytest', pytest,
     env: pytest_env,
     workdir: meson.current_source_dir())
