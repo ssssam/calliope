@@ -1,4 +1,0 @@
-click
-lightfm
-musicbrainzngs
-spotipy
