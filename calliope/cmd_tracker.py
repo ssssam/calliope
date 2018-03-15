@@ -397,9 +397,7 @@ def cmd_search(context, text):
 @tracker_cli.command(name='show')
 @click.pass_context
 def cmd_show(context):
-    '''Show all files that have metadata stored in a Tracker database.
-
-    This is only possible when `--domain=app`.'''
+    '''Show all files that have metadata stored in a Tracker database.'''
     tracker = context.obj.tracker_client
     print_collection(tracker.songs())
 
