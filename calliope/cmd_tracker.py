@@ -395,11 +395,13 @@ def cmd_search(context, text):
 
 
 @tracker_cli.command(name='show')
+@click.option('--artist', nargs=1, type=str,
+              help="Limit results to the given artist")
 @click.pass_context
-def cmd_show(context):
+def cmd_show(context, artist):
     '''Show all files that have metadata stored in a Tracker database.'''
     tracker = context.obj.tracker_client
-    print_collection(tracker.songs())
+    print_collection(tracker.songs(artist_name=artist))
 
 
 @tracker_cli.command(name='top-artists')
