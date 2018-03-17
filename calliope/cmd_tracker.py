@@ -141,7 +141,7 @@ class TrackerClient():
         query_songs_with_releases = """
         SELECT
             nie:url(?track)
-            nmm:albumTitle(?album)
+            nie:title(?album)
             nie:title(?track)
             %s
         WHERE {
@@ -150,7 +150,7 @@ class TrackerClient():
                 nmm:musicAlbum ?album .
             %s %s %s
         } ORDER BY
-            nmm:albumTitle(?album)
+            nie:title(?album)
             nmm:trackNumber(?track)
         """ % (artist_select, artist_pattern, album_pattern, track_pattern)
 
