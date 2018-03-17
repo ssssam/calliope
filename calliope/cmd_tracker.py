@@ -297,9 +297,17 @@ def print_table(result_table):
 
 
 def print_collection(result):
+    # We manually serialize the YAML here in chunks so that large collections
+    # don't block for ages with no output.
     print('collection:')
     for item in result:
-        print(yaml.dump(item))
+        item_yaml = yaml.dump(item)
+
+        for i, line in enumerate(item_yaml.splitlines()):
+            if i == 0:
+                print('- {}'.format(line))
+            else:
+                print('  {}'.format(line))
 
 
 @calliope.cli.group(name='tracker',
