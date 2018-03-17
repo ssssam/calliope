@@ -330,12 +330,14 @@ def tracker_cli(context, domain, app_domain_dir):
         context.call_on_close(cleanup)
 
         context.obj.app_domain = tracker_app_domain
-        context.obj.tracker_client = TrackerClient(tracker_app_domain.connection())
+        context.obj.sparql_connection = tracker_app_domain.connection()
     else:
         context.obj.app_domain = None
         if domain != 'session':
             Tracker.SparqlConnection.set_domain(domain)
-        context.obj.tracker_client = TrackerClient(Tracker.SparqlConnection.get())
+        context.obj.sparql_connection = Tracker.SparqlConnection.get()
+
+    context.obj.tracker_client = TrackerClient(context.obj.sparql_connection)
 
 
 @tracker_cli.command(name='annotate')
@@ -408,6 +410,17 @@ def cmd_show(context, artist):
     '''Show all files that have metadata stored in a Tracker database.'''
     tracker = context.obj.tracker_client
     print_collection(tracker.songs(filter_artist_name=artist))
+
+
+@tracker_cli.command(name='sparql')
+@click.argument('query', nargs=1, type=str)
+@click.pass_context
+def cmd_sparql(context, query):
+    '''Execute a SPARQL query.'''
+    cursor = context.obj.sparql_connection.query(query)
+    while cursor.next():
+        values = [str(cursor.get_string(i)[0]) for i in range(0, cursor.get_n_columns())]
+        print(", ".join(values))
 
 
 @tracker_cli.command(name='top-artists')
