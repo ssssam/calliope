@@ -1,5 +1,6 @@
 sources = [
   '__init__.py',
+  '__main__.py',
   'config.py',
   'cmd_export.py',
   'cmd_import.py',

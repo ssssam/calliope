@@ -1,6 +1,5 @@
-#!/usr/bin/python3
 # Calliope
-# Copyright (C) 2017  Sam Thursfield <sam@afuera.me.uk>
+# Copyright (C) 2017-2018  Sam Thursfield <sam@afuera.me.uk>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,20 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-'''Calliope is a set of tools for processing playlists.
+import warnings
 
-This module is a wrapper script for launching Calliope from the path
-where it was installed.
+import calliope
 
-'''
+def pretty_warnings(message, category, filename, lineno,
+                    file=None, line=None):
+    return 'WARNING: %s\n' % (message)
 
-import click
+warnings.formatwarning = pretty_warnings
 
-import runpy
-import sys
 
-PYTHON_SITE_PACKAGES_DIR = '@pythondir@'
-
-sys.path.insert(1, PYTHON_SITE_PACKAGES_DIR)
-
-runpy.run_module('calliope')
+try:
+    calliope.cli()
+except RuntimeError as e:
+    sys.stderr.write("ERROR: %s\n" % e)
+    sys.exit(1)
+except BrokenPipeError as e:
+    # These happen when we are piped to `less` or something and are harmless.
+    sys.exit(0)
