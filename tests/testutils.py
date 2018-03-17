@@ -54,8 +54,6 @@ class Cli():
         command = "cpe " + " ".join(args)
         print("Calliope exited with code {} for invocation:\n\t{}"
                 .format(result.exit_code, command))
-        if result.output:
-            print("Program output was:\n{}".format(result.output))
         if result.stderr:
             print("Program stderr was:\n{}".format(result.stderr))
 
