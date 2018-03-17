@@ -41,6 +41,7 @@ setup_requires = [
 ]
 
 test_requires = [
+  'mutagen',
 ]
 
 missing_dependency_errors = []
