@@ -14,6 +14,10 @@ if python_version_check.returncode() != 0
 endif
 python_version = python_version_check.stdout()
 
+if not python_version.version_compare('>= 3.5')
+  error('Python 3.5 or newer is required.')
+endif
+
 python_name = 'python' + python_version
 python_site_packages_dir = join_paths(get_option('prefix'), get_option('libdir'), python_name, 'site-packages')
 
