@@ -75,5 +75,6 @@ pytest_env.prepend('PYTHONPATH', '@0@:@1@'.format(
     meson.current_source_dir(),
     join_paths(meson.current_source_dir(), 'subprojects', 'tracker-app-domain')))
 test('pytest', pytest,
+    args: 'tests/',
     env: pytest_env,
     workdir: meson.current_source_dir())
