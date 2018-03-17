@@ -100,7 +100,7 @@ class TrackerClient():
             generator=result_generator_fn(result_cursor))
 
 
-    def songs(self, artist_name=None, album_name=None, track_name=None, track_search_text=None):
+    def songs(self, filter_artist_name=None, filter_album_name=None, filter_track_name=None, track_search_text=None):
         '''Return all songs matching specific search criteria.
 
         These are grouped into their respective releases. Any tracks that
@@ -108,8 +108,8 @@ class TrackerClient():
         appear on multiple releases will appear multiple times.
 
         '''
-        if artist_name:
-            artist_id = self.artist_id(artist_name)
+        if filter_artist_name:
+            artist_id = self.artist_id(filter_artist_name)
             artist_select = ""
             artist_pattern = """
                 ?track nmm:performer <%s> .
@@ -117,19 +117,19 @@ class TrackerClient():
         else:
             artist_select = "nmm:artistName(nmm:performer(?track))"
             artist_pattern = ""
-        if album_name:
+        if filter_album_name:
             album_pattern = """
                 ?album nie:title ?albumTitle .
                 FILTER (LCASE(?albumTitle) = "%s")
-            """  % Tracker.sparql_escape_string(album_name.lower())
+            """  % Tracker.sparql_escape_string(filter_album_name.lower())
         else:
             album_pattern = ""
-        if track_name:
-            assert track_search_text is None, "Cannot pass both track_name and track_search_text"
+        if filter_track_name:
+            assert track_search_text is None, "Cannot pass both filter_track_name and track_search_text"
             track_pattern = """
                 ?track nie:title ?trackTitle .
                 FILTER (LCASE(?trackTitle) = "%s")
-            """  % Tracker.sparql_escape_string(track_name.lower())
+            """  % Tracker.sparql_escape_string(filter_track_name.lower())
         elif track_search_text:
             track_pattern = """
                 ?track nie:title ?trackTitle .
@@ -156,7 +156,7 @@ class TrackerClient():
 
         songs_with_releases = self.query(query_songs_with_releases)
 
-        if not album_name:
+        if not filter_album_name:
             query_songs_without_releases = """
             SELECT
                 nie:url(?track)
@@ -188,12 +188,11 @@ class TrackerClient():
 
         album_tracks = []
         while songs_with_releases.next():
-            if artist_select:
-                artist_name = songs_with_releases.get_string(3)[0]
+            current_artist_name = filter_artist_name or songs_with_releases.get_string(3)[0]
             album_name = songs_with_releases.get_string(1)[0]
 
             if prev_artist_name is -1:
-                prev_artist_name = artist_name
+                prev_artist_name = current_artist_name
             if prev_album_name is -1:
                 prev_album_name = album_name
 
@@ -204,7 +203,7 @@ class TrackerClient():
                     'tracks': album_tracks,
                 }
                 album_tracks = []
-                prev_artist_name = artist_name
+                prev_artist_name = current_artist_name
                 prev_album_name = album_name
 
             album_tracks.append({
@@ -213,7 +212,7 @@ class TrackerClient():
             })
         if len(album_tracks) > 0:
             yield {
-                'artist': artist_name,
+                'artist': current_artist_name,
                 'album': album_name,
                 'tracks': album_tracks,
             }
@@ -222,16 +221,15 @@ class TrackerClient():
         catchall_tracks = []
         if songs_without_releases:
             while songs_without_releases.next():
-                if artist_select:
-                    artist_name = songs_without_releases.get_string(3)[0]
+                current_artist_name = filter_artist_name or songs_without_releases.get_string(3)[0]
                 if prev_artist_name is -1:
-                    prev_artist_name = artist_name
-                if prev_artist_name != artist_name:
+                    prev_artist_name = current_artist_name
+                if prev_artist_name != current_artist_name:
                     yield {
                         'artist': prev_artist_name,
                         'tracks': catchall_tracks
                     }
-                    prev_artist_name = artist_name
+                    prev_artist_name = current_artist_name
                     catchall_tracks = []
                 catchall_tracks.append({
                     'track': songs_without_releases.get_string(2)[0],
@@ -239,7 +237,7 @@ class TrackerClient():
                 })
             if len(catchall_tracks) > 0:
                 yield {
-                    'artist': artist_name,
+                    'artist': current_artist_name,
                     'tracks': catchall_tracks
                 }
 
@@ -279,13 +277,13 @@ def add_location(tracker, item):
     if tracks:
         for track in tracks:
             result.extend(
-                list(tracker.songs(artist_name=item.get('artist'), track_name=str(track))))
+                list(tracker.songs(filter_artist_name=item.get('artist'), filter_track_name=str(track))))
     elif albums:
         for album in albums:
             result.extend(
-                list(tracker.songs(artist_name=item.get('artist'), album_name=str(album))))
+                list(tracker.songs(filter_artist_name=item.get('artist'), filter_album_name=str(album))))
     else:
-        result = list(tracker.songs(artist_name=item['artist']))
+        result = list(tracker.songs(filter_artist_name=item['artist']))
 
     if len(result) > 0:
         return yaml.dump(result)
@@ -401,7 +399,7 @@ def cmd_search(context, text):
 def cmd_show(context, artist):
     '''Show all files that have metadata stored in a Tracker database.'''
     tracker = context.obj.tracker_client
-    print_collection(tracker.songs(artist_name=artist))
+    print_collection(tracker.songs(filter_artist_name=artist))
 
 
 @tracker_cli.command(name='top-artists')
