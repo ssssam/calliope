@@ -156,6 +156,8 @@ class OneShotResultsTable():
             print("\t".join(row))
         self.dead = True
 
+
+from . import cache
 from . import config
 
 from . import cmd_export
