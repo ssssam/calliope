@@ -19,6 +19,7 @@ import click
 import musicbrainzngs
 import yaml
 
+import json
 import logging
 import sys
 import warnings
@@ -46,7 +47,9 @@ def add_musicbrainz_artist(cache, item):
         cache.store('artist:{}'.format(artist_name), entry)
 
     if entry is None:
-        print("# Unable to find %s on musicbrainz" % artist_name)
+        warnings = item.get('musicbrainz.warnings', [])
+        warnings += ["Unable to find artist on musicbrainz"]
+        item['musicbrainz.warnings'] = warnings
     else:
         item['musicbrainz.artist'] = entry['id']
         if 'country' in entry:
@@ -65,13 +68,11 @@ def run(context, playlist):
 
     musicbrainzngs.set_useragent("Calliope", "0.1", "https://github.com/ssssam/calliope")
 
-    output_playlist = []
-
     for item in calliope.playlist.read(playlist):
         if 'artist' in item and 'musicbrainz.artist' not in item:
             try:
-                output_playlist.append(add_musicbrainz_artist(cache, item))
+                item = add_musicbrainz_artist(cache, item)
             except RuntimeError as e:
                 raise RuntimeError("%s\nItem: %s" % (e, item))
 
-    calliope.playlist.write(output_playlist, sys.stdout)
+        calliope.playlist.write([item], sys.stdout)
