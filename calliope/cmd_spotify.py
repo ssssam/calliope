@@ -29,6 +29,8 @@ import warnings
 
 import calliope
 
+log = logging.getLogger(__name__)
+
 
 def flatten(l):
     return l[0] if len(l) == 1 else l
@@ -36,7 +38,7 @@ def flatten(l):
 
 def annotate_track(sp, track_entry):
     '''Query Spotify-specific metadata about a track and add to its entry.'''
-    logging.debug("Searching for track: %s", track_entry)
+    log.debug("Searching for track: %s", track_entry)
     result = sp.search(q=track_entry['track'], type='track')
     first_result = result['tracks']['items'][0]
 

@@ -19,7 +19,6 @@ import click
 import musicbrainzngs
 import yaml
 
-import logging
 import sys
 import warnings
 

@@ -21,7 +21,6 @@ import jinja2
 import yaml
 
 import argparse
-import logging
 import os
 import sys
 

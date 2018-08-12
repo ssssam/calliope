@@ -29,6 +29,8 @@ import sys
 
 import calliope
 
+log = logging.getLogger(__name__)
+
 
 GST_NANOSECONDS = 1 * 1000 * 1000 * 1000
 
@@ -42,13 +44,13 @@ def set_element_state_sync(pipeline, target_state):
             msg = bus.pop_filtered(Gst.MessageType.ERROR)
             if msg:
                 error = msg.parse_error()
-                logging.debug(error.debug)
+                log.debug(error.debug)
                 raise error.gerror
             else:
                 raise RuntimeError("Failed to change state to %s" % target_state)
         if state == target_state:
             break
-    logging.debug("Got to state %s", target_state)
+    log.debug("Got to state %s", target_state)
 
 
 def update_item_from_timestamp(item, timestamp):
@@ -99,7 +101,7 @@ def play(playlists, audio_output):
 
     def enqueue_songs(uri_list, i=0):
         uri = uri_list.pop()
-        logging.debug("Enqueuing %s", uri)
+        log.debug("Enqueuing %s", uri)
 
         uridecodebin = Gst.ElementFactory.make('uridecodebin',
                                                'uridecodebin_%u' % i)
@@ -108,7 +110,7 @@ def play(playlists, audio_output):
         uridecodebin.set_property('uri', uri)
 
         def decode_pad_added(element, pad):
-            logging.debug("Pad added")
+            log.debug("Pad added")
             pad.link(concat.get_request_pad('sink_%u'))
             if len(uri_list) > 0:
                 enqueue_songs(uri_list, i+1)
@@ -135,7 +137,7 @@ def play(playlists, audio_output):
                 result, timestamp = pipeline.query_position(Gst.Format.TIME)
                 stream_state['track-index'] += 1
                 index = stream_state['track-index']
-                logging.debug("New stream started. Now at track %i; timestamp %s", index, timestamp)
+                log.debug("New stream started. Now at track %i; timestamp %s", index, timestamp)
                 update_item_from_timestamp(output_playlist[index], stream_state['time'])
                 stream_state['time'] += timestamp
 
@@ -149,7 +151,7 @@ def play(playlists, audio_output):
             if message:
                 if message.type == Gst.MessageType.ERROR:
                     error = message.parse_error()
-                    logging.debug(error.debug)
+                    log.debug(error.debug)
                     raise(error.gerror)
                 elif message.type == Gst.MessageType.EOS:
                     index = stream_state['track-index'] + 1
@@ -162,7 +164,7 @@ def play(playlists, audio_output):
                         update_item_from_tags(output_playlist[index], taglist)
 
     finally:
-        logging.debug("Complete")
+        log.debug("Complete")
         set_element_state_sync(pipeline, Gst.State.NULL)
 
     return calliope.Playlist({'list': output_playlist})

@@ -31,6 +31,8 @@ import warnings
 
 import calliope
 
+log = logging.getLogger(__name__)
+
 
 class Operation():
     '''Base class for operations that this tool can perform.'''
@@ -211,5 +213,5 @@ def run(context, dry_run, target, allow_formats, album_per_dir,
             print(operation)
     else:
         for operation in operations:
-            logging.debug(str(operation))
+            log.debug(str(operation))
             operation.run()

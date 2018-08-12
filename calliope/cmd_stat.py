@@ -20,7 +20,6 @@ import click
 import yaml
 
 import argparse
-import logging
 import os
 import sys
 import urllib.parse

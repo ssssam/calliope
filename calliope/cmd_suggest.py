@@ -28,7 +28,6 @@ import lightfm
 import numpy
 import yaml
 
-import logging
 import os
 import sys
 

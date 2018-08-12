@@ -21,7 +21,6 @@ import yaml
 
 import argparse
 import itertools
-import logging
 import os
 import random
 import sys

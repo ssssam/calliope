@@ -30,16 +30,18 @@ import yaml
 
 import calliope
 
+log = logging.getLogger(__name__)
+
 
 def guess_format(text):
     try:
-        logging.debug("guess_format: Checking .pls format")
+        log.debug("guess_format: Checking .pls format")
         parser = configparser.ConfigParser()
         parser.read_string(text)
         if parser.has_section('playlist'):
             return 'pls'
     except (UnicodeDecodeError, configparser.Error) as e:
-        logging.debug("guess_format: Got exception: %s", e)
+        log.debug("guess_format: Got exception: %s", e)
         pass
     return None
 

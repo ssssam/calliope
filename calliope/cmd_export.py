@@ -18,7 +18,6 @@
 
 import click
 
-import logging
 import sys
 import yaml
 

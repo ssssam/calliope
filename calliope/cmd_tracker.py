@@ -32,6 +32,8 @@ import xdg.BaseDirectory
 
 import calliope
 
+log = logging.getLogger(__name__)
+
 
 DEFAULT_APP_DOMAIN_DIR = os.path.join(xdg.BaseDirectory.xdg_data_home, 'calliope', 'tracker')
 
@@ -44,7 +46,7 @@ class TrackerClient():
 
     def query(self, query):
         '''Run a single SPARQL query.'''
-        logging.debug("Query: %s" % query)
+        log.debug("Query: %s" % query)
         return self._conn.query(query)
 
     def artist_id(self, artist_name):
