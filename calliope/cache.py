@@ -17,9 +17,13 @@
 
 import contextlib
 import json
+import logging
 import os
 import tempfile
+import time
 import xdg.BaseDirectory
+
+log = logging.getLogger(__name__)
 
 
 # Adapted from BuildStream:
@@ -100,25 +104,33 @@ class Cache:
         self._path = os.path.join(xdg.BaseDirectory.save_cache_path('calliope'), namespace)
 
         self._data = {}
+        self._mtime = None
 
     def _load(self):
         try:
             with open(self._path) as f:
                 self._data = json.load(f)
+            self._mtime = time.time()
         except FileNotFoundError as e:
             pass
 
     def _save(self):
         with save_file_atomic(self._path) as f:
             json.dump(self._data, f)
+        self._mtime = time.time()
+
+    def _check_reload(self):
+        if self._mtime is None:
+            log.debug("Loading cache for the first time")
+            self._load()
+        else:
+            mtime = os.stat(self._path).st_mtime
+            if self._mtime < mtime:
+                log.debug("Cache has been updated (new mtime is {})".format(mtime))
+                self._load()
 
     def lookup(self, key):
-        # FIXME: if the cache becomes too big or there are IO problems, this
-        # will block the program. We should at least monitor the loading process
-        # and display feedback to the user when it is taking a long time.
-        # FIXME: we should be able to monitor this file for changes, and avoid
-        # reading every time we look up a value if the mtime hasn't changed.
-        self._load()
+        self._check_reload()
         return self._data.get(key)
 
     def store(self, key, value):
