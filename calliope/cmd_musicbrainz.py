@@ -58,10 +58,39 @@ def add_musicbrainz_artist(cache, item):
     return item
 
 
+def add_musicbrainz_artist_urls(cache, item):
+    if 'musicbrainz.artist' not in item:
+        # We assume add_musicbrainz_artist() was already called, so
+        # we assume we couldn't find this artist in the cache.
+        pass
+    else:
+        artist_name = item['artist']
+        artist_musicbrainz_id = item['musicbrainz.artist']
+        found, result_urls = cache.lookup('artist:{}:urls'.format(artist_musicbrainz_id))
+        if found:
+            log.debug("Found artist urls for {} in cache".format(artist_name))
+        else:
+            log.debug("Didn't find artist urls for {} in cache, running remote query".format(artist_name))
+
+            result = musicbrainzngs.get_artist_by_id(item['musicbrainz.artist'], includes='url-rels')
+
+            result_urls = result['artist'].get('url-relation-list', [])
+
+            cache.store('artist:{}:urls'.format(artist_musicbrainz_id), result_urls)
+
+        item_urls = item.get('musicbrainz.artist.urls', [])
+        for result_url in result_urls:
+            item_urls.append(
+                { 'musicbrainz.url.type': result_url['type'], 'musicbrainz.url.target': result_url['target'] })
+        item['musicbrainz.artist.urls'] = item_urls
+    return item
+
+
 @calliope.cli.command(name='musicbrainz')
 @click.argument('playlist', type=click.File(mode='r'))
+@click.option('--include', '-i', type=click.Choice(['urls']), multiple=True)
 @click.pass_context
-def run(context, playlist):
+def run(context, playlist, include):
     '''Annotate playlists with data from Musicbrainz'''
 
     cache = calliope.cache.Cache(namespace='musicbrainz')
@@ -74,5 +103,8 @@ def run(context, playlist):
                 item = add_musicbrainz_artist(cache, item)
             except RuntimeError as e:
                 raise RuntimeError("%s\nItem: %s" % (e, item))
+
+        if 'urls' in include:
+            item = add_musicbrainz_artist_urls(cache, item)
 
         calliope.playlist.write([item], sys.stdout)
