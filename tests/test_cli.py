@@ -32,13 +32,17 @@ def test_export(cli):
     result = cli.run(['export'])
     assert result.exit_code == 0
 
-
 def test_import(cli):
     example_pls = '''[playlist]
     NumberOfEntries=0
     '''
 
     result = cli.run(['import'], input=example_pls)
+    assert result.exit_code == 0
+
+
+def test_musicbrainz(cli):
+    result = cli.run(['musicbrainz'], input='')
     assert result.exit_code == 0
 
 
