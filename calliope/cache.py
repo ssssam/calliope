@@ -130,8 +130,16 @@ class Cache:
                 self._load()
 
     def lookup(self, key):
+        '''Lookup 'key' in the cache.
+
+        Returns a tuple of (found, value).
+
+        '''
         self._check_reload()
-        return self._data.get(key)
+        if key in self._data:
+            return True, self._data[key]
+        else:
+            return False, None
 
     def store(self, key, value):
         self._data[key] = value
