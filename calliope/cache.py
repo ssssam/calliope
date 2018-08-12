@@ -98,10 +98,11 @@ class Cache:
     in future.
 
     '''
-    def __init__(self, namespace):
-        self.namespace = namespace
+    def __init__(self, namespace, cachedir=None):
+        if cachedir is None:
+            cachedir = xdg.BaseDirectory.save_cache_path('calliope')
 
-        self._path = os.path.join(xdg.BaseDirectory.save_cache_path('calliope'), namespace)
+        self._path = os.path.join(cachedir, namespace)
 
         self._data = {}
         self._mtime = None
