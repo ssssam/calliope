@@ -49,9 +49,6 @@ def add_musicbrainz_artist(item):
 def run(context, playlist):
     '''Annotate playlists with data from Musicbrainz'''
 
-    if context.obj.debug:
-        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-
     musicbrainzngs.set_useragent("Calliope", "0.1", "https://github.com/ssssam/calliope")
 
     if len(playlist) == 0:
