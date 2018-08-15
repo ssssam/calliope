@@ -51,13 +51,11 @@ def measure_size(playlists):
 
 
 @calliope.cli.command(name='stat')
-@click.option('--duration', '-d', is_flag=True,
-              help="show the total duration of the playlist")
 @click.option('--size', '-s', is_flag=True,
               help="show the total size on disk of the playlist contents")
 @click.argument('playlist', nargs=-1, type=click.Path(exists=True))
 @click.pass_context
-def run(context, duration, size, playlist):
+def run(context, size, playlist):
     '''Information about the contents of a playlist'''
 
     if playlist == None:
@@ -67,7 +65,5 @@ def run(context, duration, size, playlist):
 
     if size:
         measure_size(input_playlists)
-    elif duration:
-        measure_duration(input_playlists)
     else:
         print("Please select a mode.")
