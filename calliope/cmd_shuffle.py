@@ -42,7 +42,7 @@ def measure_size(playlists):
 
     size = 0
     for playlist_data in playlists:
-        for item in calliope.Playlist(playlist_data):
+        for item in calliope.playlist.Playlist(playlist_data):
             if 'location' in item:
                 size += measure_one(item)
             elif 'tracks' in item:
@@ -67,9 +67,9 @@ def run(context, count, playlist):
         for p in playlist:
             input_playlists.extend(yaml.safe_load_all(open(p, 'r')))
 
-    corpus = calliope.Playlist()
+    corpus = calliope.playlist.Playlist()
     for playlist_data in input_playlists:
-        corpus.append(calliope.Playlist(playlist_data))
+        corpus.append(calliope.playlist.Playlist(playlist_data))
 
     # This is the simplest shuffle that we could implement.
     #

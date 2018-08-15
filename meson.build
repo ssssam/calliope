@@ -66,6 +66,4 @@ cdata.set('pythondir', python_site_packages_dir)
 
 subdir('calliope')
 
-pythonpath_dir = meson.current_source_dir()
-
 subdir('tests')
