@@ -19,44 +19,92 @@ import click
 import musicbrainzngs
 import yaml
 
+import json
+import logging
 import sys
 import warnings
 
 import calliope
 
+log = logging.getLogger(__name__)
 
-# FIXME: we need to cache requests and responses.
-# How about
-# https://github.com/jaraco/jaraco.net/blob/master/jaraco/net/http/caching.py ?
 
-def add_musicbrainz_artist(item):
-    artist = item['artist']
-    result = musicbrainzngs.search_artists(artist=artist)['artist-list']
-    if len(result) == 0:
-        print("# Unable to find %s on musicbrainz" % artist)
+def add_musicbrainz_artist(cache, item):
+    artist_name = item['artist']
+
+    found, entry = cache.lookup('artist:{}'.format(artist_name))
+
+    if found:
+        log.debug("Found artist:{} in cache".format(artist_name))
     else:
-        artist = result[0]
-        item['musicbrainz.artist'] = artist['id']
-        if 'country' in artist:
-            item['musicbrainz.artist.country'] = artist['country']
+        log.debug("Didn't find artist:{} in cache, running remote query".format(artist_name))
+        result = musicbrainzngs.search_artists(artist=artist_name)['artist-list']
+        if len(result) == 0:
+            entry = None
+        else:
+            entry = result[0]
+
+        cache.store('artist:{}'.format(artist_name), entry)
+
+    if entry is None:
+        warnings = item.get('musicbrainz.warnings', [])
+        warnings += ["Unable to find artist on musicbrainz"]
+        item['musicbrainz.warnings'] = warnings
+    else:
+        item['musicbrainz.artist'] = entry['id']
+        if 'country' in entry:
+            item['musicbrainz.artist.country'] = entry['country']
+
+    return item
+
+
+def add_musicbrainz_artist_urls(cache, item):
+    if 'musicbrainz.artist' not in item:
+        # We assume add_musicbrainz_artist() was already called, so
+        # we assume we couldn't find this artist in the cache.
+        pass
+    else:
+        artist_name = item['artist']
+        artist_musicbrainz_id = item['musicbrainz.artist']
+        found, result_urls = cache.lookup('artist:{}:urls'.format(artist_musicbrainz_id))
+        if found:
+            log.debug("Found artist urls for {} in cache".format(artist_name))
+        else:
+            log.debug("Didn't find artist urls for {} in cache, running remote query".format(artist_name))
+
+            result = musicbrainzngs.get_artist_by_id(item['musicbrainz.artist'], includes='url-rels')
+
+            result_urls = result['artist'].get('url-relation-list', [])
+
+            cache.store('artist:{}:urls'.format(artist_musicbrainz_id), result_urls)
+
+        item_urls = item.get('musicbrainz.artist.urls', [])
+        for result_url in result_urls:
+            item_urls.append(
+                { 'musicbrainz.url.type': result_url['type'], 'musicbrainz.url.target': result_url['target'] })
+        item['musicbrainz.artist.urls'] = item_urls
     return item
 
 
 @calliope.cli.command(name='musicbrainz')
 @click.argument('playlist', type=click.File(mode='r'))
+@click.option('--include', '-i', type=click.Choice(['urls']), multiple=True)
 @click.pass_context
-def run(context, playlist):
+def run(context, playlist, include):
     '''Annotate playlists with data from Musicbrainz'''
 
-    musicbrainzngs.set_useragent("Calliope", "0.1", "https://github.com/ssssam/calliope")
+    cache = calliope.cache.Cache(namespace='musicbrainz')
 
-    output_playlist = []
+    musicbrainzngs.set_useragent("Calliope", "0.1", "https://github.com/ssssam/calliope")
 
     for item in calliope.playlist.read(playlist):
         if 'artist' in item and 'musicbrainz.artist' not in item:
             try:
-                output_playlist.append(add_musicbrainz_artist(item))
+                item = add_musicbrainz_artist(cache, item)
             except RuntimeError as e:
                 raise RuntimeError("%s\nItem: %s" % (e, item))
 
-    calliope.playlist.write(output_playlist, sys.stdout)
+        if 'urls' in include:
+            item = add_musicbrainz_artist_urls(cache, item)
+
+        calliope.playlist.write([item], sys.stdout)
