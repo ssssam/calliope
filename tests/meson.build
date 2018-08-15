@@ -2,6 +2,7 @@ tests = [
   'test_cache.py',
   'test_cli.py',
   'test_export.py',
+  'test_import.py',
   'test_tracker.py',
 ]
 
