@@ -15,17 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import pytest
-
 import os
-
-import testutils
-
-
-@pytest.fixture()
-def cli():
-    '''Fixture for testing through the `cpe` commandline interface.'''
-    return testutils.Cli()
 
 
 def test_export(cli):
