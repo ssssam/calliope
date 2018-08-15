@@ -25,9 +25,6 @@ import calliope
 
 
 def convert_to_cue(playlist):
-    if playlist.kind != calliope.PlaylistKind.PLAYLIST:
-        raise RuntimeError("Only playlists can be converted to CUE sheets")
-
     output_text = ['FILE "none" WAVE']
     for i, item in enumerate(playlist):
         output_text.append("  TRACK %02i AUDIO" % (i + 1))
@@ -49,18 +46,12 @@ def convert_to_cue(playlist):
 
 @calliope.cli.command(name='export')
 @click.option('-f', '--format', type=click.Choice(['cue']), default='cue')
-@click.argument('playlist', nargs=-1, type=click.Path(exists=True))
+@click.argument('playlist', nargs=1, type=click.File('r'))
 @click.pass_context
 def run(context, format, playlist):
     '''Convert to a different playlist format'''
 
-    if len(playlist) == 0:
-        input_playlists = yaml.safe_load_all(sys.stdin)
-    else:
-        input_playlists = (yaml.safe_load(open(p, 'r')) for p in playlist)
-
     if format == 'cue':
-        for playlist_dict in input_playlists:
-            print(convert_to_cue(calliope.Playlist(playlist_dict)))
+        print(convert_to_cue(calliope.playlist.read(playlist)))
     else:
         raise NotImplementedError("Unsupport format: %s" % format)

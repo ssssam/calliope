@@ -27,44 +27,39 @@ import sys
 import calliope
 
 
-def render_html(playlists, template_filename):
+def render_html(playlist, template_filename):
     '''Render a playlist as HTML using a template.'''
 
     with open(template_filename, 'r') as f:
         template = jinja2.Template(f.read())
 
     items = []
-    for playlist_data in playlists:
-        for item_in in calliope.Playlist(playlist_data):
-            item = {}
-            item['image'] = 'Image'
+    for item_in in playlist:
+        item = {}
+        item['image'] = 'Image'
 
-            name_parts = []
-            if 'artist' in item_in:
-                name_parts.append(item_in['artist'])
-            if 'track' in item_in:
-                name_parts.append(item_in['track'])
-            elif 'album' in item_in:
-                name_parts.append(item_in['album'])
-            item['name'] = ' - '.join(name_parts)
+        name_parts = []
+        if 'artist' in item_in:
+            name_parts.append(item_in['artist'])
+        if 'track' in item_in:
+            name_parts.append(item_in['track'])
+        elif 'album' in item_in:
+            name_parts.append(item_in['album'])
+        item['name'] = ' - '.join(name_parts)
 
-            items.append(item)
+        items.append(item)
 
     return template.render(items=items)
 
 
 @calliope.cli.command(name='web')
-@click.argument('playlist', nargs=-1, type=click.Path(exists=True))
+@click.argument('playlist', type=click.File(mode='r'))
 @click.pass_context
 def run(context, playlist):
     '''Render a Calliope playlist to a web page'''
 
-    if len(playlist) == 0:
-        input_playlists = yaml.safe_load_all(sys.stdin)
-    else:
-        input_playlists = (yaml.safe_load(open(p, 'r')) for p in playlist)
-
     template = os.path.join(calliope.datadir(), 'web', 'templates', 'playlist.html.in')
 
-    text = render_html(input_playlists, template)
+    input_playlist = list(calliope.playlist.read(playlist))
+    text = render_html(input_playlist, template)
     print(text)

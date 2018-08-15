@@ -15,10 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import yaml
-
 import enum
+import json
 import sys
+
+
+class PlaylistError(RuntimeError):
+    pass
 
 
 class PlaylistKind(enum.Enum):
@@ -66,21 +69,62 @@ class Playlist():
     def append(self, playlist):
         self.items += playlist.items
 
-    def dump(self, stream):
-        kind_name = 'collection' if self.kind == PlaylistKind.COLLECTION else 'playlist'
-        document = { kind_name: self.items }
-        yaml.safe_dump(document, sys.stdout, default_flow_style=False)
+
+class Item(dict):
+    '''Represents a single item in a Calliope playlist.'''
+    def __init__(self, data):
+        # FIXME: let's not be this dumb.
+        self.update(data)
 
     def tracks(self):
-        for item in self.items:
-            if 'track' in item:
-                yield item
-            elif 'album' in item and 'tracks' in item:
-                for track in item['tracks']:
-                    track_merged = copy.copy(track)
-                    track_merged['album'] = item['album']
-                    if item.get('artist') and 'artist' not in track_merged:
-                        track_merged['artist'] = item['artist']
-                    yield track_merged
+        '''Return all the tracks for this playlist item.
+
+        In many cases one item corresponds to one track. However, this isn't
+        guaranteed. For example a playlist may be a list of albums, each of
+        which contains multiple tracks.
+
+        '''
+        if 'track' in self:
+            return self
+        elif 'album' in self and 'tracks' in self:
+            for track in self['tracks']:
+                track_merged = copy.copy(track)
+                track_merged['album'] = self['album']
+                if self.get('artist') and 'artist' not in track_merged:
+                    track_merged['artist'] = self['artist']
+                yield track_merged
 
 
+# Adapted from https://stackoverflow.com/questions/6886283/how-i-can-i-lazily-read-multiple-json-values-from-a-file-stream-in-python/7795029
+#
+# FIXME: currently reads the whole file into memory; we should process objects
+# eagerly instead so that pipelines can process playlists iteratively.
+def _iterload(f, cls=json.JSONDecoder, **kwargs):
+    text = f.read()
+
+    decoder = cls(**kwargs)
+    idx = json.decoder.WHITESPACE.match(text, 0).end()
+    while idx < len(text):
+        obj, end = decoder.raw_decode(text, idx)
+        yield obj
+        idx = json.decoder.WHITESPACE.match(text, end).end()
+
+
+def read(stream):
+    '''Parses a playlist from the given stream.
+
+    Returns an iterator of calliope.playlist.Item objects.
+
+    '''
+    for json_object in _iterload(stream):
+        if isinstance(json_object, dict):
+            yield Item(json_object)
+        else:
+            raise PlaylistError("Expected JSON object, got {}".format(type(json_object).__name__))
+
+
+def write(items, stream):
+    '''Write a playlist to the given stream.'''
+    for item in items:
+        json.dump(item, stream)
+        stream.write('\n')

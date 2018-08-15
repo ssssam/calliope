@@ -143,70 +143,63 @@ def normalize_path(path):
                    "order")
 @click.option('--number-files', is_flag=True,
               help="ensure filename sort order matches desired playback order")
-@click.argument('playlist', nargs=-1,
-                type=click.Path(exists=True, dir_okay=False))
+@click.argument('playlist', type=click.File(mode='r'))
 @click.pass_context
 def run(context, dry_run, target, allow_formats, album_per_dir,
         number_dirs, number_files, playlist):
     '''Copy playlists & collections between devices'''
 
-    if len(playlist) == 0:
-        input_playlists = yaml.safe_load_all(sys.stdin)
-    else:
-        input_playlists = (yaml.safe_load(open(p, 'r')) for p in playlist)
-
     allow_formats = allow_formats or ['all']
 
     operations = []
-    for playlist_data in input_playlists:
-        for item_number, item in enumerate(calliope.Playlist(playlist_data)):
-            if 'location' in item:
-                path = calliope.uri_to_path(item['location'])
-                if number_files:
-                    filename = ensure_number(os.path.basename(path), item_number + 1)
-                else:
-                    filename = None  # use existing
-                operations.append(
-                    sync_track(item['location'], target, allow_formats,
-                               target_filename=filename))
-            elif 'tracks' in item:
-                for track_number, track_item in enumerate(item['tracks']):
-                    if 'location' in track_item:
-                        path = calliope.uri_to_path(track_item['location'])
-                        if number_files:
-                            filename = ensure_number(
-                                os.path.basename(path),
-                                track_number + 1)
-                        else:
-                            filename = None  # use existing
+    for item_number, item in enumerate(calliope.playlist.read(playlist)):
+        if 'location' in item:
+            path = calliope.uri_to_path(item['location'])
+            if number_files:
+                filename = ensure_number(os.path.basename(path), item_number + 1)
+            else:
+                filename = None  # use existing
+            operations.append(
+                sync_track(item['location'], target, allow_formats,
+                            target_filename=filename))
+        elif 'tracks' in item:
+            for track_number, track_item in enumerate(item['tracks']):
+                if 'location' in track_item:
+                    path = calliope.uri_to_path(track_item['location'])
+                    if number_files:
+                        filename = ensure_number(
+                            os.path.basename(path),
+                            track_number + 1)
+                    else:
+                        filename = None  # use existing
 
-                        if album_per_dir:
-                            album_name = item.get('album') or 'No album'
-                            if number_dirs:
-                                dirname = make_dirname('%03i' % (item_number + 1),
-                                                       item['artist'],
-                                                       album_name)
-                            else:
-                                dirname = make_dirname(item['artist'],
-                                                       album_name)
+                    if album_per_dir:
+                        album_name = item.get('album') or 'No album'
+                        if number_dirs:
+                            dirname = make_dirname('%03i' % (item_number + 1),
+                                                    item['artist'],
+                                                    album_name)
                         else:
-                            dirname = None  # use existing
+                            dirname = make_dirname(item['artist'],
+                                                    album_name)
+                    else:
+                        dirname = None  # use existing
 
-                        if filename:
-                            target_filename = normalize_path(filename)
-                        else:
-                            target_filename = None
+                    if filename:
+                        target_filename = normalize_path(filename)
+                    else:
+                        target_filename = None
 
-                        if dirname:
-                            target_dirname = normalize_path(dirname)
-                        else:
-                            target_dirname = None
+                    if dirname:
+                        target_dirname = normalize_path(dirname)
+                    else:
+                        target_dirname = None
 
-                        operations.append(
-                            sync_track(track_item['location'], target,
-                                       allow_formats,
-                                       target_filename=target_filename,
-                                       target_dirname=target_dirname))
+                    operations.append(
+                        sync_track(track_item['location'], target,
+                                    allow_formats,
+                                    target_filename=target_filename,
+                                    target_dirname=target_dirname))
 
     if dry_run:
         for operation in operations:

@@ -41,13 +41,13 @@ def suggest_cli(context):
     pass
 
 @suggest_cli.command(name='tracks')
-@click.option('--from', 'from_', required=True, type=click.Path(exists=True),
-              help="collection from which tracks should be suggested")
+@click.option('--from', 'from_', required=True, type=click.File(mode='r'),
+              help="playlist from which tracks should be suggested")
 @click.option('--count', type=int, default=10,
               help="number of track suggestions to generate")
 @click.option('--training-input', multiple=True,
-              type=(click.Path(exists=True), float),
-              help="a collection or playlist used to train the recommender. "
+              type=(click.File(mode='r'), float),
+              help="a playlist used to train the recommender. "
                    "A training input requires two arguments, the first is the "
                    "path to the file, the second is how it should weight the "
                    "training. Weight should be a value between -1.0 and 1.0, "
@@ -60,19 +60,18 @@ def tracks(context, from_, count, training_input):
     # First we need a 'user-item' interaction matrix. Each 'item' is a track in
     # the input collection. Each 'user' is one of the input playlists.
 
-    input_collection = calliope.Playlist(yaml.safe_load(open(from_, 'r')))
+    corpus_playlist = calliope.playlist.read(from_)
+    corpus_tracks = [item.tracks() for item in corpus_playlist]
 
     interaction_matrix = []
 
-    for path, weight in training_input:
-        input_playlists = [calliope.Playlist(data) for data in yaml.safe_load_all(open(path, 'r'))]
-
+    for playlist_stream, weight in training_input:
         # Set all interactions to zeros
-        interaction_list = [0.0] * input_collection.track_count()
+        interaction_list = [0.0] * corpus_tracks
 
-        for input_playlist in input_playlists:
-            for track in input_playlist.tracks():
-                track_id = input_collection.track_index(track)
+        for item in playlist_stream:
+            for track in item.tracks():
+                track_index = corpus_tracks.index(track)
                 if track_id:
                     interaction_list[track_id] = weight
         interaction_matrix.append(interaction_list)

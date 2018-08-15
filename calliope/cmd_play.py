@@ -66,18 +66,17 @@ def update_item_from_tags(item, tags):
     return item
 
 
-def play(playlists, audio_output):
+def play(tracks, audio_output):
     '''Play playlists.'''
     output_playlist = []
 
     file_uris = []
-    for playlist_data in playlists:
-        for item in calliope.Playlist(playlist_data):
-            if 'location' not in item:
-                raise RuntimeError("All tracks must have the 'location' "
-                                   "property set in order to render audio.")
-            file_uris.append(item['location'])
-            output_playlist.append(item)
+    for item in tracks:
+        if 'location' not in item:
+            raise RuntimeError("All tracks must have the 'location' "
+                                "property set in order to render audio.")
+        file_uris.append(item['location'])
+        output_playlist.append(item)
     file_uris = list(reversed(file_uris))
 
     if len(file_uris) == 0:
@@ -172,18 +171,14 @@ def play(playlists, audio_output):
 
 @calliope.cli.command(name='play')
 @click.option('-o', '--output', type=click.Path(), required=True)
-@click.argument('playlist', nargs=-1, type=click.Path(exists=True))
+@click.argument('playlist', type=click.File(mode='r'))
 @click.pass_context
 def run(context, output, playlist):
     '''Render a Calliope playlist to an audio file'''
 
-    if len(playlist) == 0:
-        input_playlists = yaml.safe_load_all(sys.stdin)
-    else:
-        input_playlists = (yaml.safe_load(open(p, 'r')) for p in playlist)
-
     Gst.init([])
+    input_playlist = list(calliope.playlist.read(playlist))
 
-    output_playlist = play(input_playlists, output)
+    output_playlist = play(input_playlist, output)
     if output_playlist:
-        output_playlist.dump(sys.stdout)
+        calliope.playlist.write(output_playlist, sys.stdout)

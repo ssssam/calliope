@@ -28,7 +28,7 @@ import warnings
 import calliope
 
 
-def measure_size(playlists):
+def measure_size(playlist):
     '''Measure the total size of the files listed.'''
     def measure_one(item):
         path = urllib.parse.unquote(urllib.parse.urlsplit(item['location']).path)
@@ -39,31 +39,27 @@ def measure_size(playlists):
             return 0
 
     size = 0
-    for playlist_data in playlists:
-        for item in calliope.Playlist(playlist_data):
-            if 'location' in item:
-                size += measure_one(item)
-            elif 'tracks' in item:
-                for track in item['tracks']:
-                    if 'location' in track:
-                        size += measure_one(track)
+    for item in playlist:
+        if 'location' in item:
+            size += measure_one(item)
+        elif 'tracks' in item:
+            for track in item['tracks']:
+                if 'location' in track:
+                    size += measure_one(track)
     print("Total size: %i MB" % (size / 1024 / 1024.0))
 
 
 @calliope.cli.command(name='stat')
 @click.option('--size', '-s', is_flag=True,
               help="show the total size on disk of the playlist contents")
-@click.argument('playlist', nargs=-1, type=click.Path(exists=True))
+@click.argument('playlist', type=click.File(mode='r'))
 @click.pass_context
 def run(context, size, playlist):
     '''Information about the contents of a playlist'''
 
-    if playlist == None:
-        input_playlists = yaml.safe_load_all(sys.stdin)
-    else:
-        input_playlists = (yaml.safe_load(open(p, 'r')) for p in playlist)
+    input_playlist = list(calliope.playlist.read(playlist))
 
     if size:
-        measure_size(input_playlists)
+        measure_size(input_playlist)
     else:
         print("Please select a mode.")

@@ -12,39 +12,33 @@ collections of music.
 
 # The basics
 
-Run `cpe` to see the list of commands available.
+All Calliope commands operate on *playlists*, which are represented as text.
+Here is an example of a simple Calliope playlist:
 
-Most commands operate on *playlists*. Calliope defines a way of representing
-playlists as [YAML](http://yaml.org/) documents. Here's a minimal example:
-
-    name: Minimal example
-    playlist:
     - artist: The Mighty Mighty Bosstones
       track: The Impression That I Get
     - artist: Less Than Jake
       track: Gainesville Rock City
 
-You can also create *collections*, which are represented similarly to playlists
-but are conceptually different as they represent an unordered collection of
-tracks, rather than an ordered list.
+This playlist uses a standard format called [YAML](http://yaml.org/) which is
+simple for people to read and write. The Calliope tools don't understand this
+format directly, instead they use a simpler format called
+[JSON](https://json.org/). It's simple to convert between the two formats using
+a tool called [yq](https://github.com/kislyuk/yq).
 
-The Calliope playlist format aims to be arbitrarily extensible so that any kind
-of data can be carried along with the tracks.
+Calliope commands are designed to be combined with each other, with the
+data processing tools [jq](https://stedolan.github.io/jq/) and
+[yq](https://github.com/kislyuk/yq), and with other UNIX shell tools.
+Most commands default to reading playlists on stdin and writing processed
+playlists on stdout.
 
-Some standard fields that Calliope uses are:
-
-  * `location`: a URL where a track can be accessed.
-
-Calliope commands are designed to be combined with each other and with other
-UNIX shell tools. Most commands default to reading playlists on stdin and
-writing processed playlists on stdout.
+Run `cpe` to see the list of commands available.
 
 # Use cases
 
 ## Copying music onto a portable device
 
-You can copy a collection from one device to another by creating a .collection
-or .playlist file, then using `cpe sync`.
+You can copy a playlist from one device to another by creating a .playlist file, then using `cpe sync`.
 
 Start by writing a playlist as a .yaml file. If you don't want to fill in the
 `location` fields yourself you can pipe the playlist to `cpe tracker` to find
@@ -52,7 +46,7 @@ the files for you.
 
 Then copy the files to the device:
 
-     cpe sync ./my.collection --target /path/to/device
+     cpe sync ./my.playlist --target /path/to/device
 
 You can pass extra options to `cpe sync` to enable transcoding and/or renaming
 of the files, see `cpe sync --help` for details.
