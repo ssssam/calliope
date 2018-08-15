@@ -58,69 +58,6 @@ def uri_to_path(uri):
         urllib.parse.urlsplit(uri).path)
 
 
-class PlaylistKind(enum.Enum):
-    COLLECTION = 0
-    PLAYLIST = 1
-
-
-def process_playlist(yaml_parsed):
-    if 'collection' in yaml_parsed:
-        kind = PlaylistKind.COLLECTION
-        items = yaml_parsed['collection'] or []
-    elif 'playlist' in yaml_parsed:
-        kind = PlaylistKind.PLAYLIST
-        items = yaml_parsed['playlist'] or []
-    elif 'list' in yaml_parsed:
-        kind = PlaylistKind.PLAYLIST
-        items = yaml_parsed['list'] or []
-    else:
-        raise RuntimeError ("Expected 'playlist' or 'collection' entry")
-
-    return kind, items
-
-
-class Playlist():
-    '''A playlist is a set of songs.
-
-    A 'collection' is also considered to be a playlist, but one where order
-    isn't important.
-
-    '''
-    def __init__(self, yaml_parsed=None):
-        if not yaml_parsed:
-            self.kind = PlaylistKind.PLAYLIST
-            self.items = []
-        else:
-            self.kind, self.items = process_playlist(yaml_parsed)
-
-        for i, item in enumerate(self.items):
-            if isinstance(item, str):
-                self.items[i] = {'track': item}
-
-    def __iter__(self):
-        return iter(self.items)
-
-    def append(self, playlist):
-        self.items += playlist.items
-
-    def dump(self, stream):
-        kind_name = 'collection' if self.kind == PlaylistKind.COLLECTION else 'playlist'
-        document = { kind_name: self.items }
-        yaml.safe_dump(document, sys.stdout, default_flow_style=False)
-
-    def tracks(self):
-        for item in self.items:
-            if 'track' in item:
-                yield item
-            elif 'album' in item and 'tracks' in item:
-                for track in item['tracks']:
-                    track_merged = copy.copy(track)
-                    track_merged['album'] = item['album']
-                    if item.get('artist') and 'artist' not in track_merged:
-                        track_merged['artist'] = item['artist']
-                    yield track_merged
-
-
 class OneShotResultsTable():
     '''A class for wrapping a generator that contains data.
 
@@ -159,6 +96,7 @@ class OneShotResultsTable():
 
 from . import cache
 from . import config
+from . import playlist
 
 from . import cmd_export
 from . import cmd_import

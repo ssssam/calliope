@@ -14,6 +14,7 @@ sources = [
   'cmd_sync.py',
   'cmd_tracker.py',
   'cmd_web.py',
+  'playlist.py',
 ]
 
 install_data(

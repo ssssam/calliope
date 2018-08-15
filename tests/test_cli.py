@@ -15,44 +15,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import pytest
-
 import os
-
-import testutils
-
-
-@pytest.fixture()
-def cli():
-    '''Fixture for testing through the `cpe` commandline interface.'''
-    return testutils.Cli()
-
-
-def test_export(cli):
-    result = cli.run(['export'])
-    assert result.exit_code == 0
-
-def test_import(cli):
-    example_pls = '''[playlist]
-    NumberOfEntries=0
-    '''
-
-    result = cli.run(['import'], input=example_pls)
-    assert result.exit_code == 0
 
 
 def test_musicbrainz(cli):
-    result = cli.run(['musicbrainz'], input='')
+    result = cli.run(['musicbrainz', '-'], input='')
     assert result.exit_code == 0
 
 
 def test_play(cli):
-    result = cli.run(['play', '--output', '/dev/null'])
+    result = cli.run(['play', '-', '--output', '/dev/null'])
     assert result.exit_code == 0
 
 
 def test_shuffle(cli):
-    result = cli.run(['shuffle'])
+    result = cli.run(['shuffle', '-'])
     assert result.exit_code == 0
 
 
@@ -69,7 +46,7 @@ def test_spotify(cli):
 
 
 def test_stat(cli):
-    result = cli.run(['stat'])
+    result = cli.run(['stat', '-'])
     assert result.exit_code == 0
 
 
@@ -79,7 +56,7 @@ def test_suggest(cli):
 
 
 def test_sync(cli):
-    result = cli.run(['sync'])
+    result = cli.run(['sync', '-'])
     assert result.exit_code == 0
 
 
@@ -89,5 +66,5 @@ def test_tracker(cli):
 
 
 def test_web(cli):
-    result = cli.run(['web'])
+    result = cli.run(['web', '-'])
     assert result.exit_code == 0

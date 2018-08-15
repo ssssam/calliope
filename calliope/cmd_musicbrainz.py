@@ -43,25 +43,20 @@ def add_musicbrainz_artist(item):
 
 
 @calliope.cli.command(name='musicbrainz')
-@click.argument('playlist', nargs=-1, type=click.Path(exists=True))
+@click.argument('playlist', type=click.File(mode='r'))
 @click.pass_context
 def run(context, playlist):
     '''Annotate playlists with data from Musicbrainz'''
 
     musicbrainzngs.set_useragent("Calliope", "0.1", "https://github.com/ssssam/calliope")
 
-    if len(playlist) == 0:
-        input_playlists = yaml.safe_load_all(sys.stdin)
-    else:
-        input_playlists = (yaml.safe_load(open(p, 'r')) for p in playlist)
+    output_playlist = []
 
-    # FIXME: should be a collection if any inputs are collections, otherwise a
-    # playlist
-    print('collection:')
-    for playlist_data in input_playlists:
-        for item in calliope.Playlist(playlist_data):
-            if 'artist' in item and 'musicbrainz.artist' not in item:
-                try:
-                    print(add_musicbrainz_artist(item))
-                except RuntimeError as e:
-                    raise RuntimeError("%s\nItem: %s" % (e, item))
+    for item in calliope.playlist.read(playlist):
+        if 'artist' in item and 'musicbrainz.artist' not in item:
+            try:
+                output_playlist.append(add_musicbrainz_artist(item))
+            except RuntimeError as e:
+                raise RuntimeError("%s\nItem: %s" % (e, item))
+
+    calliope.playlist.write(output_playlist, sys.stdout)
