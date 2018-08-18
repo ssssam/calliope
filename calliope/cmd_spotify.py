@@ -88,7 +88,7 @@ def spotify_cli(context, user):
     client_secret = calliope.config.get('spotify', 'client-secret')
     redirect_uri = calliope.config.get('spotify', 'redirect-uri')
 
-    scope = ''
+    scope = 'user-top-read'
     try:
         token = util.prompt_for_user_token(user, scope, client_id=client_id,
                                            client_secret=client_secret,
@@ -141,3 +141,32 @@ def cmd_export(context):
 def cmd_import(context):
     '''Upload one or more playlists to Spotify'''
     raise NotImplementedError
+
+
+@spotify_cli.command(name='top-artists')
+@click.pass_context
+@click.option('-c', '--count', type=int, default=20,
+              help="Maximum number of artists to return")
+@click.option('--time-range', default='long_term',
+              type=click.Choice(['short_term', 'medium_term', 'long_term']))
+def cmd_top_artists(context, count, time_range):
+    '''Return user's top artists.'''
+    sp = context.obj.spotify
+    response = sp.current_user_top_artists(limit=count, time_range=time_range)['items']
+
+    if count > 50:
+        # This is true as of 2018-08-18; see:
+        # https://developer.spotify.com/documentation/web-api/reference/personalization/get-users-top-artists-and-tracks/
+        raise RuntimeError("Requested {} top artists, but the Spotify API will "
+                           "not return more than 50.".format(count))
+
+    output = []
+    for i, artist_info in enumerate(response):
+        output_item = {
+            'artist': artist_info['name'],
+            'spotify.id': artist_info['id'],
+            'spotify.user-ranking': i+1,
+        }
+        output.append(output_item)
+
+    calliope.playlist.write(output, sys.stdout)
