@@ -128,6 +128,7 @@ def cmd_annotate(context, playlist):
 def cmd_export(context):
     '''Query user playlists from Spotify'''
     sp = context.obj.spotify
+    user = context.obj.user
     playlists = sp.current_user_playlists()
     for playlist in playlists['items']:
         if playlist['owner']['id'] == user:
