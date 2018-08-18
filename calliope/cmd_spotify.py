@@ -79,6 +79,7 @@ def spotify_cli(context, user):
         raise RuntimeError("Please specify a username.")
 
     context.obj.user = user
+    log.debug("Spotify user: {}".format(user))
 
     if 'CALLIOPE_TEST_ONLY' in os.environ:
         sys.exit(0)
@@ -98,6 +99,7 @@ def spotify_cli(context, user):
     if not token:
         raise RuntimeError("No token")
 
+    log.debug("Spotify access token: {}".format(token))
     context.obj.spotify = spotipy.Spotify(auth=token)
     context.obj.spotify.trace = False
 
