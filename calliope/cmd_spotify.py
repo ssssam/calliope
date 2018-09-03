@@ -73,7 +73,7 @@ def print_spotify_playlist(playlist, tracks):
 @click.option('--token',
               help="use the given API access token")
 @click.option('--user',
-              help="show playlists for the given Spotify user")
+              help="show data for the given Spotify user")
 @click.pass_context
 def spotify_cli(context, token, user):
     if not user:
