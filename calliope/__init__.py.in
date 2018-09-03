@@ -68,6 +68,9 @@ from . import cmd_stat
 from . import cmd_sync
 from . import cmd_web
 
+if @enable_lastfm@:
+    from . import cmd_lastfm
+
 if @enable_musicbrainz@:
     from . import cmd_musicbrainz
 

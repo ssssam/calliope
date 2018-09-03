@@ -1,3 +1,6 @@
 [submodule "subprojects/tracker-app-domain"]
 	path = subprojects/tracker-app-domain
 	url = https://gitlab.gnome.org/sthursfield/tracker-app-domain
+[submodule "calliope/lastfmclient"]
+	path = subprojects/lastfmclient
+	url = https://github.com/ssssam/lastfmclient
