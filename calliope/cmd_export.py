@@ -19,7 +19,6 @@
 import click
 
 import sys
-import yaml
 
 import calliope
 

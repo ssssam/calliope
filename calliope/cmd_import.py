@@ -26,7 +26,6 @@ import click
 import configparser
 import logging
 import sys
-import yaml
 
 import calliope
 

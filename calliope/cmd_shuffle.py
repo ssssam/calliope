@@ -17,7 +17,6 @@
 
 
 import click
-import yaml
 
 import argparse
 import itertools

@@ -20,7 +20,6 @@ import spotipy
 import spotipy.util as util
 
 import click
-import yaml
 
 import logging
 import os

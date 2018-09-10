@@ -18,7 +18,6 @@
 
 import click
 import jinja2
-import yaml
 
 import argparse
 import os

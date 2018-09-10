@@ -22,7 +22,6 @@ from gi.repository import GLib, Tracker
 
 import click
 import trackerappdomain
-import yaml
 
 import logging
 import os

@@ -17,7 +17,6 @@
 
 import click
 import musicbrainzngs
-import yaml
 
 import json
 import logging

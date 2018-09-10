@@ -19,7 +19,6 @@
 
 
 import click
-import yaml
 
 import itertools
 import logging

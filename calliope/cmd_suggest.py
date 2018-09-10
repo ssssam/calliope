@@ -26,7 +26,6 @@ see its documentation at: http://lyst.github.io/lightfm/docs/home.html
 import click
 import lightfm
 import numpy
-import yaml
 
 import os
 import sys

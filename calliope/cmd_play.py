@@ -21,7 +21,6 @@ gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 
 import click
-import yaml
 
 import argparse
 import logging
