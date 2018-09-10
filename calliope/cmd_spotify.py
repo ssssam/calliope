@@ -40,14 +40,16 @@ def annotate_track(sp, track_entry):
     '''Query Spotify-specific metadata about a track and add to its entry.'''
     log.debug("Searching for track: %s", track_entry)
     result = sp.search(q=track_entry['track'], type='track')
-    first_result = result['tracks']['items'][0]
 
-    track_entry['spotify.artist'] = flatten([
-        artist['name'] for artist in first_result['artists']
-    ])
-    if first_result['name'] != track_entry['track']:
-        track_entry['spotify.track'] = first_result['name']
-    track_entry['spotify.url'] = first_result['external_urls']['spotify']
+    if len(result['tracks']['items']) > 0:
+        first_result = result['tracks']['items'][0]
+
+        track_entry['spotify.artist'] = flatten([
+            artist['name'] for artist in first_result['artists']
+        ])
+        if first_result['name'] != track_entry['track']:
+            track_entry['spotify.track'] = first_result['name']
+        track_entry['spotify.url'] = first_result['external_urls']['spotify']
 
     return track_entry
 
