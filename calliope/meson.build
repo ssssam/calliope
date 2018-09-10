@@ -4,7 +4,6 @@ sources = [
   'config.py',
   'cmd_export.py',
   'cmd_import.py',
-  'cmd_play.py',
   'cmd_shuffle.py',
   'cmd_stat.py',
   'cmd_sync.py',
@@ -14,6 +13,10 @@ sources = [
 
 if get_option('musicbrainz')
   sources += ['cmd_musicbrainz.py']
+endif
+
+if get_option('play')
+  sources += ['cmd_play.py']
 endif
 
 if get_option('spotify')

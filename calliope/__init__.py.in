@@ -99,7 +99,6 @@ from . import playlist
 
 from . import cmd_export
 from . import cmd_import
-from . import cmd_play
 from . import cmd_shuffle
 from . import cmd_stat
 from . import cmd_sync
@@ -107,6 +106,9 @@ from . import cmd_web
 
 if @enable_musicbrainz@:
     from . import cmd_musicbrainz
+
+if @enable_play@:
+    from . import cmd_play
 
 if @enable_spotify@:
     from . import cmd_spotify

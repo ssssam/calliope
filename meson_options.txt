@@ -1,11 +1,13 @@
 option('musicbrainz', type: 'boolean', value: 'true',
        description: 'Enable Musicbrainz integration (requires Python "musicbrainzngs" library)')
+option('play', type: 'boolean', value: 'true',
+       description: 'Enable `play` command (requires GStreamer & PyGObject)')
 option('spotify', type: 'boolean', value: 'true',
        description: 'Enable Spotify integration (requires Python "spotipy" library)')
 option('suggest', type: 'boolean', value: 'true',
        description: 'Enable recommendation engine (requires Python "lightfm" library)')
 option('tracker', type: 'boolean', value: 'true',
-       description: 'Enable Tracker integration')
+       description: 'Enable Tracker integration (requires Tracker & PyGObject)')
 
 option('testsuite', type: 'boolean', value: 'true',
        description: 'Enable automated test suite (requires Python "mutagen" library)')
