@@ -1,6 +1,8 @@
 project('calliope')
 
-subproject('tracker-app-domain')
+if get_option('tracker')
+  subproject('tracker-app-domain')
+endif
 
 ###############################################################################
 # Python dependencies
@@ -32,10 +34,19 @@ endif
 
 install_requires = [
   'click',
-  'lightfm',
-  'musicbrainzngs',
-  'spotipy',
 ]
+
+if get_option('musicbrainz')
+  install_requires += ['musicbrainzngs']
+endif
+
+if get_option('spotify')
+  install_requires += ['spotipy']
+endif
+
+if get_option('suggest')
+  install_requires += ['lightfm']
+endif
 
 setup_requires = [
 ]
@@ -47,9 +58,17 @@ test_requires = [
 missing_dependency_errors = []
 
 message('Checking for Python dependencies')
-modules_check = run_command(python, 'meson-python-packages-check', install_requires + setup_requires + test_requires)
+modules_check = run_command(python, 'meson-python-packages-check', install_requires + setup_requires)
 if modules_check.returncode() != 0
   error('Python dependency requirements are not satisfied:\n' + modules_check.stderr().strip())
+endif
+
+if get_option('testsuite')
+  message('Checking for Python test suite dependencies')
+  modules_check = run_command(python, 'meson-python-packages-check', test_requires)
+  if modules_check.returncode() != 0
+    error('Test suite dependency requirements are not satisfied:\n' + modules_check.stderr().strip())
+  endif
 endif
 
 pytest = find_program('pytest-3', required: false)
@@ -63,6 +82,10 @@ pytest_workdir = meson.current_source_dir()
 
 cdata = configuration_data()
 cdata.set('pythondir', python_site_packages_dir)
+cdata.set('enable_musicbrainz', get_option('musicbrainz'))
+cdata.set('enable_spotify', get_option('spotify'))
+cdata.set('enable_suggest', get_option('suggest'))
+cdata.set('enable_tracker', get_option('tracker'))
 
 subdir('calliope')
 
