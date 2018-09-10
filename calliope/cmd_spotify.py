@@ -107,22 +107,15 @@ def spotify_cli(context, user):
 
 
 @spotify_cli.command(name='annotate')
-@click.argument('playlist', nargs=-1, type=click.Path(exists=True))
+@click.argument('playlist', type=click.File(mode='r'))
 @click.pass_context
 def cmd_annotate(context, playlist):
     '''Add Spotify-specific information to tracks in a playlist.'''
     sp = context.obj.spotify
 
-    if len(playlist) == 0:
-        input_playlists = yaml.safe_load_all(sys.stdin)
-    else:
-        input_playlists = (yaml.safe_load(open(p, 'r')) for p in playlist)
-    input_playlists = [calliope.Playlist(p) for p in input_playlists]
-
-    for playlist in input_playlists:
-        for track in playlist:
-            track = annotate_track(sp, track)
-            print(track)
+    for track in calliope.playlist.read(playlist):
+        track = annotate_track(sp, track)
+        calliope.playlist.write([track], sys.stdout)
 
 
 @spotify_cli.command(name='export')
