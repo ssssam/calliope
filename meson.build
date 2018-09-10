@@ -34,6 +34,7 @@ endif
 
 install_requires = [
   'click',
+  'pyxdg',
 ]
 
 if get_option('musicbrainz')
