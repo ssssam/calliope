@@ -163,6 +163,7 @@ def cmd_top_artists(context, count, time_range):
             'artist': artist_info['name'],
             'spotify.id': artist_info['id'],
             'spotify.user-ranking': i+1,
+            'spotify.artist-image': artist_info['images']
         }
         output.append(output_item)
 
