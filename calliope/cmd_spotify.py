@@ -70,10 +70,12 @@ def print_spotify_playlist(playlist, tracks):
 
 @calliope.cli.group(name='spotify',
                     help="Interface to the Spotify online streaming service")
+@click.option('--token',
+              help="use the given API access token")
 @click.option('--user',
               help="show playlists for the given Spotify user")
 @click.pass_context
-def spotify_cli(context, user):
+def spotify_cli(context, token, user):
     if not user:
         user = calliope.config.get('spotify', 'user')
     if not user:
@@ -85,17 +87,18 @@ def spotify_cli(context, user):
     if 'CALLIOPE_TEST_ONLY' in os.environ:
         sys.exit(0)
 
-    client_id = calliope.config.get('spotify', 'client-id')
-    client_secret = calliope.config.get('spotify', 'client-secret')
-    redirect_uri = calliope.config.get('spotify', 'redirect-uri')
+    if not token:
+        client_id = calliope.config.get('spotify', 'client-id')
+        client_secret = calliope.config.get('spotify', 'client-secret')
+        redirect_uri = calliope.config.get('spotify', 'redirect-uri')
 
-    scope = 'user-top-read'
-    try:
-        token = util.prompt_for_user_token(user, scope, client_id=client_id,
-                                           client_secret=client_secret,
-                                           redirect_uri=redirect_uri)
-    except spotipy.client.SpotifyException as e:
-        raise RuntimeError(e)
+        scope = 'user-top-read'
+        try:
+            token = util.prompt_for_user_token(user, scope, client_id=client_id,
+                                            client_secret=client_secret,
+                                            redirect_uri=redirect_uri)
+        except spotipy.client.SpotifyException as e:
+            raise RuntimeError(e)
 
     if not token:
         raise RuntimeError("No token")
