@@ -1,6 +1,6 @@
 [submodule "tracker"]
 	path = subprojects/tracker
-	url = git://git.gnome.org/tracker/
+	url = https://gitlib.gnome.org/GNOME/tracker/
 [submodule "subprojects/tracker-app-domain"]
 	path = subprojects/tracker-app-domain
 	url = https://gitlab.gnome.org/sthursfield/tracker-app-domain
