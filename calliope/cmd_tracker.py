@@ -98,7 +98,39 @@ class TrackerClient():
                 'track-count': n_songs
             }
 
-    def songs(self, filter_artist_name=None, filter_album_name=None, filter_track_name=None, track_search_text=None):
+    def tracks(self, track_search_text=None):
+        '''Return a list of tracks.'''
+
+        if track_search_text:
+            track_pattern = """
+                FILTER (fn:contains(LCASE(?track_title), "%s"))
+            """  % Tracker.sparql_escape_string(track_search_text.lower())
+        else:
+            track_pattern = None
+
+        query_tracks = """
+        SELECT
+            ?track_title ?track_url ?artist_name
+        WHERE {
+            ?track a nmm:MusicPiece ;
+              dc:title ?track_title ;
+              nie:url ?track_url ;
+              nmm:performer ?artist .
+            %s
+            ?artist nmm:artistName ?artist_name .
+        }
+        ORDER BY ?track_title
+        """ % track_pattern
+
+        tracks = self.query(query_tracks)
+        while tracks.next():
+            yield {
+                'track': tracks.get_string(0)[0],
+                'artist': tracks.get_string(2)[0],
+                'tracker.url': tracks.get_string(1)[0],
+            }
+
+    def albums(self, filter_artist_name=None, filter_album_name=None, filter_track_name=None, ):
         '''Return all songs matching specific search criteria.
 
         These are grouped into their respective releases. Any tracks that
@@ -128,11 +160,6 @@ class TrackerClient():
                 ?track nie:title ?trackTitle .
                 FILTER (LCASE(?trackTitle) = "%s")
             """  % Tracker.sparql_escape_string(filter_track_name.lower())
-        elif track_search_text:
-            track_pattern = """
-                ?track nie:title ?trackTitle .
-                FILTER (fn:contains(LCASE(?trackTitle), "%s"))
-            """  % Tracker.sparql_escape_string(track_search_text.lower())
         else:
             track_pattern = ""
 
@@ -239,6 +266,27 @@ class TrackerClient():
                     'tracks': catchall_tracks
                 }
 
+    def artists(self):
+        '''Return all artists who have at least one track available locally.'''
+        query_artists_with_tracks = """
+        SELECT
+            ?artist_name
+        {   ?artist a nmm:Artist ;
+            dc:title ?artist_name .
+            ?song nmm:performer ?artist
+        }
+        GROUP BY ?artist ORDER BY ?artist_name
+        """
+
+        artists_with_tracks = self.query(query_artists_with_tracks)
+
+        while artists_with_tracks.next():
+            artist_name = artists_with_tracks.get_string(0)[0]
+            yield {
+                'artist': artist_name,
+            }
+
+
 
 def add_location(tracker, item):
     if 'artist' not in item and 'album' not in item and 'track' not in item:
@@ -338,6 +386,32 @@ def cmd_annotate(context, playlist):
                 raise RuntimeError("%s\nItem: %s" % (e, item))
 
 
+@tracker_cli.command(name='local-albums')
+@click.option('--artist', nargs=1, type=str,
+              help="Limit to albums by the given artist")
+@click.pass_context
+def cmd_local_albums(context, artist):
+    '''Show all albums available locally..'''
+    tracker = context.obj.tracker_client
+    calliope.playlist.write(tracker.albums(filter_artist_name=artist), sys.stdout)
+
+
+@tracker_cli.command(name='local-artists')
+@click.pass_context
+def cmd_local_artists(context):
+    '''Show all artists whose music is available locally..'''
+    tracker = context.obj.tracker_client
+    calliope.playlist.write(tracker.artists(), sys.stdout)
+
+
+@tracker_cli.command(name='local-tracks')
+@click.pass_context
+def cmd_local_tracks(context):
+    '''Show all tracks available locally..'''
+    tracker = context.obj.tracker_client
+    calliope.playlist.write(tracker.tracks(), sys.stdout)
+
+
 @tracker_cli.command(name='scan')
 @click.argument('path', nargs=1, type=click.Path(exists=True))
 @click.pass_context
@@ -370,17 +444,7 @@ def cmd_scan(context, path):
 def cmd_search(context, text):
     '''Search track titles in the Tracker database.'''
     tracker = context.obj.tracker_client
-    calliope.playlist.write(tracker.songs(track_search_text=text), sys.stdout)
-
-
-@tracker_cli.command(name='show')
-@click.option('--artist', nargs=1, type=str,
-              help="Limit results to the given artist")
-@click.pass_context
-def cmd_show(context, artist):
-    '''Show all files that have metadata stored in a Tracker database.'''
-    tracker = context.obj.tracker_client
-    calliope.playlist.write(tracker.songs(filter_artist_name=artist), sys.stdout)
+    calliope.playlist.write(tracker.tracks(track_search_text=text), sys.stdout)
 
 
 @tracker_cli.command(name='sparql')
