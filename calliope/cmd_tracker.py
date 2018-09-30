@@ -113,8 +113,8 @@ class TrackerClient():
                 ?track nmm:performer <%s> .
             """ % artist_id
         else:
-            artist_select = "nmm:artistName(nmm:performer(?track))"
-            artist_pattern = ""
+            artist_select = "nmm:artistName(?artist)"
+            artist_pattern = "?track nmm:performer ?artist"
         if filter_album_name:
             album_pattern = """
                 ?album nie:title ?albumTitle .
