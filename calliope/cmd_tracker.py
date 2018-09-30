@@ -286,29 +286,11 @@ def add_location(tracker, item):
     else:
         result = list(tracker.songs(filter_artist_name=item['artist']))
 
-    if len(result) > 0:
-        return yaml.dump(result)
-    else:
-        warnings.warn("No results found for %s" % item)
-        return "# No results found for %s" % item
+    return result
 
 
 def print_table(result_table):
     result_table.display()
-
-
-def print_collection(result):
-    # We manually serialize the YAML here in chunks so that large collections
-    # don't block for ages with no output.
-    print('collection:')
-    for item in result:
-        item_yaml = yaml.dump(item)
-
-        for i, line in enumerate(item_yaml.splitlines()):
-            if i == 0:
-                print('- {}'.format(line))
-            else:
-                print('  {}'.format(line))
 
 
 @calliope.cli.group(name='tracker',
@@ -391,7 +373,7 @@ def cmd_scan(context, path):
 def cmd_search(context, text):
     '''Search track titles in the Tracker database.'''
     tracker = context.obj.tracker_client
-    print_collection(tracker.songs(track_search_text=text))
+    calliope.playlist.write(tracker.songs(track_search_text=text), sys.stdout)
 
 
 @tracker_cli.command(name='show')
@@ -401,7 +383,7 @@ def cmd_search(context, text):
 def cmd_show(context, artist):
     '''Show all files that have metadata stored in a Tracker database.'''
     tracker = context.obj.tracker_client
-    print_collection(tracker.songs(filter_artist_name=artist))
+    calliope.playlist.write(tracker.songs(filter_artist_name=artist), sys.stdout)
 
 
 @tracker_cli.command(name='sparql')
