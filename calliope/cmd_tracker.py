@@ -396,8 +396,10 @@ def cmd_sparql(context, query):
 
 @tracker_cli.command(name='top-artists')
 @click.pass_context
-def cmd_top_artists(context):
+@click.option('-c', '--count', type=int, default=20,
+              help="Maximum number of artists to return")
+def cmd_top_artists(context, count):
     '''Query the top artists in a Tracker database'''
     tracker = context.obj.tracker_client
-    result = list(tracker.artists_by_number_of_songs(limit=None))
+    result = list(tracker.artists_by_number_of_songs(limit=count))
     calliope.playlist.write(result, sys.stdout)
