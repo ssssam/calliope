@@ -88,18 +88,15 @@ class TrackerClient():
         else:
             query = query_artists_by_number_of_songs
 
-        result_cursor = self.query(query)
+        cursor = self.query(query)
 
-        def result_generator_fn(cursor):
-            while cursor.next():
-                artist_name = cursor.get_string(0)[0]
-                n_songs = cursor.get_string(1)[0]
-                yield artist_name, n_songs
-
-        return calliope.OneShotResultsTable(
-            headings=['Artist', 'Number of Songs'],
-            generator=result_generator_fn(result_cursor))
-
+        while cursor.next():
+            artist_name = cursor.get_string(0)[0]
+            n_songs = cursor.get_string(1)[0]
+            yield {
+                'artist': artist_name,
+                'track-count': n_songs
+            }
 
     def songs(self, filter_artist_name=None, filter_album_name=None, filter_track_name=None, track_search_text=None):
         '''Return all songs matching specific search criteria.
@@ -402,4 +399,5 @@ def cmd_sparql(context, query):
 def cmd_top_artists(context):
     '''Query the top artists in a Tracker database'''
     tracker = context.obj.tracker_client
-    print_table(tracker.artists_by_number_of_songs(limit=None))
+    result = list(tracker.artists_by_number_of_songs(limit=None))
+    calliope.playlist.write(result, sys.stdout)
