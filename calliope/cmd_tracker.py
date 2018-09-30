@@ -114,7 +114,7 @@ class TrackerClient():
             """ % artist_id
         else:
             artist_select = "nmm:artistName(?artist)"
-            artist_pattern = "?track nmm:performer ?artist"
+            artist_pattern = "?track nmm:performer ?artist ."
         if filter_album_name:
             album_pattern = """
                 ?album nie:title ?albumTitle .
