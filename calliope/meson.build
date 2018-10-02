@@ -11,6 +11,34 @@ sources = [
   'playlist.py',
 ]
 
+if get_option('lastfm')
+  sources += ['cmd_lastfm.py']
+endif
+
+if get_option('musicbrainz')
+  sources += ['cmd_musicbrainz.py']
+endif
+
+if get_option('musicbrainz')
+  sources += ['cmd_musicbrainz.py']
+endif
+
+if get_option('musicbrainz')
+  sources += ['cmd_musicbrainz.py']
+endif
+
+if get_option('musicbrainz')
+  sources += ['cmd_musicbrainz.py']
+endif
+
+if get_option('musicbrainz')
+  sources += ['cmd_musicbrainz.py']
+endif
+
+if get_option('musicbrainz')
+  sources += ['cmd_musicbrainz.py']
+endif
+
 if get_option('musicbrainz')
   sources += ['cmd_musicbrainz.py']
 endif

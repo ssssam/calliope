@@ -1,3 +1,5 @@
+option('lastfm', type: 'boolean', value: 'true',
+       description: 'Enable Last.fm integration (requires Python "lastfmclient" library)')
 option('musicbrainz', type: 'boolean', value: 'true',
        description: 'Enable Musicbrainz integration (requires Python "musicbrainzngs" library)')
 option('play', type: 'boolean', value: 'true',

@@ -37,6 +37,10 @@ install_requires = [
   'pyxdg',
 ]
 
+if get_option('lastfm')
+  install_requires += ['lastfmclient']
+endif
+
 if get_option('musicbrainz')
   install_requires += ['musicbrainzngs']
 endif
@@ -83,6 +87,7 @@ pytest_workdir = meson.current_source_dir()
 
 cdata = configuration_data()
 cdata.set('pythondir', python_site_packages_dir)
+cdata.set('enable_lastfm', get_option('lastfm'))
 cdata.set('enable_musicbrainz', get_option('musicbrainz'))
 cdata.set('enable_play', get_option('play'))
 cdata.set('enable_spotify', get_option('spotify'))
@@ -92,3 +97,12 @@ cdata.set('enable_tracker', get_option('tracker'))
 subdir('calliope')
 
 subdir('tests')
+
+# Install the bundled lastfmclient library.
+#
+# Theoretically this could conflict with an existing user-installed version,
+# but the upstream version doesn't work with Python 3 so it's unlikely to be
+# part of any existing Python 3 installations.
+install_subdir(
+    'subprojects/lastfmclient/lastfmclient',
+    install_dir: join_paths(python_site_packages_dir))

@@ -1,5 +1,10 @@
 # Finding your most listened artists
 
+Using `cpe lastfm` you can get a list of artists you listen to the most.
+This is based on the data you have submitted to that service in the past.
+
+    cpe lastfm top-artists
+
 The Spotify online streaming service can provide a list of the artists
 you listen to the most on that platform. See the list with:
 
