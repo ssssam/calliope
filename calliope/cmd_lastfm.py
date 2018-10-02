@@ -159,7 +159,8 @@ def lastfm_cli(context, user):
 @click.option('--time-range', default='overall',
               type=click.Choice(['overall', '7day', '1month', '3month',
                                  '6month', '12month']))
-def cmd_top_artists(context, count, time_range):
+@click.option('--include', '-i', type=click.Choice(['images']), multiple=True)
+def cmd_top_artists(context, count, time_range, include):
     '''Return user's top artists.'''
     lastfm = context.obj.lastfm
     response = lastfm.user.get_top_artists(user=context.obj.user, limit=count, period=time_range)
@@ -172,8 +173,11 @@ def cmd_top_artists(context, count, time_range):
             'lastfm.url': artist_info['url'],
             'lastfm.playcount': artist_info['playcount'],
             'lastfm.user-ranking': artist_info['@attr']['rank'],
-            'lastfm.images': artist_info['image'],
         }
+
+        if 'images' in include:
+            output_item['lastfm.images'] = artist_info['image']
+
         output.append(output_item)
 
     calliope.playlist.write(output, sys.stdout)
