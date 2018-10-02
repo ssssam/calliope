@@ -36,55 +36,5 @@ Run `cpe` to see the list of commands available.
 
 # Use cases
 
-## Copying music onto a portable device
-
-You can copy a playlist from one device to another by creating a .playlist file, then using `cpe sync`.
-
-Start by writing a playlist as a .yaml file. If you don't want to fill in the
-`location` fields yourself you can pipe the playlist to `cpe tracker` to find
-the files for you.
-
-Then copy the files to the device:
-
-     cpe sync ./my.playlist --target /path/to/device
-
-You can pass extra options to `cpe sync` to enable transcoding and/or renaming
-of the files, see `cpe sync --help` for details.
-
-## Creating mixes
-
-You can use Calliope to create simple audio mixes.
-
-Start by writing a playlist as a .yaml file. If you don't want to fill in the
-`location` fields yourself you can pipe the playlist to `cpe tracker` to find
-the files for you.
-
-Alternately, you can create a playlist in Rhythmbox, export it to a `.pls` file
-and then pipe to `cpe import` to convert to Calliope format.
-
-Then pipe the playlist to `cpe play -o mix.wav`. You will get all the tracks
-mixed into a single audio file named `mix.wav`. On stdout you will get the
-playlist with extra `start-time` fields, which can be piped to `cpe export` to
-create a CUE sheet for the mix.
-
-## Follow your favourite bands on Twitter
-
-You can use Calliope to find the Twitter handles of a list of artists.
-
-First you need to get hold of a list of your favourite artists. One way is to
-take the output of `cpe tracker`. You can strip the list down to just artists
-using `yq '{ collection : [ { 'artist': .[][].artist } ] }'`.
-
-Now pipe that list to `cpe musicbrainz --include urls` and you'll get a list
-of relationship URLs for each artist.
-
-Finally, pipe that into `jq`:
-
-    jq '. | ."musicbrainz.artist.urls" // [] | .[]."musicbrainz.url.target" | "@" + match("^http[s]?://(www\\\.)?twitter.com/(.*)").captures[1].string' -r |sort -u
-
-Now you have a list of Twitter handles. Using a tool such as
-[t (Twitter CLI)](https://github.com/sferik/t) you can add all these handles to
-a list, or you can just follow all of them directly. Note that you have to fill
-in a bunch of forms in order to get a Twitter API key before you can use a
-Twitter CLI tool. The `t authorize` command will point you in the right
-direction.
+Look in the `docs/` subdirectory for a list of example use cases for
+Calliope. This is not an exhaustive list -- many more things are possible.

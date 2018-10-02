@@ -1,0 +1,12 @@
+# Finding your most listened artists
+
+The Spotify online streaming service can provide a list of the artists
+you listen to the most on that platform. See the list with:
+
+    cpe spotify top-artists
+
+Using `cpe tracker` you can get a list of the top artists in your local
+music collection. This is sorted by the number of tracks you have by that
+artists rather than by how much you have listened to them:
+
+    cpe tracker top-artists
