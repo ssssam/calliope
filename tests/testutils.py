@@ -26,7 +26,6 @@ import shutil
 import subprocess
 import sys
 import traceback
-import yaml
 
 import calliope
 
@@ -43,9 +42,6 @@ class Result():
 
     def assert_success(self, fail_message=''):
         assert self.exit_code == 0, fail_message
-
-    def yaml(self):
-        return yaml.safe_load(self.output)
 
 
 class Cli():
