@@ -37,10 +37,6 @@ install_requires = [
   'pyxdg',
 ]
 
-if get_option('lastfm')
-  install_requires += ['lastfmclient']
-endif
-
 if get_option('musicbrainz')
   install_requires += ['musicbrainzngs']
 endif
