@@ -20,30 +20,6 @@ if get_option('musicbrainz')
   sources += ['cmd_musicbrainz.py']
 endif
 
-if get_option('musicbrainz')
-  sources += ['cmd_musicbrainz.py']
-endif
-
-if get_option('musicbrainz')
-  sources += ['cmd_musicbrainz.py']
-endif
-
-if get_option('musicbrainz')
-  sources += ['cmd_musicbrainz.py']
-endif
-
-if get_option('musicbrainz')
-  sources += ['cmd_musicbrainz.py']
-endif
-
-if get_option('musicbrainz')
-  sources += ['cmd_musicbrainz.py']
-endif
-
-if get_option('musicbrainz')
-  sources += ['cmd_musicbrainz.py']
-endif
-
 if get_option('play')
   sources += ['cmd_play.py']
 endif
