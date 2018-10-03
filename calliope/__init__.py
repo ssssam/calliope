@@ -114,3 +114,6 @@ if modules_config['suggest']:
 
 if modules_config['tracker']:
     from . import cmd_tracker
+
+if modules_config['web']:
+    from . import cmd_web

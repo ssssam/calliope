@@ -8,7 +8,6 @@ sources = [
   'cmd_shuffle.py',
   'cmd_stat.py',
   'cmd_sync.py',
-  'cmd_web.py',
   'playlist.py',
 ]
 
@@ -36,6 +35,10 @@ if get_option('tracker')
   sources += ['cmd_tracker.py']
 endif
 
+if get_option('web')
+  sources += ['cmd_web.py']
+endif
+
 install_data(
     sources,
     install_dir: join_paths(python_site_packages_dir, 'calliope'))
@@ -52,4 +55,6 @@ configure_file(
     configuration: cdata,
     install_dir: get_option('bindir'))
 
-subdir('data/web/templates')
+if get_option('web')
+  subdir('data/web/templates')
+endif

@@ -49,6 +49,10 @@ if get_option('suggest')
   install_requires += ['lightfm']
 endif
 
+if get_option('web')
+  install_requires += ['jinja2']
+endif
+
 setup_requires = [
 ]
 
@@ -89,6 +93,7 @@ cdata.set10('enable_play', get_option('play'))
 cdata.set10('enable_spotify', get_option('spotify'))
 cdata.set10('enable_suggest', get_option('suggest'))
 cdata.set10('enable_tracker', get_option('tracker'))
+cdata.set10('enable_web', get_option('web'))
 
 top_build_dir = meson.current_build_dir()
 
