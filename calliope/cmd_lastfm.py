@@ -109,6 +109,29 @@ def prompt_for_user_token(username, client_id=None, client_secret=None,
     return token
 
 
+def add_lastfm_artist_top_tags(lastfm, cache, item):
+    artist_name = item['artist']
+
+    found, entry = cache.lookup('artist-top-tags:{}'.format(artist_name))
+
+    if found:
+        log.debug("Found artist-top-tags:{} in cache".format(artist_name))
+    else:
+        log.debug("Didn't find artist-top-tags:{} in cache, running remote query".format(artist_name))
+        result = lastfm.artist.get_top_tags(artist_name)
+        if len(result) == 0:
+            entry = None
+        else:
+            entry = result
+
+        cache.store('artist-top-tags:{}'.format(artist_name), entry)
+
+    if 'tag' in entry:
+        item['lastfm.tags.top'] = [tag['name'] for tag in entry['tag']]
+
+    return item
+
+
 @calliope.cli.group(name='lastfm',
                     help="Interface to the Last.fm music database")
 @click.option('--user', metavar='NAME',
@@ -150,6 +173,24 @@ def lastfm_cli(context, user):
     lastfm.session_key = session_key
 
     context.obj.lastfm = lastfm
+
+
+@lastfm_cli.command(name='annotate-tags')
+@click.argument('playlist', type=click.File(mode='r'))
+@click.pass_context
+def annotate_tags(context, playlist):
+    '''Annotate playlist with tags from Last.fm'''
+
+    lastfm = context.obj.lastfm
+    cache = calliope.cache.Cache(namespace='lastfm')
+
+    for item in calliope.playlist.read(playlist):
+        if 'artist' in item and 'last.fm.tags' not in item:
+            try:
+                item = add_lastfm_artist_top_tags(lastfm, cache, item)
+            except RuntimeError as e:
+                raise RuntimeError("%s\nItem: %s" % (e, item))
+        calliope.playlist.write([item], sys.stdout)
 
 
 @lastfm_cli.command(name='top-artists')
