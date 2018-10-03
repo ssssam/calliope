@@ -100,11 +100,12 @@ subdir('calliope')
 
 subdir('tests')
 
-# Install the bundled lastfmclient library.
-#
-# Theoretically this could conflict with an existing user-installed version,
-# but the upstream version doesn't work with Python 3 so it's unlikely to be
-# part of any existing Python 3 installations.
-install_subdir(
-    'subprojects/lastfmclient/lastfmclient',
-    install_dir: join_paths(python_site_packages_dir))
+if get_option('lastfm'):
+  # Install the bundled lastfmclient library.
+  #
+  # Theoretically this could conflict with an existing user-installed version,
+  # but the upstream version doesn't work with Python 3 so it's unlikely to be
+  # part of any existing Python 3 installations.
+  install_subdir(
+      'subprojects/lastfmclient/lastfmclient',
+      install_dir: join_paths(python_site_packages_dir))
