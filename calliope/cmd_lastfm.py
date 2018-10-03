@@ -118,15 +118,18 @@ def add_lastfm_artist_top_tags(lastfm, cache, item):
         log.debug("Found artist-top-tags:{} in cache".format(artist_name))
     else:
         log.debug("Didn't find artist-top-tags:{} in cache, running remote query".format(artist_name))
-        result = lastfm.artist.get_top_tags(artist_name)
-        if len(result) == 0:
+
+        try:
+            entry = lastfm.artist.get_top_tags(artist_name)
+        except lastfmclient.exceptions.InvalidParametersError:
+            warnings = item.get('lastfm.warnings', [])
+            warnings += ["Unable to find artist on Last.fm"]
+            item['lastfm.warnings'] = warnings
             entry = None
-        else:
-            entry = result
 
         cache.store('artist-top-tags:{}'.format(artist_name), entry)
 
-    if 'tag' in entry:
+    if entry is not None and 'tag' in entry:
         item['lastfm.tags.top'] = [tag['name'] for tag in entry['tag']]
 
     return item
