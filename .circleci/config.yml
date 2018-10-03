@@ -1,0 +1,28 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: ssssam/calliope-testsuite:latest
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - run:
+          name: configure project
+          command: |
+            mkdir build
+            cd build
+            meson ..
+            ninja
+
+      - run:
+          name: run tests
+          command: |
+            cd build
+            env LANG=en_US.UTF8 LC_ALL=en_US.UTF8 XDG_DATA_DIRS=/usr/share dbus-launch meson test --suite calliope --print-errorlogs
+
+      - store_artifacts:
+          path: build/logs
+          destination: build/logs
