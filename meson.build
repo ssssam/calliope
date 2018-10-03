@@ -100,7 +100,7 @@ subdir('calliope')
 
 subdir('tests')
 
-if get_option('lastfm'):
+if get_option('lastfm')
   # Install the bundled lastfmclient library.
   #
   # Theoretically this could conflict with an existing user-installed version,
@@ -109,3 +109,4 @@ if get_option('lastfm'):
   install_subdir(
       'subprojects/lastfmclient/lastfmclient',
       install_dir: join_paths(python_site_packages_dir))
+endif
