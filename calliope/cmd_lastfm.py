@@ -19,7 +19,6 @@
 import lastfmclient
 
 import click
-import yaml
 
 import hashlib
 import logging
