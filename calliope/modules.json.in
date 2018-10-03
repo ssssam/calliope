@@ -1,0 +1,9 @@
+{
+    "lastfm": @enable_lastfm@,
+    "musicbrainz": @enable_musicbrainz@,
+    "play": @enable_play@,
+    "spotify": @enable_spotify@,
+    "suggest": @enable_suggest@,
+    "tracker": @enable_tracker@,
+    "web": @enable_web@
+}
