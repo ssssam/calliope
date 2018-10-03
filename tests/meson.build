@@ -7,6 +7,7 @@ tests = [
 ]
 
 pytest_env = environment()
+pytest_env.set('CALLIOPE_MODULES_CONFIG', join_paths(top_build_dir, 'calliope', 'modules.json'))
 # FIXME: doing 'prepend' twice seems to lose one of the values; possibly a
 # bug in Meson 0.44.1..
 pytest_env.prepend('PYTHONPATH', '@0@:@1@'.format(

@@ -24,6 +24,7 @@ import click
 
 import copy
 import enum
+import json
 import logging
 import os
 import sys
@@ -68,20 +69,48 @@ from . import cmd_stat
 from . import cmd_sync
 from . import cmd_web
 
-if @enable_lastfm@:
+
+# Some modules can be switched on/off using `meson configure` when Calliope
+# is installed from a Git checkout. This makes it possible to use some features
+# without having to install every possible dependency.
+#
+# In order to discover which modules we should import, Meson generates a .json
+# file which we read here. Normally the file is installed alongside the module,
+# but when running the test suite from the source tree, the file will be inside
+# the build/ dir and the testsuite sets the CALLIOPE_MODULES_CONFIG variable
+# accordingly.
+#
+# Note that we can't simply generate the __init__.py file using Meson because
+# this makes it impossible to do `import calliope` from inside the source tree,
+# which would make `meson test` unusable.
+
+def load_modules_config():
+    if 'CALLIOPE_MODULES_CONFIG' in os.environ:
+        modules_config_file = os.environ['CALLIOPE_MODULES_CONFIG']
+    else:
+        module_path = os.path.dirname(__file__)
+        modules_config_file = os.path.join(module_path, 'modules.json')
+
+    with open(modules_config_file) as f:
+        return json.load(f)
+
+
+modules_config = load_modules_config()
+
+if modules_config['lastfm']:
     from . import cmd_lastfm
 
-if @enable_musicbrainz@:
+if modules_config['musicbrainz']:
     from . import cmd_musicbrainz
 
-if @enable_play@:
+if modules_config['play']:
     from . import cmd_play
 
-if @enable_spotify@:
+if modules_config['spotify']:
     from . import cmd_spotify
 
-if @enable_suggest@:
+if modules_config['suggest']:
     from . import cmd_suggest
 
-if @enable_tracker@:
+if modules_config['tracker']:
     from . import cmd_tracker

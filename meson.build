@@ -87,12 +87,14 @@ pytest_workdir = meson.current_source_dir()
 
 cdata = configuration_data()
 cdata.set('pythondir', python_site_packages_dir)
-cdata.set('enable_lastfm', get_option('lastfm'))
-cdata.set('enable_musicbrainz', get_option('musicbrainz'))
-cdata.set('enable_play', get_option('play'))
-cdata.set('enable_spotify', get_option('spotify'))
-cdata.set('enable_suggest', get_option('suggest'))
-cdata.set('enable_tracker', get_option('tracker'))
+cdata.set10('enable_lastfm', get_option('lastfm'))
+cdata.set10('enable_musicbrainz', get_option('musicbrainz'))
+cdata.set10('enable_play', get_option('play'))
+cdata.set10('enable_spotify', get_option('spotify'))
+cdata.set10('enable_suggest', get_option('suggest'))
+cdata.set10('enable_tracker', get_option('tracker'))
+
+top_build_dir = meson.current_build_dir()
 
 subdir('calliope')
 
