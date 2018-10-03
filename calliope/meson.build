@@ -1,4 +1,5 @@
 sources = [
+  '__init__.py',
   '__main__.py',
   'cache.py',
   'config.py',
@@ -64,8 +65,8 @@ install_data(
     install_dir: join_paths(python_site_packages_dir, 'calliope'))
 
 configure_file(
-    input: '__init__.py.in',
-    output: '__init__.py',
+    input: 'modules.json.in',
+    output: 'modules.json',
     configuration: cdata,
     install_dir: join_paths(python_site_packages_dir, 'calliope'))
 
