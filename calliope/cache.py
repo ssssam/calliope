@@ -16,6 +16,7 @@
 
 
 import contextlib
+import dbm
 import json
 import io
 import logging
@@ -33,6 +34,9 @@ responses we get to avoid repeating the same request. This module provides a
 simple key/value store interface that should be used for caching.
 
 Use the `open()` module method to access a cache.
+
+Multiple processes can read and write to a cache concurrently and can share data
+appropriately.
 
 '''
 
@@ -54,7 +58,11 @@ class Cache():
         raise NotImplementedError()
 
     def store(self, key, value):
-        '''Store 'value' in the cache under the given key.'''
+        '''Store 'value' in the cache under the given key.
+
+        The contents of 'value' must be representable as JSON data.
+
+        '''
         raise NotImplementedError()
 
 
@@ -169,6 +177,38 @@ class JsonCache:
     def store(self, key, value):
         self._data[key] = value
         self._save()
+
+
+class GdbmCache:
+    '''Cache implementation which uses the GNU DBM library.'''
+
+    # GDBM does not support concurrent writers & readers. To work around this
+    # we re-open the database on every read and write. This probably has a
+    # performance penalty.
+
+    def __init__(self, namespace, cachedir=None):
+        if cachedir is None:
+            cachedir = xdg.BaseDirectory.save_cache_path('calliope')
+
+        self._path = os.path.join(cachedir, namespace) + '.gdbm'
+
+    def lookup(self, key):
+        '''Lookup 'key' in the cache.
+
+        Returns a tuple of (found, value).
+
+        '''
+        if not os.path.exists(self._path):
+            return False, None
+        with dbm.open(self._path, 'r') as db:
+            if key in db:
+                return True, json.loads(db[key])
+            else:
+                return False, None
+
+    def store(self, key, value):
+        with dbm.open(self._path, 'cf') as db:
+            db[key] = json.dumps(value)
 
 
 def open(namespace, cachedir=None):
