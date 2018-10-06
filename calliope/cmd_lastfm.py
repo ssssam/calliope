@@ -155,7 +155,7 @@ def lastfm_cli(context, user):
     client_secret = calliope.config.get('lastfm', 'client-secret')
     redirect_uri = calliope.config.get('lastfm', 'redirect-uri')
 
-    cache = calliope.cache.Cache('lastfm')
+    cache = calliope.cache.open('lastfm')
 
     lastfm = lastfmclient.LastfmClient(
         api_key=client_id,
@@ -184,7 +184,7 @@ def annotate_tags(context, playlist):
     '''Annotate playlist with tags from Last.fm'''
 
     lastfm = context.obj.lastfm
-    cache = calliope.cache.Cache(namespace='lastfm')
+    cache = calliope.cache.open(namespace='lastfm')
 
     for item in calliope.playlist.read(playlist):
         if 'artist' in item and 'last.fm.tags' not in item:

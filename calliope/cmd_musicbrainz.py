@@ -92,7 +92,7 @@ def add_musicbrainz_artist_urls(cache, item):
 def run(context, playlist, include):
     '''Annotate playlists with data from Musicbrainz'''
 
-    cache = calliope.cache.Cache(namespace='musicbrainz')
+    cache = calliope.cache.open(namespace='musicbrainz')
 
     musicbrainzngs.set_useragent("Calliope", "0.1", "https://github.com/ssssam/calliope")
 

@@ -57,7 +57,7 @@ setup_requires = [
 ]
 
 test_requires = [
-  'mutagen',
+  'mutagen', 'pytest-benchmark'
 ]
 
 missing_dependency_errors = []
