@@ -22,7 +22,7 @@ import calliope
 import threading
 
 
-KINDS = [calliope.cache.JsonCache, calliope.cache.GdbmCache]
+KINDS = [calliope.cache.GdbmCache]
 
 
 @pytest.fixture
