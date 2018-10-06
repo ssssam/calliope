@@ -20,7 +20,7 @@ import calliope
 
 def test_dict(tmpdir):
     '''Store and retrieve a dictionary value.'''
-    cache = calliope.cache.Cache('test', cachedir=tmpdir)
+    cache = calliope.cache.open('test', cachedir=tmpdir)
 
     key = 'foo'
     value = {'a': 5, 'b': 4}
@@ -39,7 +39,7 @@ def test_dict(tmpdir):
 
 def test_null_value(tmpdir):
     '''Store and retrieve a null value.'''
-    cache = calliope.cache.Cache('test', cachedir=tmpdir)
+    cache = calliope.cache.open('test', cachedir=tmpdir)
 
     key = 'foo'
     value = None

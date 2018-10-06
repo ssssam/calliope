@@ -17,6 +17,7 @@
 
 import contextlib
 import json
+import io
 import logging
 import os
 import tempfile
@@ -24,6 +25,37 @@ import time
 import xdg.BaseDirectory
 
 log = logging.getLogger(__name__)
+
+'''cache: Simple key-value store for use by Calliope tools.
+
+Many Calliope tools contact online services. We should always cache the
+responses we get to avoid repeating the same request. This module provides a
+simple key/value store interface that should be used for caching.
+
+Use the `open()` module method to access a cache.
+
+'''
+
+class Cache():
+    '''Abstract base class that defines the Cache interface.
+
+    Do not use this class directly. Call the `open()` module method instead.
+
+    '''
+    def __init__(self, namespace, cachedir=None):
+        raise NotImplementedError("Use the cache.open() function to open a cache")
+
+    def lookup(self, key):
+        '''Lookup 'key' in the cache.
+
+        Returns a tuple of (found, value).
+
+        '''
+        raise NotImplementedError()
+
+    def store(self, key, value):
+        '''Store 'value' in the cache under the given key.'''
+        raise NotImplementedError()
 
 
 # Adapted from BuildStream:
@@ -61,8 +93,8 @@ def save_file_atomic(filename, mode='w', *, buffering=-1, encoding=None,
     fd, tempname = tempfile.mkstemp(dir=dirname)
     os.close(fd)
 
-    f = open(tempname, mode=mode, buffering=buffering, encoding=encoding,
-             errors=errors, newline=newline, closefd=closefd, opener=opener)
+    f = io.open(tempname, mode=mode, buffering=buffering, encoding=encoding,
+                errors=errors, newline=newline, closefd=closefd, opener=opener)
 
     def cleanup_tempfile():
         f.close()
@@ -85,17 +117,14 @@ def save_file_atomic(filename, mode='w', *, buffering=-1, encoding=None,
         raise
 
 
-class Cache:
-    '''Simple key-value store for use by Calliope tools.
+class JsonCache:
+    '''Cache implementation based on the 'json' module.
 
-    Many Calliope tools contact online services. We should always cache the
-    responses we get to avoid repeating the same request. This class provides a
-    simple key/value store interface that should be used for caching.
+    All data is stored on disk in a JSON file, which is read each time we look
+    up a value and written every time we save a value.
 
-    Currently the implementation is very simple and dumb. All data is stored on
-    disk in a JSON file, which is read each time we look up a value and written
-    every time we save a value. A more scalable solution will no doubt be needed
-    in future.
+    Write performance becomes very bad with this kind of cache as soon as it
+    grows beyond 1MB in size. Do not use.
 
     '''
     def __init__(self, namespace, cachedir=None):
@@ -109,7 +138,7 @@ class Cache:
 
     def _load(self):
         try:
-            with open(self._path) as f:
+            with io.open(self._path) as f:
                 self._data = json.load(f)
             self._mtime = time.time()
         except FileNotFoundError as e:
@@ -131,11 +160,6 @@ class Cache:
                 self._load()
 
     def lookup(self, key):
-        '''Lookup 'key' in the cache.
-
-        Returns a tuple of (found, value).
-
-        '''
         self._check_reload()
         if key in self._data:
             return True, self._data[key]
@@ -145,3 +169,15 @@ class Cache:
     def store(self, key, value):
         self._data[key] = value
         self._save()
+
+
+def open(namespace, cachedir=None):
+    '''Open a cache using the best available cache implementation.
+
+    The 'namespace' parameter should usually correspond with the name of tool
+    or module using the cache.
+
+    The 'cachedir' parameter is mainly for use during automated tests.
+
+    '''
+    return JsonCache(namespace, cachedir=cachedir)
