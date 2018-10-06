@@ -54,10 +54,10 @@ def test_scan_show(tracker_cli, tmpdir, musicdir):
     result = tracker_cli.run(['scan', musicdir])
     result.assert_success()
 
-    result = tracker_cli.run(['show'])
+    result = tracker_cli.run(['local-albums'])
     result.assert_success()
 
-    collection = result.yaml()['collection']
+    collection = result.json()
     assert collection[0]['artist'] == 'Artist 1'
     assert collection[0]['tracks'][0]['track'] == 'Track 1'
     assert collection[0]['tracks'][1]['track'] == 'Track 2'

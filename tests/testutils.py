@@ -21,6 +21,7 @@ import calliope
 
 import contextlib
 import io
+import json
 import os
 import shutil
 import subprocess
@@ -42,6 +43,9 @@ class Result():
 
     def assert_success(self, fail_message=''):
         assert self.exit_code == 0, fail_message
+
+    def json(self):
+        return [json.loads(line) for line in self.output.strip().split('\n')]
 
 
 class Cli():
