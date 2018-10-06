@@ -102,7 +102,7 @@ class Cache:
         if cachedir is None:
             cachedir = xdg.BaseDirectory.save_cache_path('calliope')
 
-        self._path = os.path.join(cachedir, namespace)
+        self._path = os.path.join(cachedir, namespace) + '.json'
 
         self._data = {}
         self._mtime = None
