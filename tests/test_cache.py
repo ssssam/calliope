@@ -15,13 +15,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import pytest
+
 import calliope
 
 
-def test_dict(tmpdir):
-    '''Store and retrieve a dictionary value.'''
-    cache = calliope.cache.open('test', cachedir=tmpdir)
+KINDS = [calliope.cache.JsonCache, calliope.cache.GdbmCache]
 
+
+@pytest.fixture
+def cache(tmpdir, kind):
+    return kind(namespace='test', cachedir=tmpdir)
+
+
+@pytest.mark.parametrize('kind', KINDS)
+def test_dict(cache):
+    '''Store and retrieve a dictionary value.'''
     key = 'foo'
     value = {'a': 5, 'b': 4}
 
@@ -37,10 +46,9 @@ def test_dict(tmpdir):
     assert returned_value == value
 
 
-def test_null_value(tmpdir):
+@pytest.mark.parametrize('kind', KINDS)
+def test_null_value(cache):
     '''Store and retrieve a null value.'''
-    cache = calliope.cache.open('test', cachedir=tmpdir)
-
     key = 'foo'
     value = None
 
