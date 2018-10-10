@@ -15,3 +15,6 @@ option('web', type: 'boolean', value: 'true',
 
 option('testsuite', type: 'boolean', value: 'true',
        description: 'Enable automated test suite (requires Python "mutagen" library)')
+
+option('viewer', type: 'boolean', value: 'true',
+       description: 'Enable playlist viewer app (requires GTK+ and PyGObject)')

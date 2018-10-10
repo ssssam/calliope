@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+# Calliope Playlist Viewer
+#
+# Copyright 2018 Sam Thursfield <sam@afuera.me.uk>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+import gi
+from gi.repository import Gio, GLib
+
+import argparse
+import gettext
+import locale
+import logging
+import os
+import signal
+import sys
+import warnings
+
+from gettext import gettext as _
+
+
+LOCALE_DIR = '@localedir@'
+PACKAGE_DATA_DIR = os.environ.get('CALLIOPE_VIEWER_DATA_DIR', '@pkgdatadir@')
+PYTHON_SITE_PACKAGES_DIR = '@pythonsitepackagesdir@'
+
+sys.path.append(PYTHON_SITE_PACKAGES_DIR)
+
+
+import calliope
+import calliope.apps.viewer.app
+
+
+def install_excepthook():
+    """ Make sure we exit when an unhandled exception occurs. """
+    gi.require_version('Gtk', '3.0')
+    from gi.repository import Gtk
+    old_hook = sys.excepthook
+
+    def new_hook(etype, evalue, etb):
+        old_hook(etype, evalue, etb)
+        while Gtk.main_level():
+            Gtk.main_quit()
+        sys.exit()
+    sys.excepthook = new_hook
+
+
+def argument_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--debug', action='store_true', default=False)
+    parser.add_argument('playlist', type=argparse.FileType('r', encoding='UTF-8'))
+    return parser
+
+
+if __name__ == "__main__":
+    install_excepthook()
+
+    args, passthrough_args = argument_parser().parse_known_args()
+
+    # Gtk does its own argument parsing later on, and raises an error on
+    # anything it can't parse. So we pass it everything we didn't parse
+    # ourselves and let it report any errors.
+    sys.argv[1:] = passthrough_args
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG,
+                            format='%(asctime)s %(levelname)s\t%(message)s',
+                            datefmt='%H:%M:%S')
+    else:
+        logging.basicConfig(level=logging.WARN,
+                            format='%(asctime)s %(levelname)s\t%(message)s',
+                            datefmt='%H:%M:%S')
+
+    def pretty_warnings(message, category, filename, lineno,
+                        file=None, line=None):
+        return 'WARNING: %s\n' % (message)
+
+    warnings.formatwarning = pretty_warnings
+
+    locale.bindtextdomain('calliope', LOCALE_DIR)
+    locale.textdomain('calliope')
+    gettext.bindtextdomain('calliope', LOCALE_DIR)
+    gettext.textdomain('calliope')
+
+    resource = Gio.resource_load(os.path.join(PACKAGE_DATA_DIR, 'calliope-viewer.gresource'))
+    Gio.Resource._register(resource)
+
+    GLib.set_application_name(_("Calliope Playlist Viewer"))
+    GLib.set_prgname('calliope-playlist-viewer')
+
+    app = calliope.apps.viewer.app.Application(args.playlist)
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    exit_status = app.run(sys.argv)
+    sys.exit(exit_status)
