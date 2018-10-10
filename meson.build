@@ -85,6 +85,9 @@ pytest_workdir = meson.current_source_dir()
 # Configuration
 ###############################################################################
 
+localedir = join_paths(get_option('prefix'), get_option('localedir'))
+pkgdatadir = join_paths(get_option('prefix'), get_option('datadir'), 'tagcloud')
+
 cdata = configuration_data()
 cdata.set('pythondir', python_site_packages_dir)
 cdata.set10('enable_lastfm', get_option('lastfm'))
@@ -94,10 +97,16 @@ cdata.set10('enable_spotify', get_option('spotify'))
 cdata.set10('enable_suggest', get_option('suggest'))
 cdata.set10('enable_tracker', get_option('tracker'))
 cdata.set10('enable_web', get_option('web'))
+cdata.set('localedir', join_paths(localedir))
+cdata.set('pkgdatadir', join_paths(pkgdatadir))
 
 top_build_dir = meson.current_build_dir()
 
 subdir('calliope')
+
+if get_option('viewer')
+  subdir('apps/viewer')
+endif
 
 subdir('tests')
 
