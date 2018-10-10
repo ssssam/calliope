@@ -31,12 +31,16 @@ import warnings
 
 from gettext import gettext as _
 
-import calliope
-import calliope.apps.viewer.app
-
 
 LOCALE_DIR = '@localedir@'
 PACKAGE_DATA_DIR = os.environ.get('CALLIOPE_VIEWER_DATA_DIR', '@pkgdatadir@')
+PYTHON_SITE_PACKAGES_DIR = '@pythonsitepackagesdir@'
+
+sys.path.append(PYTHON_SITE_PACKAGES_DIR)
+
+
+import calliope
+import calliope.apps.viewer.app
 
 
 def install_excepthook():

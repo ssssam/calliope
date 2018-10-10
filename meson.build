@@ -97,8 +97,9 @@ cdata.set10('enable_spotify', get_option('spotify'))
 cdata.set10('enable_suggest', get_option('suggest'))
 cdata.set10('enable_tracker', get_option('tracker'))
 cdata.set10('enable_web', get_option('web'))
-cdata.set('localedir', join_paths(localedir))
-cdata.set('pkgdatadir', join_paths(pkgdatadir))
+cdata.set('localedir', localedir)
+cdata.set('pkgdatadir', pkgdatadir)
+cdata.set('pythonsitepackagesdir', python_site_packages_dir)
 
 top_build_dir = meson.current_build_dir()
 
