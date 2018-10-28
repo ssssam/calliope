@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Calliope
-# Copyright (C) 2016  Sam Thursfield <sam@afuera.me.uk>
+# Copyright (C) 2016,2018  Sam Thursfield <sam@afuera.me.uk>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
