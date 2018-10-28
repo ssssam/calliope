@@ -106,7 +106,7 @@ class TrackerClient():
                 FILTER (fn:contains(LCASE(?track_title), "%s"))
             """  % Tracker.sparql_escape_string(track_search_text.lower())
         else:
-            track_pattern = None
+            track_pattern = " "
 
         query_tracks = """
         SELECT
