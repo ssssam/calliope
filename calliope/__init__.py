@@ -62,6 +62,7 @@ from . import cache
 from . import config
 from . import playlist
 
+from . import cmd_diff
 from . import cmd_export
 from . import cmd_import
 from . import cmd_shuffle
