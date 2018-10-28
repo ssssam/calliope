@@ -21,14 +21,13 @@ from yoyo import step
 step(
     'CREATE TABLE imports_lastfm ('
     '   id INTEGER UNIQUE PRIMARY KEY, '
-    '   play_id INTEGER NOT NULL, '
+    '   datetime DATETIME NOT NULL, '
     '   trackname VARCHAR, '
     '   artistname VARCHAR, '
     '   albumname VARCHAR, '
     '   trackmbid VARCHAR, '
     '   artistmbid VARCHAR, '
-    '   albummbid VARCHAR, '
-    '   FOREIGN KEY (play_id) REFERENCES plays(id)'
+    '   albummbid VARCHAR '
     ')',
     'DROP TABLE imports_lastfm'
 )

@@ -27,6 +27,7 @@ import sys
 import warnings
 
 import calliope
+import calliope.lastfm.history
 
 log = logging.getLogger(__name__)
 
@@ -224,3 +225,43 @@ def cmd_top_artists(context, count, time_range, include):
         output.append(output_item)
 
     calliope.playlist.write(output, sys.stdout)
+
+
+@calliope.cli.group(name='lastfm-history',
+                      help="Scrape and query user's LastFM listening history")
+@click.option('--sync/--no-sync', default=True,
+              help="update the local copy of the LastFM history")
+@click.option('--user', metavar='NAME',
+              help="show data for the given Last.fm user")
+@click.pass_context
+def lastfm_history_cli(context, sync, user):
+    if not user:
+        user = calliope.config.get('lastfm', 'user')
+    if not user:
+        raise RuntimeError("Please specify a username.")
+
+    lastfm_history = calliope.lastfm.history.load(user)
+    if sync:
+        lastfm_history.sync()
+
+    context.obj.lastfm_history = lastfm_history
+
+
+@lastfm_history_cli.command(name='scrobbles',
+                            help="Export individual scrobbles as a playlist")
+@click.pass_context
+def cmd_history_scrobbles(context):
+    lastfm_history = context.obj.lastfm_history
+    tracks = lastfm_history.scrobbles()
+    calliope.playlist.write(tracks, sys.stdout)
+
+
+@lastfm_history_cli.command(name='tracks',
+                            help="Query tracks from the listening history")
+@click.option('--min-listens', default=1, metavar='N',
+              help="show only tracks that were played N times")
+@click.pass_context
+def cmd_history_scrobbles(context, min_listens):
+    lastfm_history = context.obj.lastfm_history
+    tracks = lastfm_history.tracks(min_listens=min_listens)
+    calliope.playlist.write(tracks, sys.stdout)

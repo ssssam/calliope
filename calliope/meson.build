@@ -14,6 +14,7 @@ sources = [
 
 if get_option('lastfm')
   sources += ['cmd_lastfm.py']
+  subdir('lastfm')
 endif
 
 if get_option('musicbrainz')
