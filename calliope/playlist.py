@@ -76,6 +76,12 @@ class Item(dict):
         # FIXME: let's not be this dumb.
         self.update(data)
 
+    def id(self):
+        if 'id' in self:
+            return self['id']
+        else:
+            return '%s.%s' % (self.get('artist').lower(), self.get('track').lower())
+
     def tracks(self):
         '''Return all the tracks for this playlist item.
 

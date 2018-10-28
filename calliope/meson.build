@@ -3,6 +3,7 @@ sources = [
   '__main__.py',
   'cache.py',
   'config.py',
+  'cmd_diff.py',
   'cmd_export.py',
   'cmd_import.py',
   'cmd_shuffle.py',
