@@ -27,6 +27,7 @@ import sys
 import warnings
 
 import calliope
+import calliope.lastfm.history
 
 log = logging.getLogger(__name__)
 
@@ -224,3 +225,24 @@ def cmd_top_artists(context, count, time_range, include):
         output.append(output_item)
 
     calliope.playlist.write(output, sys.stdout)
+
+
+@calliope.cli.command(name='lastfm-history',
+                      help="Scrape and query user's LastFM listening history")
+@click.option('--sync/--no-sync', default=True,
+              help="update the local copy of the LastFM history")
+@click.option('--user', metavar='NAME',
+              help="show data for the given Last.fm user")
+@click.pass_context
+def lastfm_history_cli(context, sync, user):
+    if not user:
+        user = calliope.config.get('lastfm', 'user')
+    if not user:
+        raise RuntimeError("Please specify a username.")
+
+    history = calliope.lastfm.history.load(user)
+    if sync:
+        history.sync()
+
+    tracks = history.query()
+    calliope.playlist.write(tracks, sys.stdout)

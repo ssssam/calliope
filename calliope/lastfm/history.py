@@ -1,5 +1,5 @@
-# Calliope -- last.fm miner
-# Copyright (C) 2015  Sam Thursfield <sam@afuera.me.uk>
+# Calliope -- last.fm history
+# Copyright (C) 2015,2018  Sam Thursfield <sam@afuera.me.uk>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,17 +15,56 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import xdg.BaseDirectory
+import yoyo
+
 import logging
 import os
+import re
+import sqlite3
+import time
 
-from miners.lastfm import lastexport
-
-
-# FIXME: need to add 'accounts' info.
-USERNAME = 'ssam'
-
+import calliope.lastfm.lastexport
 
 log = logging.getLogger(__name__)
+
+
+_escape_re = re.compile('[^a-zA-Z0-9]')
+def escape_for_sql_identifier(name):
+    return re.sub(_escape_re, '_', name)
+
+
+class Store:
+    def __init__(self, file_path):
+        self.db = sqlite3.connect(file_path)
+        self.apply_migrations(file_path, self.migrations_dir())
+
+    def migrations_dir(self):
+        return os.path.join(os.path.dirname(__file__), 'migrations')
+
+    def apply_migrations(self, file_path, migrations_path):
+        backend = yoyo.get_backend('sqlite:///' + file_path)
+        migrations = yoyo.read_migrations(migrations_path)
+        with backend.lock():
+            backend.apply_migrations(backend.to_apply(migrations))
+
+    def commit(self):
+        retries = 3
+        for i in range(0, retries):
+            try:
+                self.db.commit()
+                break
+            except sqlite3.OperationalError as e:
+                # Probably 'database is locked', we should retry a few times.
+                logging.debug("%s, try %i of %i", e, i, retries)
+                if i == retries:
+                    raise
+                else:
+                    time.sleep(0.1)
+                    pass
+
+    def cursor(self):
+        return self.db.cursor()
 
 
 def escape_for_lastfm_uri(name):
@@ -35,9 +74,10 @@ def escape_for_lastfm_uri(name):
     return name.replace(' ', '+').replace(':', '%2F')
 
 
-class LastfmMiner:
-    def __init__(self, store):
+class _LastfmHistory:
+    def __init__(self, store, username):
         self.store = store
+        self.username = username
 
     def migrations_dir(self):
         return os.path.join(os.path.dirname(__file__), 'migrations')
@@ -48,11 +88,7 @@ class LastfmMiner:
 
     def _get_newest_play_datetime(self, cursor):
         newest_play_sql = \
-            'SELECT plays.datetime ' \
-            'FROM imports_lastfm INNER JOIN plays ' \
-            'WHERE plays.id = imports_lastfm.play_id ' \
-            'ORDER BY plays.datetime ' \
-            'LIMIT 1'
+            'SELECT datetime FROM imports_lastfm ORDER BY datetime DESC LIMIT 1'
         result = cursor.execute(newest_play_sql).fetchone()
         if result:
             return result[0]
@@ -72,8 +108,8 @@ class LastfmMiner:
 
         log.debug("Newest play: %i", newest_play)
 
-        gen = lastexport.get_tracks('last.fm', USERNAME,
-                                    tracktype='recenttracks')
+        gen = calliope.lastfm.lastexport.get_tracks(
+            'last.fm', self.username, tracktype='recenttracks')
 
         page_size = None
         timeouts = 0
@@ -89,7 +125,7 @@ class LastfmMiner:
 
             page_size = page_size or len(tracks)
 
-            if top_datetime < newest_play:
+            if top_datetime <= newest_play:
                 log.debug("Caught up with stored plays.")
                 break
 
@@ -101,9 +137,9 @@ class LastfmMiner:
         if last_stored_page < total_pages - 1:
             log.debug('Processing missing history from page %i/%i',
                       last_stored_page, total_pages)
-            gen = lastexport.get_tracks('last.fm', USERNAME,
-                                        tracktype='recenttracks',
-                                        startpage=last_stored_page)
+            gen = calliope.lastfm.lastexport.get_tracks(
+                'last.fm', self.username, tracktype='recenttracks',
+                startpage=last_stored_page)
 
             for page, total_pages, tracks in gen:
                 log.debug("Received page %i/%i", page, total_pages)
@@ -116,26 +152,54 @@ class LastfmMiner:
             albummbid = play_info
         uri = 'lastfm://%s/%s/' % (escape_for_lastfm_uri(artistname),
                                    escape_for_lastfm_uri(trackname))
-        item_id = self.store.intern_item(uri, trackmbid)
-        play_id = self.store.intern_play(datetime, item_id)
 
         cursor = self.store.cursor()
-        find_lastfm_sql = 'SELECT id FROM imports_lastfm WHERE play_id = ?'
-        row = cursor.execute(find_lastfm_sql, [play_id]).fetchone()
+        find_lastfm_sql = 'SELECT id FROM imports_lastfm WHERE datetime = ?'
+        row = cursor.execute(find_lastfm_sql, [datetime]).fetchone()
         if row is None:
             cursor.execute(
-                'INSERT INTO imports_lastfm(play_id, trackname, '
+                'INSERT INTO imports_lastfm(datetime, trackname, '
                 ' artistname, albumname, trackmbid, artistmbid, '
-                ' albummbid) VALUES (?, ?, ?, ?, ?, ?, ?)', [play_id,
-                trackname, artistname, albumname, trackmbid, artistmbid,
-                albummbid])
+                ' albummbid) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [datetime, trackname, artistname, albumname, trackmbid,
+                 artistmbid, albummbid])
             scrobble_id = cursor.lastrowid
         else:
             scrobble_id = row[0]
         return scrobble_id
 
+    def query(self):
+        sql = 'SELECT datetime, trackname, artistname, albumname, ' + \
+              ' trackmbid, artistmbid, albummbid FROM imports_lastfm ' + \
+              ' ORDER BY datetime DESC'
+        cursor = self.store.cursor()
+        cursor.execute(sql)
+        for row in cursor:
+            datetime, trackname, artistname, albumname, trackmbid, \
+                artistmbid, albummbid = row
+            item = {
+                'artist': artistname,
+                'album': albumname,
+                'track': trackname,
+                'lastfm.scrobble_datetime': datetime
+            }
+            if artistmbid:
+                item['musicbrainz.artist'] = artistmbid
+            if albummbid:
+                item['musicbrainz.album'] = albummbid
+            if trackmbid:
+                item['musicbrainz.track'] = trackmbid
+            yield item
 
-def load(store):
-    miner = LastfmMiner(store)
-    store.apply_migrations('miner.lastfm', miner.migrations_dir())
-    return miner
+
+def load(username, cachedir=None):
+    if cachedir is None:
+        cachedir = xdg.BaseDirectory.save_cache_path('calliope')
+
+    namespace = 'lastfm-history.%s' % username
+
+    store_path = os.path.join(cachedir, namespace) + '.sqlite'
+    store = Store(store_path)
+
+    history = _LastfmHistory(store, username)
+    return history

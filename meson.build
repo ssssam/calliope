@@ -37,6 +37,10 @@ install_requires = [
   'pyxdg',
 ]
 
+if get_option('lastfm')
+  install_requires += ['yoyo-migrations']
+endif
+
 if get_option('musicbrainz')
   install_requires += ['musicbrainzngs']
 endif
