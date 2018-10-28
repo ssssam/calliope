@@ -169,7 +169,8 @@ class _LastfmHistory:
             scrobble_id = row[0]
         return scrobble_id
 
-    def query(self):
+    def scrobbles(self):
+        '''Return individual scrobbles as a Calliope playlist.'''
         sql = 'SELECT datetime, trackname, artistname, albumname, ' + \
               ' trackmbid, artistmbid, albummbid FROM imports_lastfm ' + \
               ' ORDER BY datetime DESC'
@@ -183,6 +184,37 @@ class _LastfmHistory:
                 'album': albumname,
                 'track': trackname,
                 'lastfm.scrobble_datetime': datetime
+            }
+            if artistmbid:
+                item['musicbrainz.artist'] = artistmbid
+            if albummbid:
+                item['musicbrainz.album'] = albummbid
+            if trackmbid:
+                item['musicbrainz.track'] = trackmbid
+            yield item
+
+    def tracks(self, min_listens=1):
+        '''Return tracks from the lastfm history.'''
+        # last.fm doesn't give us a single unique identifier for the tracks, so
+        # we construct one by concatenating the two fields that are guaranteed
+        # to be present for every track (which are 'artistname' and 'trackname').
+        sql = 'SELECT COUNT(trackid) AS playcount, trackname, artistname, albumname, ' + \
+              '       artistmbid, trackmbid, albummbid ' + \
+              '  FROM ( SELECT (artistname || \',\' || trackname) AS trackid, trackname, artistname, ' + \
+              '                albumname, trackmbid, artistmbid, albummbid ' + \
+              '           FROM imports_lastfm ) ' + \
+              '  GROUP BY trackid HAVING playcount > ? ' + \
+              '  ORDER BY trackid';
+        cursor = self.store.cursor()
+        cursor.execute(sql, [min_listens])
+        for row in cursor:
+            playcount, trackname, artistname, albumname, trackmbid, \
+                artistmbid, albummbid = row
+            item = {
+                'artist': artistname,
+                'album': albumname,
+                'track': trackname,
+                'lastfm.playcount': playcount
             }
             if artistmbid:
                 item['musicbrainz.artist'] = artistmbid
