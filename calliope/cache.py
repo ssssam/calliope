@@ -15,12 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import xdg.BaseDirectory
+
 import dbm
 import json
 import io
 import logging
 import os
-import xdg.BaseDirectory
 
 log = logging.getLogger(__name__)
 
