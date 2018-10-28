@@ -154,8 +154,9 @@ class _LastfmHistory:
                                    escape_for_lastfm_uri(trackname))
 
         cursor = self.store.cursor()
-        find_lastfm_sql = 'SELECT id FROM imports_lastfm WHERE datetime = ?'
-        row = cursor.execute(find_lastfm_sql, [datetime]).fetchone()
+        find_lastfm_sql = 'SELECT id FROM imports_lastfm ' \
+                          '  WHERE datetime = ? AND trackname = ? AND artistname = ?'
+        row = cursor.execute(find_lastfm_sql, [datetime, trackname, artistname]).fetchone()
         if row is None:
             cursor.execute(
                 'INSERT INTO imports_lastfm(datetime, trackname, '
