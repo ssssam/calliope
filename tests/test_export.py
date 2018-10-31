@@ -18,7 +18,7 @@
 import json
 
 
-def test_basic(cli):
+def test_export_cue(cli):
     input_tracks = [
         { 'artist': 'Test1', 'start-time': 0 },
         { 'artist': 'Test2', 'start-time': 50 }
@@ -33,7 +33,24 @@ def test_basic(cli):
       "    PERFORMER \"Test2\"",
       "  INDEX 01 00:50:00"])
 
-    result = cli.run(['export', '-'], input='\n'.join(json.dumps(track) for track in input_tracks))
+    result = cli.run(['export', '--format=cue', '-'], input='\n'.join(json.dumps(track) for track in input_tracks))
+
+    assert result.exit_code == 0
+    assert result.output.strip() == expected_output
+
+
+def test_export_m3u(cli):
+    input_tracks = [
+        { 'artist': 'Test1', 'url': 'file:///test1' },
+        { 'artist': 'Test2', 'url': 'file:///test2' }
+    ]
+
+    expected_output = '\n'.join([
+        "file:///test1",
+        "file:///test2"
+    ])
+
+    result = cli.run(['export', '--format=m3u', '-'], input='\n'.join(json.dumps(track) for track in input_tracks))
 
     assert result.exit_code == 0
     assert result.output.strip() == expected_output

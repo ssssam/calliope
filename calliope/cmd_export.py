@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Calliope
-# Copyright (C) 2016  Sam Thursfield <sam@afuera.me.uk>
+# Copyright (C) 2016,2018  Sam Thursfield <sam@afuera.me.uk>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,8 +43,19 @@ def convert_to_cue(playlist):
     return '\n'.join(output_text)
 
 
+def convert_to_m3u(playlist):
+    output_text = []
+    for i, item in enumerate(playlist):
+        if 'url' in item:
+            output_text.append(item['url'])
+        else:
+            raise RuntimeError("The 'url' field must be set for all entries "
+                                "in order to create an M3U playlist")
+    return '\n'.join(output_text)
+
+
 @calliope.cli.command(name='export')
-@click.option('-f', '--format', type=click.Choice(['cue']), default='cue')
+@click.option('-f', '--format', type=click.Choice(['cue', 'm3u']), default='m3u')
 @click.argument('playlist', nargs=1, type=click.File('r'))
 @click.pass_context
 def run(context, format, playlist):
@@ -52,5 +63,7 @@ def run(context, format, playlist):
 
     if format == 'cue':
         print(convert_to_cue(calliope.playlist.read(playlist)))
+    elif format == 'm3u':
+        print(convert_to_m3u(calliope.playlist.read(playlist)))
     else:
         raise NotImplementedError("Unsupport format: %s" % format)
