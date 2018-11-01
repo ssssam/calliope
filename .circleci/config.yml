@@ -2,7 +2,9 @@ version: 2
 jobs:
   build:
     docker:
-      - image: ssssam/calliope-testsuite:latest
+      # This image is built from the Dockerfile in the
+      # ./docker/testsuite-fedora directory.
+      - image: quay.io/ssssam/calliope-testsuite:latest
 
     working_directory: ~/repo
 
