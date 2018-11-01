@@ -76,6 +76,9 @@ def print_spotify_playlist(playlist, tracks):
               help="show data for the given Spotify user")
 @click.pass_context
 def spotify_cli(context, token, user):
+    if 'CALLIOPE_TEST_ONLY' in os.environ:
+        sys.exit(0)
+
     if not user:
         user = calliope.config.get('spotify', 'user')
     if not user:
@@ -83,9 +86,6 @@ def spotify_cli(context, token, user):
 
     context.obj.user = user
     log.debug("Spotify user: {}".format(user))
-
-    if 'CALLIOPE_TEST_ONLY' in os.environ:
-        sys.exit(0)
 
     if not token:
         client_id = calliope.config.get('spotify', 'client-id')
