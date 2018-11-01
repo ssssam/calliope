@@ -10,7 +10,7 @@ o888     88   ooooooo    888   888  oooo   ooooooo  ooooooooo    ooooooooo8
 Calliope provides various utilities for working with playlists and
 collections of music.
 
-![CircleCI Status](https://circleci.com/gh/ssssam/calliope.svg?style=shield&circle-token=:circle-ci-badge-token)
+[![CircleCI Status](https://circleci.com/gh/ssssam/calliope.svg?style=shield&circle-token=:circle-ci-badge-token)](https://circleci.com/gh/ssssam/calliope)
 
 # The basics
 
