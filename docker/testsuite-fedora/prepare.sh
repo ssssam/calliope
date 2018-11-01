@@ -23,7 +23,7 @@ dnf install -y python3-devel
 
 pip3 install click pyxdg yoyo-migrations
 pip3 install mutagen
-pip3 install jinja2 lightfm musicbrainzngs spotipy
+pip3 install jinja2 lastfmclient lightfm musicbrainzngs spotipy
 dnf install -y gstreamer1-plugins-good
 
 # lightfm requires libgomp, this prevents it being removed when we uninstall GCC
