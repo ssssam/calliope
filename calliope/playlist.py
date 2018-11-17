@@ -102,18 +102,20 @@ class Item(dict):
 
 
 # Adapted from https://stackoverflow.com/questions/6886283/how-i-can-i-lazily-read-multiple-json-values-from-a-file-stream-in-python/7795029
-#
-# FIXME: currently reads the whole file into memory; we should process objects
-# eagerly instead so that pipelines can process playlists iteratively.
 def _iterload(f, cls=json.JSONDecoder, **kwargs):
-    text = f.read()
-
     decoder = cls(**kwargs)
-    idx = json.decoder.WHITESPACE.match(text, 0).end()
-    while idx < len(text):
-        obj, end = decoder.raw_decode(text, idx)
-        yield obj
-        idx = json.decoder.WHITESPACE.match(text, end).end()
+
+    while True:
+        line = f.readline()
+
+        if len(line) == 0:
+            break
+
+        idx = json.decoder.WHITESPACE.match(line, 0).end()
+        while idx < len(line):
+            obj, end = decoder.raw_decode(line, idx)
+            yield obj
+            idx = json.decoder.WHITESPACE.match(line, end).end()
 
 
 def read(stream):
