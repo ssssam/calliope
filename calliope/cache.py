@@ -17,11 +17,14 @@
 
 import xdg.BaseDirectory
 
-import dbm
+import contextlib
+import dbm.gnu
+import errno
 import json
 import io
 import logging
 import os
+import time
 
 log = logging.getLogger(__name__)
 
@@ -85,14 +88,40 @@ class GdbmCache:
         '''
         if not os.path.exists(self._path):
             return False, None
-        with dbm.open(self._path, 'r') as db:
+        with dbm.gnu.open(self._path, 'r') as db:
             if key in db:
                 return True, json.loads(db[key])
             else:
                 return False, None
 
+    @contextlib.contextmanager
+    def _open_for_writing(self):
+        # Open the database for writing. If it is currently locked for reading,
+        # wait a bit and try again.
+
+        MAX_RETRIES = 3
+        for attempt in range(1,MAX_RETRIES+1):
+            try:
+                db = dbm.gnu.open(self._path, 'cf')
+                yield db
+                db.close()
+
+                break   # Exit the retry loop -- we succeeded.
+            except dbm.gnu.error as e:
+                if e.errno == errno.EAGAIN:   # error 11 -- database is locked
+                    delay = 10**attempt
+                    log.debug("Database locked. Retrying in {} msec ({}/{}).".
+                              format(delay, attempt, MAX_RETRIES))
+                    time.sleep(delay * 0.001)
+                else:
+                    raise
+        else:
+            raise RuntimeError(
+                "Cache is locked -- unable to write despite {} attempts.".
+                format(attempt))
+
     def store(self, key, value):
-        with dbm.open(self._path, 'cf') as db:
+        with self._open_for_writing() as db:
             db[key] = json.dumps(value)
 
 
