@@ -13,6 +13,8 @@ option('tracker', type: 'boolean', value: 'true',
 option('web', type: 'boolean', value: 'true',
        description: 'Enable world wide web integration (requires Python "jinja2" library)')
 
+option('docs', type: 'boolean', value: 'true',
+       description: 'Enable documentation (requires Sphinx and some Sphinx plugins)')
 option('testsuite', type: 'boolean', value: 'true',
        description: 'Enable automated test suite (requires Python "mutagen" library)')
 

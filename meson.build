@@ -64,12 +64,26 @@ test_requires = [
   'mutagen', 'pytest-benchmark'
 ]
 
+doc_requires = [
+  'sphinx',
+]
+
 missing_dependency_errors = []
 
 message('Checking for Python dependencies')
 modules_check = run_command(python, 'meson-python-packages-check', install_requires + setup_requires)
 if modules_check.returncode() != 0
   error('Python dependency requirements are not satisfied:\n' + modules_check.stderr().strip())
+endif
+
+if get_option('docs')
+  message('Checking for Python documentation dependencies')
+  modules_check = run_command(python, 'meson-python-packages-check', doc_requires)
+  if modules_check.returncode() != 0
+    error('Documentation dependency requirements are not satisfied:\n' + modules_check.stderr().strip())
+  endif
+
+  sphinx_build = find_program('sphinx-build-3', 'sphinx-build', required: true)
 endif
 
 if get_option('testsuite')
@@ -114,6 +128,10 @@ if get_option('viewer')
 endif
 
 subdir('tests')
+
+if get_option('docs')
+  subdir('docs')
+endif
 
 if get_option('lastfm')
   # Install the bundled lastfmclient library.
