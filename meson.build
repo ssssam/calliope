@@ -1,4 +1,5 @@
-project('calliope')
+project('calliope',
+        meson_version: '>= 0.46')
 
 if get_option('tracker')
   subproject('tracker-app-domain')
@@ -8,20 +9,13 @@ endif
 # Python dependencies
 ###############################################################################
 
-python = find_program('python3', required: true)
+pymod = import('python')
 
-python_version_check = run_command(python, '-c', 'import sys; sys.stdout.write("%d.%d" % (sys.version_info[0], sys.version_info[1]))')
-if python_version_check.returncode() != 0
-  error('Unable to detect Python version: ' + result.stdout() + result.stderr())
-endif
-python_version = python_version_check.stdout()
+python = pymod.find_installation('python3')
 
-if not python_version.version_compare('>= 3.5')
+if not python.language_version().version_compare('>= 3.5')
   error('Python 3.5 or newer is required.')
 endif
-
-python_name = 'python' + python_version
-python_site_packages_dir = join_paths(get_option('prefix'), get_option('libdir'), python_name, 'site-packages')
 
 # FIXME: We check manually for our Python dependencies as Meson doesn't
 # support doing so yet. See https://github.com/mesonbuild/meson/issues/2377
@@ -107,7 +101,6 @@ localedir = join_paths(get_option('prefix'), get_option('localedir'))
 pkgdatadir = join_paths(get_option('prefix'), get_option('datadir'), 'tagcloud')
 
 cdata = configuration_data()
-cdata.set('pythondir', python_site_packages_dir)
 cdata.set10('enable_lastfm', get_option('lastfm'))
 cdata.set10('enable_musicbrainz', get_option('musicbrainz'))
 cdata.set10('enable_play', get_option('play'))
@@ -117,7 +110,7 @@ cdata.set10('enable_tracker', get_option('tracker'))
 cdata.set10('enable_web', get_option('web'))
 cdata.set('localedir', localedir)
 cdata.set('pkgdatadir', pkgdatadir)
-cdata.set('pythonsitepackagesdir', python_site_packages_dir)
+cdata.set('pythonsitepackagesdir', python.get_install_dir(pure: false))
 
 top_build_dir = meson.current_build_dir()
 
@@ -141,5 +134,5 @@ if get_option('lastfm')
   # part of any existing Python 3 installations.
   install_subdir(
       'subprojects/lastfmclient/lastfmclient',
-      install_dir: join_paths(python_site_packages_dir))
+      install_dir: python.get_install_dir(pure: false))
 endif

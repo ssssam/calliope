@@ -4,4 +4,4 @@ data = [
 
 install_data(
   data,
-  install_dir: join_paths(python_site_packages_dir, 'calliope', 'data', 'web', 'templates'))
+  install_dir: join_paths(python.get_install_dir(pure: false), 'calliope', 'data', 'web', 'templates'))

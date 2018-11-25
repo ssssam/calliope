@@ -14,9 +14,9 @@ viewer_script = configure_file(
     configuration: cdata,
     install_dir: get_option('bindir'))
 
-install_data(
+python.install_sources(
     sources,
-    install_dir: join_paths(python_site_packages_dir, 'calliope', 'apps', 'viewer'))
+    subdir: join_paths('calliope', 'apps', 'viewer'))
 
 resources = gnome.compile_resources('calliope-viewer', 'calliope-viewer.gresource.xml',
     gresource_bundle: true,

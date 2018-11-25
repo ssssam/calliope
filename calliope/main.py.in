@@ -27,7 +27,7 @@ import click
 import runpy
 import sys
 
-PYTHON_SITE_PACKAGES_DIR = '@pythondir@'
+PYTHON_SITE_PACKAGES_DIR = '@pythonsitepackagesdir@'
 
 sys.path.insert(1, PYTHON_SITE_PACKAGES_DIR)
 
