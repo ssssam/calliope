@@ -4,7 +4,7 @@ jobs:
     docker:
       # This image is built from the Dockerfile in the
       # ./docker/testsuite-fedora directory.
-      - image: quay.io/ssssam/calliope-testsuite:628a0df3d6f5
+      - image: quay.io/ssssam/calliope-testsuite:latest
 
     working_directory: ~/repo
 
