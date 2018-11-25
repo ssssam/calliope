@@ -15,10 +15,10 @@ for requirement in requirements:
     try:
         pkg_resources.require(requirement)
     except pkg_resources.VersionConflict as e:
-        sys.stderr.write("Wanted Python dependency {}, got {}.\n".format(e.req, e.dist))
+        sys.stderr.write("{}: Wanted Python dependency {}, got {}.\n".format(requirement, e.req, e.dist))
         returncode = 1
     except pkg_resources.DistributionNotFound as e:
-        sys.stderr.write("Required Python dependency {} was not found.\n".format(e.req))
+        sys.stderr.write("{}: Required Python dependency {} was not found.\n".format(requirement, e.req))
         returncode = 1
 
 sys.exit(returncode)
