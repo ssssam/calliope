@@ -1,3 +1,5 @@
+.. _top_artists:
+
 Finding your most listened artists
 ==================================
 

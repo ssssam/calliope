@@ -1,7 +1,7 @@
 Follow your top artists on Twitter
 ==================================
 
-First you need to get a list of your :ref:`most listened artists <use-cases/top-artists>.
+First you need to get a list of your :ref:`most listened artists <top_artists>`.
 
 Now pipe that list to ``cpe musicbrainz --include urls`` and you'll get a list
 of relationship URLs for each artist.
