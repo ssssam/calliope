@@ -41,15 +41,16 @@ if get_option('web')
   sources += ['cmd_web.py']
 endif
 
-install_data(
+python.install_sources(
     sources,
-    install_dir: join_paths(python_site_packages_dir, 'calliope'))
+    pure: false,
+    subdir: 'calliope')
 
 configure_file(
     input: 'modules.json.in',
     output: 'modules.json',
     configuration: cdata,
-    install_dir: join_paths(python_site_packages_dir, 'calliope'))
+    install_dir: join_paths(python.get_install_dir(pure: false), 'calliope'))
 
 configure_file(
     input: 'main.py.in',
