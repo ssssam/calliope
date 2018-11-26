@@ -13,7 +13,8 @@ sphinx_sources = [
 
 docs_html = custom_target('docs',
   build_by_default: true,
-  command: [sphinx_build, '-M', 'html', meson.current_source_dir(),
+  command: [run_from_source_tree, top_source_dir, top_build_dir,
+            sphinx_build, '-M', 'html', meson.current_source_dir(),
             meson.current_build_dir(), '-W'],
   depend_files: sphinx_sources,
   # We only list one output.
