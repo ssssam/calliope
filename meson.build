@@ -59,7 +59,7 @@ test_requires = [
 ]
 
 doc_requires = [
-  'sphinx',
+  'sphinx', 'sphinx-click',
 ]
 
 missing_dependency_errors = []

@@ -1,6 +1,7 @@
 sphinx_sources = [
   'conf.py',
   'index.rst',
+  'reference.rst',
   'use-cases.rst',
   'use-cases/copy-onto-portable-device.rst',
   'use-cases/create-mix.rst',
