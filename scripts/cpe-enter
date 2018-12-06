@@ -1,0 +1,2 @@
+#!/bin/bash
+env PATH=/opt/calliope/bin/:$PATH bash

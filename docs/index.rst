@@ -10,7 +10,8 @@ Calliope playlist toolkit.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    use-cases
+   reference
