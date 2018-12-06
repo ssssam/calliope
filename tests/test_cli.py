@@ -1,5 +1,5 @@
 # Calliope
-# Copyright (C) 2017  Sam Thursfield <sam@afuera.me.uk>
+# Copyright (C) 2017-2018  Sam Thursfield <sam@afuera.me.uk>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import mock
 import os
+
+
+# Note that these tests do not run Calliope in-process, they spawn a subprocess.
+# This is because trackerappdomain breaks if you run it multiple times in a
+# single process.
 
 
 def test_musicbrainz(cli):
@@ -34,14 +40,12 @@ def test_shuffle(cli):
 
 
 def test_spotify(cli):
-    os.environ['CALLIOPE_TEST_ONLY'] = '1'
-    result = cli.run(['spotify'])
+    os.environ['CALLIOPE_SPOTIFY_MOCK'] = 'yes'
+    result = cli.run(['--debug' ,'spotify'])
     assert result.exit_code == 0
-    result = cli.run(['spotify', 'annotate'])
+    result = cli.run(['--debug', 'spotify', '--user', '__calliope_tests', 'annotate', '-'], input='')
     assert result.exit_code == 0
-    result = cli.run(['spotify', 'export'])
-    assert result.exit_code == 0
-    result = cli.run(['spotify', 'import'])
+    result = cli.run(['--debug', 'spotify', '--user', '__calliope_tests', 'export'])
     assert result.exit_code == 0
 
 
