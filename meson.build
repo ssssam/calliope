@@ -59,7 +59,7 @@ test_requires = [
 ]
 
 doc_requires = [
-  'sphinx',
+  'sphinx', 'sphinx-click',
 ]
 
 missing_dependency_errors = []
@@ -89,9 +89,6 @@ if get_option('testsuite')
 endif
 
 pytest = find_program('pytest-3', required: false)
-# We configure pytest through a pytest.ini file in this directory, so as
-# long as we set the workdir correctly it "just works" when run by Meson.
-pytest_workdir = meson.current_source_dir()
 
 ###############################################################################
 # Configuration
@@ -112,7 +109,10 @@ cdata.set('localedir', localedir)
 cdata.set('pkgdatadir', pkgdatadir)
 cdata.set('pythonsitepackagesdir', python.get_install_dir(pure: false))
 
+top_source_dir = meson.current_source_dir()
 top_build_dir = meson.current_build_dir()
+
+run_from_source_tree = find_program('scripts/run_from_source_tree', required: true)
 
 subdir('calliope')
 

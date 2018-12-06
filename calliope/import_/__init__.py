@@ -59,20 +59,10 @@ def parse_pls(text):
         entries.append(calliope.playlist.Item(entry))
     return entries
 
-
-@calliope.cli.command(name='import')
-@click.argument('playlist', nargs=1, type=click.File('r'))
-@click.pass_context
-def run(context, playlist):
-    '''Import playlists from other formats'''
-
-    text = playlist.read()
-
+def import_(text):
     playlist_format = guess_format(text)
     if not playlist_format:
         raise RuntimeError("Could not determine the input format.")
     elif playlist_format == 'pls':
         entries = parse_pls(text)
-    #print(parser.sections())
-
-    calliope.playlist.write(entries, sys.stdout)
+    return entries

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Calliope
 # Copyright (C) 2018  Sam Thursfield <sam@afuera.me.uk>
 #
@@ -33,33 +32,7 @@ import sys
 import calliope
 
 
-@calliope.cli.group(name='suggest',
-                    help="Suggest items or annotations")
-@click.pass_context
-def suggest_cli(context):
-    pass
-
-@suggest_cli.command(name='tracks')
-@click.option('--from', 'from_', required=True, type=click.File(mode='r'),
-              help="playlist from which tracks should be suggested")
-@click.option('--count', type=int, default=10,
-              help="number of track suggestions to generate")
-@click.option('--training-input', multiple=True,
-              type=(click.File(mode='r'), float),
-              help="a playlist used to train the recommender. "
-                   "A training input requires two arguments, the first is the "
-                   "path to the file, the second is how it should weight the "
-                   "training. Weight should be a value between -1.0 and 1.0, "
-                   "where 1.0 is the most positive weighting and -1.0 the "
-                   "most negative.")
-@click.pass_context
-def tracks(context, from_, count, training_input):
-    '''Suggest tracks from a collection based on the given training inputs.'''
-
-    # First we need a 'user-item' interaction matrix. Each 'item' is a track in
-    # the input collection. Each 'user' is one of the input playlists.
-
-    corpus_playlist = calliope.playlist.read(from_)
+def suggest_tracks(corpus_playlist, count, training_input):
     corpus_tracks = [item.tracks() for item in corpus_playlist]
 
     interaction_matrix = []

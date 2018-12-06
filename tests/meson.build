@@ -6,18 +6,9 @@ tests = [
   'test_tracker.py',
 ]
 
-pytest_env = environment()
-pytest_env.set('CALLIOPE_MODULES_CONFIG', join_paths(top_build_dir, 'calliope', 'modules.json'))
-# FIXME: doing 'prepend' twice seems to lose one of the values; possibly a
-# bug in Meson 0.44.1..
-pytest_env.prepend('PYTHONPATH', '@0@:@1@:@2@'.format(
-  pytest_workdir,
-  join_paths(pytest_workdir, 'subprojects', 'lastfmclient'),
-  join_paths(pytest_workdir, 'subprojects', 'tracker-app-domain')))
-
 foreach t: tests
-  test(t, pytest,
-    args: join_paths('tests', t),
-    env: pytest_env,
-    workdir: pytest_workdir)
+  test(t, run_from_source_tree,
+    args: [top_source_dir, top_build_dir, pytest.path(), join_paths('tests', t)],
+    # We can put a pytest.ini file in this directory to configure pytest.
+    workdir: top_source_dir)
 endforeach

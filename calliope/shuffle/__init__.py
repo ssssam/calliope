@@ -19,6 +19,7 @@
 import click
 
 import argparse
+import copy
 import itertools
 import os
 import random
@@ -51,22 +52,14 @@ def measure_size(playlists):
     print("Total size: %i MB" % (size / 1024 / 1024.0))
 
 
-@calliope.cli.command(name='shuffle')
-@click.option('--count', '-c', type=int, default=None,
-              help="number of songs to output")
-@click.argument('playlist', type=click.File(mode='r'))
-@click.pass_context
-def run(context, count, playlist):
-    '''Shuffle a playlist or collection.'''
-
-    corpus = list(calliope.playlist.read(playlist))
-
+def shuffle(playlist, count):
     # This is the simplest shuffle that we could implement.
     #
     # There is a lot more involved in creating "good" shuffled playlists. For
     # example see https://labs.spotify.com/2014/02/28/how-to-shuffle-songs/
+    corpus = copy.copy(list(playlist))
     random.shuffle(corpus)
     if count:
         corpus = corpus.items[0:count]
 
-    calliope.playlist.write(corpus, sys.stdout)
+    return corpus

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Calliope
 # Copyright (C) 2016,2018  Sam Thursfield <sam@afuera.me.uk>
 #
@@ -15,10 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-import click
-
-import sys
 
 import calliope
 
@@ -52,18 +47,3 @@ def convert_to_m3u(playlist):
             raise RuntimeError("The 'url' field must be set for all entries "
                                 "in order to create an M3U playlist")
     return '\n'.join(output_text)
-
-
-@calliope.cli.command(name='export')
-@click.option('-f', '--format', type=click.Choice(['cue', 'm3u']), default='m3u')
-@click.argument('playlist', nargs=1, type=click.File('r'))
-@click.pass_context
-def run(context, format, playlist):
-    '''Convert to a different playlist format'''
-
-    if format == 'cue':
-        print(convert_to_cue(calliope.playlist.read(playlist)))
-    elif format == 'm3u':
-        print(convert_to_m3u(calliope.playlist.read(playlist)))
-    else:
-        raise NotImplementedError("Unsupport format: %s" % format)

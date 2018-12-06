@@ -1,15 +1,17 @@
-lastfm_sources = [
+sources = files(
   '__init__.py',
   'history.py',
   'lastexport.py',
-]
+)
 
-lastfm_migrations = ['migrations/0001.init.py']
+migrations = files('migrations/0001.init.py')
 
-python.install_sources(lastfm_sources,
+python.install_sources(sources,
     pure: false,
     subdir: join_paths('calliope', 'lastfm'))
 
-python.install_sources(lastfm_migrations,
+python.install_sources(migrations,
     pure: false,
     subdir: join_paths('calliope', 'lastfm', 'migrations'))
+
+calliope_module_sources = sources + migrations

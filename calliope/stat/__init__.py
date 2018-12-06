@@ -46,19 +46,3 @@ def measure_size(playlist):
                 if 'location' in track:
                     size += measure_one(track)
     print("Total size: %i MB" % (size / 1024 / 1024.0))
-
-
-@calliope.cli.command(name='stat')
-@click.option('--size', '-s', is_flag=True,
-              help="show the total size on disk of the playlist contents")
-@click.argument('playlist', type=click.File(mode='r'))
-@click.pass_context
-def run(context, size, playlist):
-    '''Information about the contents of a playlist'''
-
-    input_playlist = list(calliope.playlist.read(playlist))
-
-    if size:
-        measure_size(input_playlist)
-    else:
-        print("Please select a mode.")

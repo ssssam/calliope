@@ -67,6 +67,8 @@ def update_item_from_tags(item, tags):
 
 def play(tracks, audio_output):
     '''Play playlists.'''
+    Gst.init([])
+
     output_playlist = []
 
     file_uris = []
@@ -166,18 +168,3 @@ def play(tracks, audio_output):
         set_element_state_sync(pipeline, Gst.State.NULL)
 
     return calliope.Playlist({'list': output_playlist})
-
-
-@calliope.cli.command(name='play')
-@click.option('-o', '--output', type=click.Path(), required=True)
-@click.argument('playlist', type=click.File(mode='r'))
-@click.pass_context
-def run(context, output, playlist):
-    '''Render a Calliope playlist to an audio file'''
-
-    Gst.init([])
-    input_playlist = list(calliope.playlist.read(playlist))
-
-    output_playlist = play(input_playlist, output)
-    if output_playlist:
-        calliope.playlist.write(output_playlist, sys.stdout)

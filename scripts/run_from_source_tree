@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# This script sets the PYTHONPATH and CALLIOPE_MODULES_CONFIG environment
+# variables so that the 'calliope' module can be imported without first
+# being installed.
+#
+# It is used by the build system when running tests and building documentation.
+#
+# Usage: run_from_source_tree SOURCE_DIR BUILD_DIR -- program
+
+set -e
+
+SOURCE_DIR=$1
+BUILD_DIR=$2
+
+shift; shift
+
+export CALLIOPE_MODULES_CONFIG=$BUILD_DIR/calliope/modules.json
+export PYTHONPATH=$BUILD_DIR:$SOURCE_DIR/subprojects/lastfmclient:$SOURCE_DIR/subprojects/tracker-app-domain:$PYTHONPATH
+
+cd $SOURCE_DIR
+exec $@

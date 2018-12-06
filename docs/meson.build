@@ -1,6 +1,7 @@
 sphinx_sources = [
   'conf.py',
   'index.rst',
+  'reference.rst',
   'use-cases.rst',
   'use-cases/copy-onto-portable-device.rst',
   'use-cases/create-mix.rst',
@@ -12,9 +13,10 @@ sphinx_sources = [
 
 docs_html = custom_target('docs',
   build_by_default: true,
-  command: [sphinx_build, '-M', 'html', meson.current_source_dir(),
-            meson.current_build_dir()],
-  depend_files: sphinx_sources,
+  command: [run_from_source_tree, top_source_dir, top_build_dir,
+            sphinx_build, '-M', 'html', meson.current_source_dir(),
+            meson.current_build_dir(), '-W'],
+  depend_files: sphinx_sources + calliope_module_sources,
   # We only list one output.
   output: ['html']
 )
