@@ -51,14 +51,9 @@ def render_html(playlist, template_filename):
     return template.render(items=items)
 
 
-@calliope.cli.command(name='web')
-@click.argument('playlist', type=click.File(mode='r'))
-@click.pass_context
-def run(context, playlist):
-    '''Render a Calliope playlist to a web page'''
-
+def render(playlist):
     template = os.path.join(calliope.datadir(), 'web', 'templates', 'playlist.html.in')
 
-    input_playlist = list(calliope.playlist.read(playlist))
+    input_playlist = list(playlist)
     text = render_html(input_playlist, template)
-    print(text)
+    return text

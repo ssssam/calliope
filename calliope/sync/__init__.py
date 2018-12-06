@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Calliope
 # Copyright (C) 2016  Sam Thursfield <sam@afuera.me.uk>
 #
@@ -125,33 +124,12 @@ def normalize_path(path):
     return ''.join([char if char in allowed else '_' for char in path])
 
 
-@calliope.cli.command(name='sync')
-@click.option('--dry-run', is_flag=True,
-              help="don't execute commands, only print what would be done")
-@click.option('--target', '-t', type=click.Path(exists=True, file_okay=False),
-              help="path to target device's filesystem")
-@click.option('--allow-formats', '-f', type=click.Choice(['all', 'mp3']),
-              multiple=True, default=[],
-              help="specify formats that the target device can read; "
-                   "transcoding can be done if needed.")
-@click.option('--album-per-dir', is_flag=True,
-              help="organise the files on the target device so each album is "
-                   "in its own directory")
-@click.option('--number-dirs', is_flag=True,
-              help="ensure directory sort order matches desired playback "
-                   "order")
-@click.option('--number-files', is_flag=True,
-              help="ensure filename sort order matches desired playback order")
-@click.argument('playlist', type=click.File(mode='r'))
-@click.pass_context
-def run(context, dry_run, target, allow_formats, album_per_dir,
-        number_dirs, number_files, playlist):
-    '''Copy playlists & collections between devices'''
-
+def sync(dry_run, target, allow_formats, album_per_dir, number_dirs,
+         number_files, playlist):
     allow_formats = allow_formats or ['all']
 
     operations = []
-    for item_number, item in enumerate(calliope.playlist.read(playlist)):
+    for item_number, item in enumerate(playlist):
         if 'location' in item:
             path = calliope.uri_to_path(item['location'])
             if number_files:

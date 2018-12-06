@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Calliope
 # Copyright (C) 2016,2018  Sam Thursfield <sam@afuera.me.uk>
 #
@@ -32,9 +31,6 @@ import xdg.BaseDirectory
 import calliope
 
 log = logging.getLogger(__name__)
-
-
-DEFAULT_APP_DOMAIN_DIR = os.path.join(xdg.BaseDirectory.xdg_data_home, 'calliope', 'tracker')
 
 
 class TrackerClient():
@@ -287,6 +283,30 @@ class TrackerClient():
             }
 
 
+class TrackerContext():
+    def __init__(self, domain, app_domain_dir):
+        if domain == 'app':
+            # It seems messy calling the tracker_app_domain() context manager
+            # directly here... but I'm not sure how else to get Click to run
+            # the cleanup function.
+            self._mgr = trackerappdomain.tracker_app_domain('uk.me.afuera.calliope', app_domain_dir)
+            tracker_app_domain = self._mgr.__enter__()
+
+            self.app_domain = tracker_app_domain
+            self.sparql_connection = tracker_app_domain.connection()
+        else:
+            self._mgr = None
+            self.app_domain = None
+            if domain != 'session':
+                Tracker.SparqlConnection.set_domain(domain)
+            self.sparql_connection = Tracker.SparqlConnection.get()
+
+        self.client = TrackerClient(self.sparql_connection)
+
+    def cleanup(self):
+        if self._mgr is not None:
+            self._mgr.__exit__(None, None, None)
+
 
 def add_location(tracker, item):
     if 'artist' not in item and 'album' not in item and 'track' not in item:
@@ -334,92 +354,15 @@ def add_location(tracker, item):
     return result
 
 
-def print_table(result_table):
-    result_table.display()
+def execute_sparql(tracker):
+    cursor = tracker.sparql_connection.query(query)
+    while cursor.next():
+        values = [str(cursor.get_string(i)[0]) for i in range(0, cursor.get_n_columns())]
+        print(", ".join(values))
 
 
-@calliope.cli.group(name='tracker',
-                    help="Query and manage the Tracker media database")
-@click.option('--domain', type=str, default='app',
-              help="Tracker domain to use. Specify 'app' for a private domain, "
-                   "or 'session' for the session-wide Tracker instance. (Default: 'app')")
-@click.option('--app-domain-dir', type=str, default=DEFAULT_APP_DOMAIN_DIR,
-              help="when --domain=app, store data in DIR (default: {})".format(DEFAULT_APP_DOMAIN_DIR))
-@click.pass_context
-def tracker_cli(context, domain, app_domain_dir):
-    if domain == 'app':
-        # It seems messy calling the tracker_app_domain() context manager
-        # directly here... but I'm not sure how else to get Click to run
-        # the cleanup function.
-        mgr = trackerappdomain.tracker_app_domain('uk.me.afuera.calliope', app_domain_dir)
-        tracker_app_domain = mgr.__enter__()
-        def cleanup():
-            mgr.__exit__(None, None, None)
-        context.call_on_close(cleanup)
-
-        context.obj.app_domain = tracker_app_domain
-        context.obj.sparql_connection = tracker_app_domain.connection()
-    else:
-        context.obj.app_domain = None
-        if domain != 'session':
-            Tracker.SparqlConnection.set_domain(domain)
-        context.obj.sparql_connection = Tracker.SparqlConnection.get()
-
-    context.obj.tracker_client = TrackerClient(context.obj.sparql_connection)
-
-
-@tracker_cli.command(name='annotate')
-@click.argument('playlist', type=click.File(mode='r'))
-@click.pass_context
-def cmd_annotate(context, playlist):
-    '''Add information stored in a Tracker database to items in a playlist.'''
-    tracker = context.obj.tracker_client
-
-    for item in calliope.playlist.read(playlist_data):
-        if 'location' in item:
-            # This already has a URI!
-            pass
-        else:
-            try:
-                calliope.write([add_location(tracker, item)], sys.stdout)
-            except RuntimeError as e:
-                raise RuntimeError("%s\nItem: %s" % (e, item))
-
-
-@tracker_cli.command(name='local-albums')
-@click.option('--artist', nargs=1, type=str,
-              help="Limit to albums by the given artist")
-@click.pass_context
-def cmd_local_albums(context, artist):
-    '''Show all albums available locally..'''
-    tracker = context.obj.tracker_client
-    calliope.playlist.write(tracker.albums(filter_artist_name=artist), sys.stdout)
-
-
-@tracker_cli.command(name='local-artists')
-@click.pass_context
-def cmd_local_artists(context):
-    '''Show all artists whose music is available locally..'''
-    tracker = context.obj.tracker_client
-    calliope.playlist.write(tracker.artists(), sys.stdout)
-
-
-@tracker_cli.command(name='local-tracks')
-@click.pass_context
-def cmd_local_tracks(context):
-    '''Show all tracks available locally..'''
-    tracker = context.obj.tracker_client
-    calliope.playlist.write(tracker.tracks(), sys.stdout)
-
-
-@tracker_cli.command(name='scan')
-@click.argument('path', nargs=1, type=click.Path(exists=True))
-@click.pass_context
-def cmd_scan(context, path):
-    '''Scan all media files under a particular path and update a Tracker database.
-
-    This is only possible when `--domain=app`.'''
-    app_domain = context.obj.app_domain
+def scan(tracker, path):
+    app_domain = tracker.app_domain
 
     if not app_domain:
         raise RuntimeError("Scanning specific directories is only possible when "
@@ -436,34 +379,3 @@ def cmd_scan(context, path):
     with trackerappdomain.glib_excepthook(loop):
         app_domain.index_location_async(path, progress_callback, idle_callback)
         loop.run()
-
-
-@tracker_cli.command(name='search')
-@click.argument('text', nargs=1, type=str)
-@click.pass_context
-def cmd_search(context, text):
-    '''Search track titles in the Tracker database.'''
-    tracker = context.obj.tracker_client
-    calliope.playlist.write(tracker.tracks(track_search_text=text), sys.stdout)
-
-
-@tracker_cli.command(name='sparql')
-@click.argument('query', nargs=1, type=str)
-@click.pass_context
-def cmd_sparql(context, query):
-    '''Execute a SPARQL query.'''
-    cursor = context.obj.sparql_connection.query(query)
-    while cursor.next():
-        values = [str(cursor.get_string(i)[0]) for i in range(0, cursor.get_n_columns())]
-        print(", ".join(values))
-
-
-@tracker_cli.command(name='top-artists')
-@click.pass_context
-@click.option('-c', '--count', type=int, default=20,
-              help="Maximum number of artists to return")
-def cmd_top_artists(context, count):
-    '''Query the top artists in a Tracker database'''
-    tracker = context.obj.tracker_client
-    result = list(tracker.artists_by_number_of_songs(limit=count))
-    calliope.playlist.write(result, sys.stdout)

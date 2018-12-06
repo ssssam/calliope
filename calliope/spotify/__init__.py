@@ -35,6 +35,38 @@ def flatten(l):
     return l[0] if len(l) == 1 else l
 
 
+class SpotifyContext():
+    def __init__(self, user):
+        if not user:
+            user = calliope.config.get('spotify', 'user')
+        if not user:
+            raise RuntimeError("Please specify a username.")
+
+        self.user = user
+        log.debug("Spotify user: {}".format(user))
+
+    def authenticate(self, token=None):
+        if not token:
+            client_id = calliope.config.get('spotify', 'client-id')
+            client_secret = calliope.config.get('spotify', 'client-secret')
+            redirect_uri = calliope.config.get('spotify', 'redirect-uri')
+
+            scope = 'user-top-read'
+            try:
+                token = util.prompt_for_user_token(
+                    self.user, scope, client_id=client_id,
+                    client_secret=client_secret, redirect_uri=redirect_uri)
+            except spotipy.client.SpotifyException as e:
+                raise RuntimeError(e)
+
+        if not token:
+            raise RuntimeError("No token")
+
+        log.debug("Spotify access token: {}".format(token))
+        self.api = spotipy.Spotify(auth=token)
+        self.api.trace = False
+
+
 def annotate_track(sp, track_entry):
     '''Query Spotify-specific metadata about a track and add to its entry.'''
     log.debug("Searching for track: %s", track_entry)
@@ -67,65 +99,10 @@ def print_spotify_playlist(playlist, tracks):
         if location:
             print('  location: %s' % location)
 
+def export(spotify):
+    sp = spotify.api
+    user = spotify.user
 
-@calliope.cli.group(name='spotify',
-                    help="Interface to the Spotify online streaming service")
-@click.option('--token',
-              help="use the given API access token")
-@click.option('--user',
-              help="show data for the given Spotify user")
-@click.pass_context
-def spotify_cli(context, token, user):
-    if 'CALLIOPE_TEST_ONLY' in os.environ:
-        sys.exit(0)
-
-    if not user:
-        user = calliope.config.get('spotify', 'user')
-    if not user:
-        raise RuntimeError("Please specify a username.")
-
-    context.obj.user = user
-    log.debug("Spotify user: {}".format(user))
-
-    if not token:
-        client_id = calliope.config.get('spotify', 'client-id')
-        client_secret = calliope.config.get('spotify', 'client-secret')
-        redirect_uri = calliope.config.get('spotify', 'redirect-uri')
-
-        scope = 'user-top-read'
-        try:
-            token = util.prompt_for_user_token(user, scope, client_id=client_id,
-                                            client_secret=client_secret,
-                                            redirect_uri=redirect_uri)
-        except spotipy.client.SpotifyException as e:
-            raise RuntimeError(e)
-
-    if not token:
-        raise RuntimeError("No token")
-
-    log.debug("Spotify access token: {}".format(token))
-    context.obj.spotify = spotipy.Spotify(auth=token)
-    context.obj.spotify.trace = False
-
-
-@spotify_cli.command(name='annotate')
-@click.argument('playlist', type=click.File(mode='r'))
-@click.pass_context
-def cmd_annotate(context, playlist):
-    '''Add Spotify-specific information to tracks in a playlist.'''
-    sp = context.obj.spotify
-
-    for track in calliope.playlist.read(playlist):
-        track = annotate_track(sp, track)
-        calliope.playlist.write([track], sys.stdout)
-
-
-@spotify_cli.command(name='export')
-@click.pass_context
-def cmd_export(context):
-    '''Query user playlists from Spotify'''
-    sp = context.obj.spotify
-    user = context.obj.user
     playlists = sp.current_user_playlists()
     for playlist in playlists['items']:
         if playlist['owner']['id'] == user:
@@ -133,22 +110,8 @@ def cmd_export(context):
             print_spotify_playlist(playlist, tracks)
 
 
-@spotify_cli.command(name='import')
-@click.pass_context
-def cmd_import(context):
-    '''Upload one or more playlists to Spotify'''
-    raise NotImplementedError
-
-
-@spotify_cli.command(name='top-artists')
-@click.pass_context
-@click.option('-c', '--count', type=int, default=20,
-              help="Maximum number of artists to return")
-@click.option('--time-range', default='long_term',
-              type=click.Choice(['short_term', 'medium_term', 'long_term']))
-def cmd_top_artists(context, count, time_range):
-    '''Return user's top artists.'''
-    sp = context.obj.spotify
+def top_artists(spotify, count, time_range):
+    sp = spotify.api
     response = sp.current_user_top_artists(limit=count, time_range=time_range)['items']
 
     if count > 50:
@@ -167,4 +130,4 @@ def cmd_top_artists(context, count, time_range):
         }
         output.append(output_item)
 
-    calliope.playlist.write(output, sys.stdout)
+    return output

@@ -1,5 +1,5 @@
 # Calliope
-# Copyright (C) 2016  Sam Thursfield <sam@afuera.me.uk>
+# Copyright (C) 2016,2018  Sam Thursfield <sam@afuera.me.uk>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,23 +35,6 @@ def datadir():
     return os.path.join(os.path.dirname(__file__), 'data')
 
 
-class App:
-    def __init__(self, debug=False):
-        self.debug = debug
-
-
-@click.group()
-@click.option('-d', '--debug', is_flag=True)
-@click.pass_context
-def cli(context, **kwargs):
-    '''Calliope is a set of tools for processing playlists.'''
-
-    context.obj = App(**kwargs)
-
-    if context.obj.debug:
-        logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-
-
 def uri_to_path(uri):
     '''Convert a file:/// URI to a path.'''
     return urllib.parse.unquote(
@@ -59,16 +42,17 @@ def uri_to_path(uri):
 
 
 from . import cache
+from . import cli
 from . import config
 from . import playlist
 
-from . import cmd_diff
-from . import cmd_export
-from . import cmd_import
-from . import cmd_shuffle
-from . import cmd_stat
-from . import cmd_sync
-from . import cmd_web
+from . import diff
+from . import export
+from . import import_
+from . import shuffle
+from . import stat
+from . import sync
+from . import web
 
 
 # Some modules can be switched on/off using `meson configure` when Calliope
@@ -99,22 +83,22 @@ def load_modules_config():
 modules_config = load_modules_config()
 
 if modules_config['lastfm']:
-    from . import cmd_lastfm
+    from . import lastfm
 
 if modules_config['musicbrainz']:
-    from . import cmd_musicbrainz
+    from . import musicbrainz
 
 if modules_config['play']:
-    from . import cmd_play
+    from . import play
 
 if modules_config['spotify']:
-    from . import cmd_spotify
+    from . import spotify
 
 if modules_config['suggest']:
-    from . import cmd_suggest
+    from . import suggest
 
 if modules_config['tracker']:
-    from . import cmd_tracker
+    from . import tracker
 
 if modules_config['web']:
-    from . import cmd_web
+    from . import web

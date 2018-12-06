@@ -18,7 +18,7 @@
 import sys
 import warnings
 
-import calliope
+import calliope.cli
 
 def pretty_warnings(message, category, filename, lineno,
                     file=None, line=None):
@@ -28,7 +28,7 @@ warnings.formatwarning = pretty_warnings
 
 
 try:
-    calliope.cli()
+    calliope.cli.cli()
 except RuntimeError as e:
     sys.stderr.write("ERROR: %s\n" % e)
     sys.exit(1)
