@@ -354,7 +354,7 @@ def add_location(tracker, item):
     return result
 
 
-def execute_sparql(tracker):
+def execute_sparql(tracker, query):
     cursor = tracker.sparql_connection.query(query)
     while cursor.next():
         values = [str(cursor.get_string(i)[0]) for i in range(0, cursor.get_n_columns())]
