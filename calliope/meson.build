@@ -66,6 +66,3 @@ endif
 if get_option('web')
   subdir('data/web/templates')
 endif
-
-#calliope = custom_target('calliope',
-#    depend_files: all_sources)
