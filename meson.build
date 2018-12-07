@@ -88,7 +88,7 @@ if get_option('testsuite')
   endif
 endif
 
-pytest = find_program('pytest-3', required: false)
+pytest = find_program('pytest-3')
 
 ###############################################################################
 # Configuration
