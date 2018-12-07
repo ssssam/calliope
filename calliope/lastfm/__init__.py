@@ -153,7 +153,8 @@ def add_lastfm_artist_top_tags(lastfm, cache, item):
     if found:
         log.debug("Found artist-top-tags:{} in cache".format(artist_name))
     else:
-        log.debug("Didn't find artist-top-tags:{} in cache, running remote query".format(artist_name))
+        log.debug("Didn't find artist-top-tags:{} in cache, running "
+                  "remote query".format(artist_name))
 
         try:
             entry = lastfm.artist.get_top_tags(artist_name)

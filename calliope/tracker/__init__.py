@@ -343,11 +343,13 @@ def add_location(tracker, item):
     if tracks:
         for track in tracks:
             result.extend(
-                list(tracker.songs(filter_artist_name=item.get('artist'), filter_track_name=str(track))))
+                list(tracker.songs(filter_artist_name=item.get('artist'),
+                                   filter_track_name=str(track))))
     elif albums:
         for album in albums:
             result.extend(
-                list(tracker.songs(filter_artist_name=item.get('artist'), filter_album_name=str(album))))
+                list(tracker.songs(filter_artist_name=item.get('artist'),
+                                   filter_album_name=str(album))))
     else:
         result = list(tracker.songs(filter_artist_name=item['artist']))
 
