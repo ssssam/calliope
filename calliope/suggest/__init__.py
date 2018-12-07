@@ -44,9 +44,10 @@ def suggest_tracks(corpus_playlist, count, training_input):
         for item in playlist_stream:
             for track in item.tracks():
                 track_index = corpus_tracks.index(track)
-                if track_id:
-                    interaction_list[track_id] = weight
+                if track_index:
+                    interaction_list[track_index] = weight
         interaction_matrix.append(interaction_list)
 
     interaction_matrix = numpy.matrix(interaction_matrix)
     print(interaction_matrix)
+    print(count)
