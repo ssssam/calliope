@@ -45,6 +45,8 @@ class SpotifyContext():
         self.user = user
         log.debug("Spotify user: {}".format(user))
 
+        self.api = None
+
     def authenticate(self, token=None):
         if not token:
             client_id = calliope.config.get('spotify', 'client-id')
