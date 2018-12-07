@@ -231,7 +231,7 @@ class TrackerClient():
                 'track': songs_with_releases.get_string(2)[0],
                 'location': songs_with_releases.get_string(0)[0]
             })
-        if len(album_tracks) > 0:
+        if album_tracks:
             yield {
                 'artist': current_artist_name,
                 'album': album_name,
@@ -256,7 +256,7 @@ class TrackerClient():
                     'track': songs_without_releases.get_string(2)[0],
                     'location': songs_without_releases.get_string(0)[0]
                 })
-            if len(catchall_tracks) > 0:
+            if catchall_tracks:
                 yield {
                     'artist': current_artist_name,
                     'tracks': catchall_tracks
