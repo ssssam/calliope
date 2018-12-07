@@ -38,7 +38,7 @@ def set_element_state_sync(pipeline, target_state):
     bus = pipeline.get_bus()
     pipeline.set_state(target_state)
     while True:
-        ret, state, pending = pipeline.get_state(1 * 1000 * 1000 * 1000)
+        ret, state, _pending = pipeline.get_state(1 * 1000 * 1000 * 1000)
         if ret == Gst.StateChangeReturn.FAILURE:
             msg = bus.pop_filtered(Gst.MessageType.ERROR)
             if msg:
@@ -134,7 +134,7 @@ def play(tracks, audio_output):
             # We use the sync message handler to get the exact timestamp that
             # each new track begins at.
             if message.type == Gst.MessageType.STREAM_START:
-                result, timestamp = pipeline.query_position(Gst.Format.TIME)
+                _result, timestamp = pipeline.query_position(Gst.Format.TIME)
                 stream_state['track-index'] += 1
                 index = stream_state['track-index']
                 log.debug("New stream started. Now at track %i; timestamp %s", index, timestamp)
@@ -167,4 +167,4 @@ def play(tracks, audio_output):
         log.debug("Complete")
         set_element_state_sync(pipeline, Gst.State.NULL)
 
-    return calliope.Playlist({'list': output_playlist})
+    return output_playlist
