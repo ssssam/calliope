@@ -151,7 +151,6 @@ class TrackerClient():
         else:
             album_pattern = ""
         if filter_track_name:
-            assert track_search_text is None, "Cannot pass both filter_track_name and track_search_text"
             track_pattern = """
                 ?track nie:title ?trackTitle .
                 FILTER (LCASE(?trackTitle) = "%s")
@@ -198,8 +197,6 @@ class TrackerClient():
                 query_songs_without_releases)
         else:
             songs_without_releases = None
-
-        result = []
 
         # The artist name may be returned as None if it's unknown to Tracker,
         # so we can't use None as an 'undefined' value. int(-1) will work,
