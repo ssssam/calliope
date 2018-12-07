@@ -72,7 +72,7 @@ def annotate_track(sp, track_entry):
     log.debug("Searching for track: %s", track_entry)
     result = sp.search(q=track_entry['track'], type='track')
 
-    if len(result['tracks']['items']) > 0:
+    if result['tracks']['items']:
         first_result = result['tracks']['items'][0]
 
         track_entry['spotify.artist'] = flatten([

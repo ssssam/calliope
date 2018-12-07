@@ -80,7 +80,7 @@ def play(tracks, audio_output):
         output_playlist.append(item)
     file_uris = list(reversed(file_uris))
 
-    if len(file_uris) == 0:
+    if not file_uris:
         return None
 
     pipeline = Gst.Pipeline.new()
@@ -112,7 +112,7 @@ def play(tracks, audio_output):
         def decode_pad_added(element, pad):
             log.debug("Pad added")
             pad.link(concat.get_request_pad('sink_%u'))
-            if len(uri_list) > 0:
+            if uri_list:
                 enqueue_songs(uri_list, i+1)
         uridecodebin.connect('pad-added', decode_pad_added)
 
