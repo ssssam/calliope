@@ -310,7 +310,7 @@ class TrackerContext():
 
 def add_location(tracker, item):
     if 'artist' not in item and 'album' not in item and 'track' not in item:
-        raise RuntimeError (
+        raise RuntimeError(
             "All items must specify at least 'artist', 'album' or 'track': got %s" %
             item)
 
