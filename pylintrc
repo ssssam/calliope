@@ -195,7 +195,7 @@ never-returning-functions=sys.exit
 [BASIC]
 
 # Naming style matching correct argument names.
-argument-naming-style=snake_case
+argument-naming-style=any
 
 # Regular expression matching correct argument names. Overrides argument-
 # naming-style.
