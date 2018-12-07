@@ -230,11 +230,11 @@ class-naming-style=PascalCase
 #class-rgx=
 
 # Naming style matching correct constant names.
-const-naming-style=UPPER_CASE
+const-naming-style=any
 
 # Regular expression matching correct constant names. Overrides const-naming-
 # style.
-#const-rgx=
+const-rgx=(log|[A-Z_]+)
 
 # Minimum line length for functions/classes that require docstrings, shorter
 # ones are exempt.
