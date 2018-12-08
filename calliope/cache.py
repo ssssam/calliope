@@ -124,6 +124,31 @@ class GdbmCache:
         with self._open_for_writing() as db:
             db[key] = json.dumps(value)
 
+    def wrap(self, key, call):
+        '''Either run call() and save the result, or return cached result.
+
+        This is intended for use when calling remote APIs. Lots of network access
+        can be avoided if the result is saved for future use. For example, this
+        snipped is used in the lastfm.similar_artists() function:
+
+            def similar_artists(lastfm, artist_name):
+                entry = lastfm.cache.wrap('artist-similar:{}'.format(artist_name),
+                    lambda: lastfm.api.artist.get_similar(artist_name, limit=count))
+
+        We currently have no mechanism for 'cache expiry'.
+
+        '''
+        found, entry = self.lookup(key)
+        if found:
+            log.debug("Found {} in cache".format(key))
+        else:
+            log.debug("Didn't find {} in cache, running remote query".format(key))
+            entry = call()
+            self.store(key, entry)
+        return entry
+
+
+
 
 def open(namespace, cachedir=None):
     '''Open a cache using the best available cache implementation.
