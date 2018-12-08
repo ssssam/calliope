@@ -121,7 +121,22 @@ def _iterload(f, cls=json.JSONDecoder, **kwargs):
 def read(stream):
     '''Parses a playlist from the given stream.
 
-    Returns an iterator of calliope.playlist.Item objects.
+    Returns an generator that produces calliope.playlist.Item objects.
+
+    The generator will read from the file on demand, so you must be careful not
+    to do this:
+
+        with open('playlist.cpe', 'r') as f:
+            playlist = calliope.playlist.read(f)
+
+        for item in playlist:
+            # You will see 'ValueError: I/O operation on closed file.'.
+            ...
+
+    If you want to read the playlist in one operation, convert it to a list:
+
+        with open('playlist.cpe', 'r') as f:
+            playlist = list(calliope.playlist.read(f))
 
     '''
     for json_object in _iterload(stream):
