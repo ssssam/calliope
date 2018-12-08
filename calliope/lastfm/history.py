@@ -112,7 +112,7 @@ class _LastfmHistory:
             'last.fm', self.username, tracktype='recenttracks')
 
         page_size = None
-        timeouts = 0
+        total_pages = 0
         for page, total_pages, tracks in gen:
             if tracks is None:
                 # This can happen when a fetch request times out.
