@@ -179,6 +179,37 @@ def annotate_tags(lastfm, playlist):
         yield item
 
 
+def similar_artists(lastfm, count, artist_name):
+    cache_key = 'artist-similar:{}'.format(artist_name)
+    entry = lastfm.cache.wrap(cache_key,
+        lambda: lastfm.api.artist.get_similar(artist_name, limit=count))
+
+    for artist in entry.get("artist", []):
+        item = {
+            'artist': artist['name'],
+        }
+        if 'mbid' in artist:
+            item['musicbrainz.artist.id'] = artist['mbid']
+        yield item
+
+
+def similar_tracks(lastfm, count, artist_name, track_name):
+    cache_key = 'track-similar:{}:{}'.format(artist_name, track_name)
+    entry = lastfm.cache.wrap(cache_key,
+        lambda: lastfm.api.track.get_similar(artist_name, track_name, limit=count))
+
+    for track in entry.get("track", []):
+        item = {
+            'artist': track['artist']['name'],
+            'track': track['name'],
+        }
+        if 'mbid' in track:
+            item['musicbrainz.track.id'] = track['mbid']
+        if 'mbid' in track['artist']:
+            item['musicbrainz.artist.id'] = track['artist']['mbid']
+        yield item
+
+
 def top_artists(lastfm, count, time_range, include):
     lastfm = lastfm.api
     response = lastfm.user.get_top_artists(user=lastfm.user, limit=count, period=time_range)

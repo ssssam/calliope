@@ -114,6 +114,33 @@ def lastfm_annotate_tags(context, playlist):
     calliope.playlist.write(result_generator, sys.stdout)
 
 
+@lastfm_cli.command(name='similar-artists')
+@click.pass_context
+@click.option('-c', '--count', type=int, default=20,
+              help="Maximum number of artists to return")
+@click.argument('ARTIST')
+def cmd_lastfm_similar_artists(context, count, artist):
+    '''Return similar artists for a given artist name.'''
+
+    output = calliope.lastfm.similar_artists(context.obj.lastfm, count,
+                                             artist)
+    calliope.playlist.write(output, sys.stdout)
+
+
+@lastfm_cli.command(name='similar-tracks')
+@click.pass_context
+@click.option('-c', '--count', type=int, default=20,
+              help="Maximum number of tracks to return")
+@click.argument('ARTIST')
+@click.argument('TRACK')
+def cmd_lastfm_similar_artists(context, count, artist, track):
+    '''Return similar tracks for a given track.'''
+
+    output = calliope.lastfm.similar_tracks(context.obj.lastfm, count,
+                                            artist, track)
+    calliope.playlist.write(output, sys.stdout)
+
+
 @lastfm_cli.command(name='top-artists')
 @click.pass_context
 @click.option('-c', '--count', type=int, default=20,
