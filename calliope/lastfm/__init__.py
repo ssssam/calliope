@@ -151,23 +151,17 @@ def prompt_for_user_token(username, client_id=None, client_secret=None,
 def add_lastfm_artist_top_tags(lastfm, cache, item):
     artist_name = item['artist']
 
-    found, entry = cache.lookup('artist-top-tags:{}'.format(artist_name))
+    cache_key = 'artist-top-tags:{}'.format(artist_name)
+    try:
+        entry = lastfm.cache.wrap(cache_key,
+                                  lambda: lastfm.api.artist.get_top_tags(artist_name))
+    except lastfmclient.exceptions.InvalidParametersError:
+        warnings = item.get('lastfm.warnings', [])
+        warnings += ["Unable to find artist on Last.fm"]
+        item['lastfm.warnings'] = warnings
 
-    if found:
-        log.debug("Found artist-top-tags:{} in cache".format(artist_name))
-    else:
-        log.debug("Didn't find artist-top-tags:{} in cache, running "
-                  "remote query".format(artist_name))
-
-        try:
-            entry = lastfm.artist.get_top_tags(artist_name)
-        except lastfmclient.exceptions.InvalidParametersError:
-            warnings = item.get('lastfm.warnings', [])
-            warnings += ["Unable to find artist on Last.fm"]
-            item['lastfm.warnings'] = warnings
-            entry = None
-
-        cache.store('artist-top-tags:{}'.format(artist_name), entry)
+        entry = None
+        cache.store(cache_key, None)
 
     if entry is not None and 'tag' in entry:
         item['lastfm.tags.top'] = [tag['name'] for tag in entry['tag']]
@@ -179,7 +173,7 @@ def annotate_tags(lastfm, playlist):
     for item in playlist:
         if 'artist' in item and 'last.fm.tags' not in item:
             try:
-                item = add_lastfm_artist_top_tags(lastfm.api, lastfm.cache, item)
+                item = add_lastfm_artist_top_tags(lastfm, lastfm.cache, item)
             except RuntimeError as e:
                 raise RuntimeError("%s\nItem: %s" % (e, item))
         yield item
