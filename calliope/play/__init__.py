@@ -152,7 +152,7 @@ def play(tracks, audio_output):
                 if message.type == Gst.MessageType.ERROR:
                     error = message.parse_error()
                     log.debug(error.debug)
-                    raise(error.gerror)
+                    raise error.gerror
                 elif message.type == Gst.MessageType.EOS:
                     index = stream_state['track-index'] + 1
                     update_item_from_timestamp(output_playlist[index], stream_state['time'])
