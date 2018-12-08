@@ -20,6 +20,7 @@ import pytest
 
 import os
 import shutil
+import urllib.request
 
 import testutils
 
@@ -48,6 +49,28 @@ def musicdir(tmpdir):
             template.save()
 
     return str(tmpdir.join('musicdir'))
+
+
+def test_annotate_locations(tracker_cli, tmpdir, musicdir):
+    result = tracker_cli.run(['scan', musicdir])
+    result.assert_success()
+
+    input_playlist = [
+        {
+            'artist': 'Artist 1',
+            'track': 'Track 1',
+        }
+    ]
+
+    result = tracker_cli.run(['annotate', '-'], input_playlist=input_playlist)
+    result.assert_success()
+
+    expected_url = 'file://' + urllib.request.pathname2url(os.path.join(musicdir, 'Artist 1 - Track 1.ogg'))
+
+    output_playlist = result.json()
+    assert output_playlist[0]['artist'] == 'Artist 1'
+    assert output_playlist[0]['track'] == 'Track 1'
+    assert output_playlist[0]['tracker.url'] == expected_url
 
 
 def test_scan_show(tracker_cli, tmpdir, musicdir):
