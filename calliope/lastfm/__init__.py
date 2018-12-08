@@ -45,14 +45,17 @@ class LastfmContext():
 
         self.cache = calliope.cache.open(namespace='lastfm')
 
-    def authenticate(self):
         client_id = calliope.config.get('lastfm', 'client-id')
         client_secret = calliope.config.get('lastfm', 'client-secret')
-        redirect_uri = calliope.config.get('lastfm', 'redirect-uri')
 
         self.api = lastfmclient.LastfmClient(
             api_key=client_id,
             api_secret=client_secret)
+
+    def authenticate(self):
+        client_id = calliope.config.get('lastfm', 'client-id')
+        client_secret = calliope.config.get('lastfm', 'client-secret')
+        redirect_uri = calliope.config.get('lastfm', 'redirect-uri')
 
         session_key_cache_id = sha1sum(client_id + client_secret + redirect_uri + self.user)
         found, session_key = self.cache.lookup('key.%s' % session_key_cache_id)
@@ -148,23 +151,17 @@ def prompt_for_user_token(username, client_id=None, client_secret=None,
 def add_lastfm_artist_top_tags(lastfm, cache, item):
     artist_name = item['artist']
 
-    found, entry = cache.lookup('artist-top-tags:{}'.format(artist_name))
+    cache_key = 'artist-top-tags:{}'.format(artist_name)
+    try:
+        entry = lastfm.cache.wrap(cache_key,
+                                  lambda: lastfm.api.artist.get_top_tags(artist_name))
+    except lastfmclient.exceptions.InvalidParametersError:
+        warnings = item.get('lastfm.warnings', [])
+        warnings += ["Unable to find artist on Last.fm"]
+        item['lastfm.warnings'] = warnings
 
-    if found:
-        log.debug("Found artist-top-tags:{} in cache".format(artist_name))
-    else:
-        log.debug("Didn't find artist-top-tags:{} in cache, running "
-                  "remote query".format(artist_name))
-
-        try:
-            entry = lastfm.artist.get_top_tags(artist_name)
-        except lastfmclient.exceptions.InvalidParametersError:
-            warnings = item.get('lastfm.warnings', [])
-            warnings += ["Unable to find artist on Last.fm"]
-            item['lastfm.warnings'] = warnings
-            entry = None
-
-        cache.store('artist-top-tags:{}'.format(artist_name), entry)
+        entry = None
+        cache.store(cache_key, None)
 
     if entry is not None and 'tag' in entry:
         item['lastfm.tags.top'] = [tag['name'] for tag in entry['tag']]
@@ -176,9 +173,40 @@ def annotate_tags(lastfm, playlist):
     for item in playlist:
         if 'artist' in item and 'last.fm.tags' not in item:
             try:
-                item = add_lastfm_artist_top_tags(lastfm.api, lastfm.cache, item)
+                item = add_lastfm_artist_top_tags(lastfm, lastfm.cache, item)
             except RuntimeError as e:
                 raise RuntimeError("%s\nItem: %s" % (e, item))
+        yield item
+
+
+def similar_artists(lastfm, count, artist_name):
+    cache_key = 'artist-similar:{}'.format(artist_name)
+    entry = lastfm.cache.wrap(cache_key,
+        lambda: lastfm.api.artist.get_similar(artist_name, limit=count))
+
+    for artist in entry.get("artist", []):
+        item = {
+            'artist': artist['name'],
+        }
+        if 'mbid' in artist:
+            item['musicbrainz.artist.id'] = artist['mbid']
+        yield item
+
+
+def similar_tracks(lastfm, count, artist_name, track_name):
+    cache_key = 'track-similar:{}:{}'.format(artist_name, track_name)
+    entry = lastfm.cache.wrap(cache_key,
+        lambda: lastfm.api.track.get_similar(artist_name, track_name, limit=count))
+
+    for track in entry.get("track", []):
+        item = {
+            'artist': track['artist']['name'],
+            'track': track['name'],
+        }
+        if 'mbid' in track:
+            item['musicbrainz.track.id'] = track['mbid']
+        if 'mbid' in track['artist']:
+            item['musicbrainz.artist.id'] = track['artist']['mbid']
         yield item
 
 

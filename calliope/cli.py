@@ -100,7 +100,6 @@ def cmd_import(context, playlist):
 @click.pass_context
 def lastfm_cli(context, user):
     context.obj.lastfm = calliope.lastfm.LastfmContext(user=user)
-    context.obj.lastfm.authenticate()
 
 
 @lastfm_cli.command(name='annotate-tags')
@@ -109,9 +108,37 @@ def lastfm_cli(context, user):
 def lastfm_annotate_tags(context, playlist):
     '''Annotate playlist with tags from Last.fm'''
 
+    context.obj.lastfm.authenticate()
     result_generator = calliope.lastfm.annotate_tags(
         context.obj.lastfm, calliope.playlist.read(playlist))
     calliope.playlist.write(result_generator, sys.stdout)
+
+
+@lastfm_cli.command(name='similar-artists')
+@click.pass_context
+@click.option('-c', '--count', type=int, default=20,
+              help="Maximum number of artists to return")
+@click.argument('ARTIST')
+def cmd_lastfm_similar_artists(context, count, artist):
+    '''Return similar artists for a given artist name.'''
+
+    output = calliope.lastfm.similar_artists(context.obj.lastfm, count,
+                                             artist)
+    calliope.playlist.write(output, sys.stdout)
+
+
+@lastfm_cli.command(name='similar-tracks')
+@click.pass_context
+@click.option('-c', '--count', type=int, default=20,
+              help="Maximum number of tracks to return")
+@click.argument('ARTIST')
+@click.argument('TRACK')
+def cmd_lastfm_similar_artists(context, count, artist, track):
+    '''Return similar tracks for a given track.'''
+
+    output = calliope.lastfm.similar_tracks(context.obj.lastfm, count,
+                                            artist, track)
+    calliope.playlist.write(output, sys.stdout)
 
 
 @lastfm_cli.command(name='top-artists')
@@ -124,6 +151,8 @@ def lastfm_annotate_tags(context, playlist):
 @click.option('--include', '-i', type=click.Choice(['images']), multiple=True)
 def cmd_lastfm_top_artists(context, count, time_range, include):
     '''Return user's top artists.'''
+
+    context.obj.lastfm.authenticate()
     result = calliope.lastfm.top_artists(context.obj.lastfm, count, time_range,
                                          include)
     calliope.playlist.write(output, sys.stdout)
