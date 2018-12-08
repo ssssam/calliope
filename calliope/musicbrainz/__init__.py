@@ -38,10 +38,10 @@ def add_musicbrainz_artist(cache, item):
     else:
         log.debug("Didn't find artist:{} in cache, running remote query".format(artist_name))
         result = musicbrainzngs.search_artists(artist=artist_name)['artist-list']
-        if len(result) == 0:
-            entry = None
-        else:
+        if result:
             entry = result[0]
+        else:
+            entry = None
 
         cache.store('artist:{}'.format(artist_name), entry)
 
