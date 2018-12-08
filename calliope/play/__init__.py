@@ -75,7 +75,7 @@ def play(tracks, audio_output):
     for item in tracks:
         if 'location' not in item:
             raise RuntimeError("All tracks must have the 'location' "
-                                "property set in order to render audio.")
+                               "property set in order to render audio.")
         file_uris.append(item['location'])
         output_playlist.append(item)
     file_uris = list(reversed(file_uris))
