@@ -45,14 +45,17 @@ class LastfmContext():
 
         self.cache = calliope.cache.open(namespace='lastfm')
 
-    def authenticate(self):
         client_id = calliope.config.get('lastfm', 'client-id')
         client_secret = calliope.config.get('lastfm', 'client-secret')
-        redirect_uri = calliope.config.get('lastfm', 'redirect-uri')
 
         self.api = lastfmclient.LastfmClient(
             api_key=client_id,
             api_secret=client_secret)
+
+    def authenticate(self):
+        client_id = calliope.config.get('lastfm', 'client-id')
+        client_secret = calliope.config.get('lastfm', 'client-secret')
+        redirect_uri = calliope.config.get('lastfm', 'redirect-uri')
 
         session_key_cache_id = sha1sum(client_id + client_secret + redirect_uri + self.user)
         found, session_key = self.cache.lookup('key.%s' % session_key_cache_id)

@@ -100,7 +100,6 @@ def cmd_import(context, playlist):
 @click.pass_context
 def lastfm_cli(context, user):
     context.obj.lastfm = calliope.lastfm.LastfmContext(user=user)
-    context.obj.lastfm.authenticate()
 
 
 @lastfm_cli.command(name='annotate-tags')
@@ -109,6 +108,7 @@ def lastfm_cli(context, user):
 def lastfm_annotate_tags(context, playlist):
     '''Annotate playlist with tags from Last.fm'''
 
+    context.obj.lastfm.authenticate()
     result_generator = calliope.lastfm.annotate_tags(
         context.obj.lastfm, calliope.playlist.read(playlist))
     calliope.playlist.write(result_generator, sys.stdout)
@@ -124,6 +124,8 @@ def lastfm_annotate_tags(context, playlist):
 @click.option('--include', '-i', type=click.Choice(['images']), multiple=True)
 def cmd_lastfm_top_artists(context, count, time_range, include):
     '''Return user's top artists.'''
+
+    context.obj.lastfm.authenticate()
     result = calliope.lastfm.top_artists(context.obj.lastfm, count, time_range,
                                          include)
     calliope.playlist.write(output, sys.stdout)
