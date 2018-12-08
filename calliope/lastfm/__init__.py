@@ -56,7 +56,7 @@ class LastfmContext():
         found, session_key = self.cache.lookup('key.%s' % session_key_cache_id)
 
         if not found:
-            token = prompt_for_user_token(user, client_id, client_secret,
+            token = prompt_for_user_token(self.user, client_id, client_secret,
                                           redirect_uri)
 
             session_key = self.api.auth.get_session(token)
