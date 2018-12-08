@@ -126,7 +126,7 @@ def prompt_for_user_token(username, client_id=None, client_secret=None,
         import webbrowser
         webbrowser.open(auth_url)
         print("Opened %s in your browser" % auth_url)
-    except:
+    except webbrowser.Error:
         print("Please navigate here: %s" % auth_url)
 
     print("\n")
