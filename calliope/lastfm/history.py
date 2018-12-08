@@ -61,7 +61,6 @@ class Store:
                     raise
                 else:
                     time.sleep(0.1)
-                    pass
 
     def cursor(self):
         return self.db.cursor()
