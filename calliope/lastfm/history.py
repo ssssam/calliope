@@ -204,7 +204,7 @@ class _LastfmHistory:
               '                albumname, trackmbid, artistmbid, albummbid ' + \
               '           FROM imports_lastfm ) ' + \
               '  GROUP BY trackid HAVING playcount > ? ' + \
-              '  ORDER BY trackid';
+              '  ORDER BY trackid'
         cursor = self.store.cursor()
         cursor.execute(sql, [min_listens])
         for row in cursor:
