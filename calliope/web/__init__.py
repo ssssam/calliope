@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Calliope
 # Copyright (C) 2018  Sam Thursfield <sam@afuera.me.uk>
 #

@@ -41,6 +41,8 @@ class LastfmContext():
         self.user = user
         log.debug("LastFM user: {}".format(user))
 
+        self.api = None
+
         self.cache = calliope.cache.open(namespace='lastfm')
 
     def authenticate(self):
@@ -126,7 +128,7 @@ def prompt_for_user_token(username, client_id=None, client_secret=None,
         import webbrowser
         webbrowser.open(auth_url)
         print("Opened %s in your browser" % auth_url)
-    except:
+    except webbrowser.Error:
         print("Please navigate here: %s" % auth_url)
 
     print("\n")
@@ -151,7 +153,8 @@ def add_lastfm_artist_top_tags(lastfm, cache, item):
     if found:
         log.debug("Found artist-top-tags:{} in cache".format(artist_name))
     else:
-        log.debug("Didn't find artist-top-tags:{} in cache, running remote query".format(artist_name))
+        log.debug("Didn't find artist-top-tags:{} in cache, running "
+                  "remote query".format(artist_name))
 
         try:
             entry = lastfm.artist.get_top_tags(artist_name)

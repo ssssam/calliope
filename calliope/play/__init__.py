@@ -38,7 +38,7 @@ def set_element_state_sync(pipeline, target_state):
     bus = pipeline.get_bus()
     pipeline.set_state(target_state)
     while True:
-        ret, state, pending = pipeline.get_state(1 * 1000 * 1000 * 1000)
+        ret, state, _pending = pipeline.get_state(1 * 1000 * 1000 * 1000)
         if ret == Gst.StateChangeReturn.FAILURE:
             msg = bus.pop_filtered(Gst.MessageType.ERROR)
             if msg:
@@ -75,12 +75,12 @@ def play(tracks, audio_output):
     for item in tracks:
         if 'location' not in item:
             raise RuntimeError("All tracks must have the 'location' "
-                                "property set in order to render audio.")
+                               "property set in order to render audio.")
         file_uris.append(item['location'])
         output_playlist.append(item)
     file_uris = list(reversed(file_uris))
 
-    if len(file_uris) == 0:
+    if not file_uris:
         return None
 
     pipeline = Gst.Pipeline.new()
@@ -112,7 +112,7 @@ def play(tracks, audio_output):
         def decode_pad_added(element, pad):
             log.debug("Pad added")
             pad.link(concat.get_request_pad('sink_%u'))
-            if len(uri_list) > 0:
+            if uri_list:
                 enqueue_songs(uri_list, i+1)
         uridecodebin.connect('pad-added', decode_pad_added)
 
@@ -134,7 +134,7 @@ def play(tracks, audio_output):
             # We use the sync message handler to get the exact timestamp that
             # each new track begins at.
             if message.type == Gst.MessageType.STREAM_START:
-                result, timestamp = pipeline.query_position(Gst.Format.TIME)
+                _result, timestamp = pipeline.query_position(Gst.Format.TIME)
                 stream_state['track-index'] += 1
                 index = stream_state['track-index']
                 log.debug("New stream started. Now at track %i; timestamp %s", index, timestamp)
@@ -152,7 +152,7 @@ def play(tracks, audio_output):
                 if message.type == Gst.MessageType.ERROR:
                     error = message.parse_error()
                     log.debug(error.debug)
-                    raise(error.gerror)
+                    raise error.gerror
                 elif message.type == Gst.MessageType.EOS:
                     index = stream_state['track-index'] + 1
                     update_item_from_timestamp(output_playlist[index], stream_state['time'])
@@ -167,4 +167,4 @@ def play(tracks, audio_output):
         log.debug("Complete")
         set_element_state_sync(pipeline, Gst.State.NULL)
 
-    return calliope.Playlist({'list': output_playlist})
+    return output_playlist

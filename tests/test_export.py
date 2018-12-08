@@ -25,13 +25,13 @@ def test_export_cue(cli):
     ]
 
     expected_output = '\n'.join([
-      "FILE \"none\" WAVE",
-      "  TRACK 01 AUDIO",
-      "    PERFORMER \"Test1\"",
-      "  INDEX 01 00:00:00",
-      "  TRACK 02 AUDIO",
-      "    PERFORMER \"Test2\"",
-      "  INDEX 01 00:50:00"])
+        "FILE \"none\" WAVE",
+        "  TRACK 01 AUDIO",
+        "    PERFORMER \"Test1\"",
+        "  INDEX 01 00:00:00",
+        "  TRACK 02 AUDIO",
+        "    PERFORMER \"Test2\"",
+        "  INDEX 01 00:50:00"])
 
     result = cli.run(['export', '--format=cue', '-'], input='\n'.join(json.dumps(track) for track in input_tracks))
 

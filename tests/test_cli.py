@@ -41,7 +41,7 @@ def test_shuffle(cli):
 
 def test_spotify(cli):
     os.environ['CALLIOPE_SPOTIFY_MOCK'] = 'yes'
-    result = cli.run(['--debug' ,'spotify'])
+    result = cli.run(['--debug', 'spotify'])
     assert result.exit_code == 0
     result = cli.run(['--debug', 'spotify', '--user', '__calliope_tests', 'annotate', '-'], input='')
     assert result.exit_code == 0

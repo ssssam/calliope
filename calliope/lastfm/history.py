@@ -61,7 +61,6 @@ class Store:
                     raise
                 else:
                     time.sleep(0.1)
-                    pass
 
     def cursor(self):
         return self.db.cursor()
@@ -112,7 +111,7 @@ class _LastfmHistory:
             'last.fm', self.username, tracktype='recenttracks')
 
         page_size = None
-        timeouts = 0
+        total_pages = 0
         for page, total_pages, tracks in gen:
             if tracks is None:
                 # This can happen when a fetch request times out.
@@ -150,8 +149,6 @@ class _LastfmHistory:
     def intern_scrobble(self, play_info):
         datetime, trackname, artistname, albumname, trackmbid, artistmbid, \
             albummbid = play_info
-        uri = 'lastfm://%s/%s/' % (escape_for_lastfm_uri(artistname),
-                                   escape_for_lastfm_uri(trackname))
 
         cursor = self.store.cursor()
         find_lastfm_sql = 'SELECT id FROM imports_lastfm ' \
@@ -204,7 +201,7 @@ class _LastfmHistory:
               '                albumname, trackmbid, artistmbid, albummbid ' + \
               '           FROM imports_lastfm ) ' + \
               '  GROUP BY trackid HAVING playcount > ? ' + \
-              '  ORDER BY trackid';
+              '  ORDER BY trackid'
         cursor = self.store.cursor()
         cursor.execute(sql, [min_listens])
         for row in cursor:

@@ -20,6 +20,12 @@ jobs:
             ninja
 
       - run:
+          name: run pylint
+          command: |
+            cd build
+            ninja pylint
+
+      - run:
           name: run tests
           command: |
             cd build

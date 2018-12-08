@@ -88,7 +88,9 @@ if get_option('testsuite')
   endif
 endif
 
-pytest = find_program('pytest-3', required: false)
+pylint = find_program('pylint')
+
+pytest = find_program('pytest-3')
 
 ###############################################################################
 # Configuration
@@ -119,6 +121,9 @@ subdir('calliope')
 if get_option('viewer')
   subdir('apps/viewer')
 endif
+
+run_target('pylint',
+  command: [run_from_source_tree, top_source_dir, top_build_dir, pylint.path(), '--rcfile', join_paths(top_source_dir, 'pylintrc')] + calliope_module_sources)
 
 subdir('tests')
 

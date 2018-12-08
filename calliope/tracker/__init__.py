@@ -151,7 +151,6 @@ class TrackerClient():
         else:
             album_pattern = ""
         if filter_track_name:
-            assert track_search_text is None, "Cannot pass both filter_track_name and track_search_text"
             track_pattern = """
                 ?track nie:title ?trackTitle .
                 FILTER (LCASE(?trackTitle) = "%s")
@@ -199,8 +198,6 @@ class TrackerClient():
         else:
             songs_without_releases = None
 
-        result = []
-
         # The artist name may be returned as None if it's unknown to Tracker,
         # so we can't use None as an 'undefined' value. int(-1) will work,
         # as any artist named "-1" would be returned as str("-1").
@@ -231,7 +228,7 @@ class TrackerClient():
                 'track': songs_with_releases.get_string(2)[0],
                 'location': songs_with_releases.get_string(0)[0]
             })
-        if len(album_tracks) > 0:
+        if album_tracks:
             yield {
                 'artist': current_artist_name,
                 'album': album_name,
@@ -256,7 +253,7 @@ class TrackerClient():
                     'track': songs_without_releases.get_string(2)[0],
                     'location': songs_without_releases.get_string(0)[0]
                 })
-            if len(catchall_tracks) > 0:
+            if catchall_tracks:
                 yield {
                     'artist': current_artist_name,
                     'tracks': catchall_tracks
@@ -290,7 +287,7 @@ class TrackerContext():
             # directly here... but I'm not sure how else to get Click to run
             # the cleanup function.
             self._mgr = trackerappdomain.tracker_app_domain('uk.me.afuera.calliope', app_domain_dir)
-            tracker_app_domain = self._mgr.__enter__()
+            tracker_app_domain = self._mgr.__enter__()  # pylint: disable=no-member
 
             self.app_domain = tracker_app_domain
             self.sparql_connection = tracker_app_domain.connection()
@@ -305,12 +302,12 @@ class TrackerContext():
 
     def cleanup(self):
         if self._mgr is not None:
-            self._mgr.__exit__(None, None, None)
+            self._mgr.__exit__(None, None, None)    # pylint: disable=no-member
 
 
 def add_location(tracker, item):
     if 'artist' not in item and 'album' not in item and 'track' not in item:
-        raise RuntimeError (
+        raise RuntimeError(
             "All items must specify at least 'artist', 'album' or 'track': got %s" %
             item)
 
@@ -343,11 +340,13 @@ def add_location(tracker, item):
     if tracks:
         for track in tracks:
             result.extend(
-                list(tracker.songs(filter_artist_name=item.get('artist'), filter_track_name=str(track))))
+                list(tracker.songs(filter_artist_name=item.get('artist'),
+                                   filter_track_name=str(track))))
     elif albums:
         for album in albums:
             result.extend(
-                list(tracker.songs(filter_artist_name=item.get('artist'), filter_album_name=str(album))))
+                list(tracker.songs(filter_artist_name=item.get('artist'),
+                                   filter_album_name=str(album))))
     else:
         result = list(tracker.songs(filter_artist_name=item['artist']))
 
