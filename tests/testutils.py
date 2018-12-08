@@ -45,15 +45,19 @@ class Result():
         assert self.exit_code == 0, fail_message
 
     def json(self):
-        return [json.loads(line) for line in self.output.strip().split('\n')]
+        try:
+            return [json.loads(line) for line in self.output.strip().split('\n')]
+        except json.JSONDecodeError:
+            raise AssertionError("Invalid JSON returned: {}".format(self.output.strip()))
 
 
 class Cli():
     def __init__(self, prepend_args=[]):
         self.prepend_args = prepend_args
 
-    def run(self, args, input=None):
-        result = self.invoke(calliope.cli, self.prepend_args + args, input=input)
+    def run(self, args, input=None, input_playlist=None):
+        result = self.invoke(calliope.cli, self.prepend_args + args,
+                             input=input, input_playlist=input_playlist)
 
         command = "cpe " + " ".join(args)
         print("Calliope exited with code {} for invocation:\n\t{}"
@@ -63,7 +67,12 @@ class Cli():
 
         return result
 
-    def invoke(self, cli, args=None, input=None):
+    def invoke(self, cli, args=None, input=None, input_playlist=None):
+        if input_playlist:
+            assert input is None
+            input = '\n'.join([json.dumps(item) for item in input_playlist])
+        print("Run with input: {}".format(input))
+
         result = subprocess.run(
             [sys.executable, '-m', 'calliope'] + args, encoding='utf8',
             input=input, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

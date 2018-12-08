@@ -377,23 +377,14 @@ def tracker_cli(context, domain, app_domain_dir):
                                                           app_domain_dir)
     context.call_on_close(context.obj.tracker.cleanup)
 
+
 @tracker_cli.command(name='annotate')
 @click.argument('playlist', type=click.File(mode='r'))
 @click.pass_context
 def cmd_tracker_annotate(context, playlist):
     '''Add information stored in a Tracker database to items in a playlist.'''
-    tracker = context.obj.tracker
-
-    for item in calliope.playlist.read(playlist_data):
-        if 'location' in item:
-            # This already has a URI!
-            pass
-        else:
-            try:
-                calliope.write([calliope.tracker.add_location(tracker.client, item)],
-                               sys.stdout)
-            except RuntimeError as e:
-                raise RuntimeError("%s\nItem: %s" % (e, item))
+    output = calliope.tracker.annotate(context.obj.tracker, calliope.playlist.read(playlist))
+    calliope.playlist.write(output, sys.stdout)
 
 
 @tracker_cli.command(name='local-albums')

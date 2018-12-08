@@ -7,6 +7,7 @@ sphinx_sources = [
   'use-cases/create-mix.rst',
   'use-cases/follow-top-artists-on-twitter.rst',
   'use-cases/never-listened.rst',
+  'use-cases/selecting-from-a-collection.rst',
   'use-cases/top-artists.rst',
   'use-cases/what-to-buy.rst',
 ]

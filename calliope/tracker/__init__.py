@@ -94,7 +94,37 @@ class TrackerClient():
                 'track-count': n_songs
             }
 
-    def tracks(self, track_search_text=None):
+    def track(self, artist_name, track_name):
+        '''Find a specific track by name.
+
+        Tries to find a track matching the given artist and title.
+
+        Returns a playlist entry, or None.
+
+        '''
+        query_track = """
+        SELECT
+            ?track_url
+        WHERE {
+            ?track a nmm:MusicPiece ;
+              dc:title "%s" ;
+              nie:url ?track_url ;
+              nmm:performer ?artist .
+            ?artist nmm:artistName "%s" .
+        }""" % (track_name, artist_name)
+
+        cursor = self.query(query_track)
+
+        if cursor.next():
+            return {
+                'track': track_name,
+                'artist': artist_name,
+                'tracker.url': cursor.get_string(0)[0],
+            }
+        else:
+            return {}
+
+    def search_tracks(self, track_search_text=None):
         '''Return a list of tracks.'''
 
         if track_search_text:
@@ -306,51 +336,31 @@ class TrackerContext():
 
 
 def add_location(tracker, item):
-    if 'artist' not in item and 'album' not in item and 'track' not in item:
-        raise RuntimeError(
-            "All items must specify at least 'artist', 'album' or 'track': got %s" %
-            item)
+    if 'track' not in item:
+        # We can only add location for 'track' items.
+        return item
 
-    albums = []
-    tracks = []
-    if 'albums' in item:
-        if 'album' in item:
-            raise RuntimeError("Only one of 'album' and 'albums' may be "
-                               "specified.")
-        if 'tracks' in item or 'track' in item:
-            raise RuntimeError("You cannot use 'track' or 'tracks' with "
-                               "'albums'")
-        albums = item['albums']
-    elif 'album' in item:
-        if 'tracks' in item or 'track' in item:
-            raise RuntimeError("You cannot use 'track' or 'tracks' with "
-                               "'album'")
-        albums = [item['album']]
+    tracker_item = tracker.track(artist_name=item['artist'], track_name=item['track'])
 
-    if 'tracks' in item:
-        if 'track' in item:
-            raise RuntimeError("Only one of 'track' and 'tracks' may be "
-                               "specified.")
-        tracks = item['tracks']
-    elif 'track' in item:
-        tracks = [item['track']]
-
-    result = []
-
-    if tracks:
-        for track in tracks:
-            result.extend(
-                list(tracker.songs(filter_artist_name=item.get('artist'),
-                                   filter_track_name=str(track))))
-    elif albums:
-        for album in albums:
-            result.extend(
-                list(tracker.songs(filter_artist_name=item.get('artist'),
-                                   filter_album_name=str(album))))
+    if tracker_item:
+        item.update(tracker_item)
     else:
-        result = list(tracker.songs(filter_artist_name=item['artist']))
+        warnings = item.get('warnings', [])
+        warnings.append('tracker: Unknown track')
+        item['warnings'] = warnings
 
-    return result
+    return item
+
+
+def annotate(tracker, playlist):
+    playlist=list(playlist)
+    for item in playlist:
+        try:
+            item = add_location(tracker.client, item)
+        except RuntimeError as e:
+            raise RuntimeError("%s\nItem: %s" % (e, item))
+
+        yield item
 
 
 def execute_sparql(tracker, query):
