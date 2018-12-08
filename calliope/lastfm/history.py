@@ -149,8 +149,6 @@ class _LastfmHistory:
     def intern_scrobble(self, play_info):
         datetime, trackname, artistname, albumname, trackmbid, artistmbid, \
             albummbid = play_info
-        uri = 'lastfm://%s/%s/' % (escape_for_lastfm_uri(artistname),
-                                   escape_for_lastfm_uri(trackname))
 
         cursor = self.store.cursor()
         find_lastfm_sql = 'SELECT id FROM imports_lastfm ' \
