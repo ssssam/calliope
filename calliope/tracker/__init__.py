@@ -287,7 +287,7 @@ class TrackerContext():
             # directly here... but I'm not sure how else to get Click to run
             # the cleanup function.
             self._mgr = trackerappdomain.tracker_app_domain('uk.me.afuera.calliope', app_domain_dir)
-            tracker_app_domain = self._mgr.__enter__()
+            tracker_app_domain = self._mgr.__enter__()  # pylint: disable=no-member
 
             self.app_domain = tracker_app_domain
             self.sparql_connection = tracker_app_domain.connection()
@@ -302,7 +302,7 @@ class TrackerContext():
 
     def cleanup(self):
         if self._mgr is not None:
-            self._mgr.__exit__(None, None, None)
+            self._mgr.__exit__(None, None, None)    # pylint: disable=no-member
 
 
 def add_location(tracker, item):
