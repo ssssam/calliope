@@ -41,6 +41,8 @@ class LastfmContext():
         self.user = user
         log.debug("LastFM user: {}".format(user))
 
+        self.api = None
+
         self.cache = calliope.cache.open(namespace='lastfm')
 
     def authenticate(self):
