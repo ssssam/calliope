@@ -124,7 +124,8 @@ def lastfm_annotate_tags(context, playlist):
 @click.option('--include', '-i', type=click.Choice(['images']), multiple=True)
 def cmd_lastfm_top_artists(context, count, time_range, include):
     '''Return user's top artists.'''
-    result = calliope.lastfm.top_artists(context.obj.lastfm)
+    result = calliope.lastfm.top_artists(context.obj.lastfm, count, time_range,
+                                         include)
     calliope.playlist.write(output, sys.stdout)
 
 

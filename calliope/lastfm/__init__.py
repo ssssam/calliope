@@ -179,9 +179,9 @@ def annotate_tags(lastfm, playlist):
         yield item
 
 
-def top_artists(lastfm, cache):
+def top_artists(lastfm, count, time_range, include):
     lastfm = lastfm.api
-    response = lastfm.user.get_top_artists(user=context.obj.user, limit=count, period=time_range)
+    response = lastfm.user.get_top_artists(user=lastfm.user, limit=count, period=time_range)
 
     output = []
     for artist_info in response['artist']:
