@@ -14,4 +14,5 @@ Calliope playlist toolkit.
    :caption: Contents:
 
    use-cases
+   format
    reference
