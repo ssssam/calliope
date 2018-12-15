@@ -89,3 +89,21 @@ def test_scan_show(tracker_cli, tmpdir, musicdir):
     assert collection[1]['tracks'][0]['track'] == 'Track 1'
     assert collection[1]['tracks'][1]['track'] == 'Track 2'
     assert collection[1]['tracks'][2]['track'] == 'Track 3'
+
+    result = tracker_cli.run(['local-tracks'])
+    result.assert_success()
+
+    collection = result.json()
+    print(collection)
+    assert collection[0]['artist'] == 'Artist 1'
+    assert collection[0]['track'] == 'Track 1'
+    assert collection[1]['artist'] == 'Artist 2'
+    assert collection[1]['track'] == 'Track 1'
+    assert collection[2]['artist'] == 'Artist 1'
+    assert collection[2]['track'] == 'Track 2'
+    assert collection[3]['artist'] == 'Artist 2'
+    assert collection[3]['track'] == 'Track 2'
+    assert collection[4]['artist'] == 'Artist 1'
+    assert collection[4]['track'] == 'Track 3'
+    assert collection[5]['artist'] == 'Artist 2'
+    assert collection[5]['track'] == 'Track 3'
