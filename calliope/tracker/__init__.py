@@ -124,7 +124,7 @@ class TrackerClient():
         else:
             return {}
 
-    def tracks(self, filter_artist_name=None, track_search_text=None):
+    def tracks(self, filter_artist_name=None, filter_album_name=None, track_search_text=None):
         '''Return a list of tracks.'''
 
         if track_search_text:
@@ -140,6 +140,14 @@ class TrackerClient():
         else:
             artist_pattern =" "
 
+        if filter_album_name:
+            album_pattern = """
+                ?track nmm:musicAlbum [ nie:title ?albumTitle ] .
+                FILTER (LCASE(?albumTitle) = "%s")
+            """  % Tracker.sparql_escape_string(filter_album_name.lower())
+        else:
+            album_pattern = ""
+
         query_tracks = """
         SELECT
             ?track_title ?track_url ?artist_name
@@ -148,11 +156,11 @@ class TrackerClient():
               dc:title ?track_title ;
               nie:url ?track_url ;
               nmm:performer ?artist .
-            %s %s
+            %s %s %s
             ?artist nmm:artistName ?artist_name .
         }
         ORDER BY ?track_title ?artist_name
-        """ % (track_pattern, artist_pattern)
+        """ % (track_pattern, artist_pattern, album_pattern)
 
         tracks = self.query(query_tracks)
         while tracks.next():
@@ -162,7 +170,7 @@ class TrackerClient():
                 'tracker.url': tracks.get_string(1)[0],
             }
 
-    def albums(self, filter_artist_name=None, filter_album_name=None, filter_track_name=None, ):
+    def albums(self, filter_artist_name=None, filter_album_name=None, filter_track_name=None):
         '''Return all songs matching specific search criteria.
 
         These are grouped into their respective releases. Any tracks that
@@ -380,9 +388,11 @@ def expand_tracks(tracker, playlist):
     for item in playlist:
         if 'track' in item or 'tracks' in item:
             yield item
+        elif 'album' in item:
+            yield from tracker.tracks(filter_artist_name=item['artist'],
+                                      filter_album_name=item['album'])
         else:
-            tracks = tracker.tracks(filter_artist_name=item['artist'])
-            yield from tracks
+            yield from tracker.tracks(filter_artist_name=item['artist'])
 
 
 def scan(tracker, path):

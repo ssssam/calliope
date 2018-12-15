@@ -51,8 +51,8 @@ def musicdir(tmpdir):
             template.tags['TRACKNUMBER'] = str(tracknumber)
         template.save()
 
-    create('Artist 1', 'Track 1')
-    create('Artist 1', 'Track 2')
+    create('Artist 1', 'Track 1', album='Album 1', tracknumber=1)
+    create('Artist 1', 'Track 2', album='Album 1', tracknumber=2)
     create('Artist 1', 'Track 3')
     create('Artist 2', 'Track 1')
     create('Artist 2', 'Track 2')
@@ -83,7 +83,7 @@ def test_annotate_locations(tracker_cli, tmpdir, musicdir):
     assert output_playlist[0]['tracker.url'] == expected_url
 
 
-def test_expand_tracks(tracker_cli, tmpdir, musicdir):
+def test_expand_tracks_for_artist(tracker_cli, tmpdir, musicdir):
     result = tracker_cli.run(['scan', musicdir])
     result.assert_success()
 
@@ -112,6 +112,28 @@ def test_expand_tracks(tracker_cli, tmpdir, musicdir):
     assert len(output_playlist) == 4
 
 
+def test_expand_tracks_for_album(tracker_cli, tmpdir, musicdir):
+    result = tracker_cli.run(['scan', musicdir])
+    result.assert_success()
+
+    input_playlist = [
+        {
+            'artist': 'Artist 1',
+            'album': 'Album 1',
+        },
+    ]
+
+    result = tracker_cli.run(['expand-tracks', '-'], input_playlist=input_playlist)
+    result.assert_success()
+
+    output_playlist = result.json()
+    assert output_playlist[0]['artist'] == 'Artist 1'
+    assert output_playlist[0]['track'] == 'Track 1'
+    assert output_playlist[1]['artist'] == 'Artist 1'
+    assert output_playlist[1]['track'] == 'Track 2'
+    assert len(output_playlist) == 2
+
+
 def test_scan_show(tracker_cli, tmpdir, musicdir):
     result = tracker_cli.run(['scan', musicdir])
     result.assert_success()
@@ -123,17 +145,17 @@ def test_scan_show(tracker_cli, tmpdir, musicdir):
     assert collection[0]['artist'] == 'Artist 1'
     assert collection[0]['tracks'][0]['track'] == 'Track 1'
     assert collection[0]['tracks'][1]['track'] == 'Track 2'
-    assert collection[0]['tracks'][2]['track'] == 'Track 3'
-    assert collection[1]['artist'] == 'Artist 2'
-    assert collection[1]['tracks'][0]['track'] == 'Track 1'
-    assert collection[1]['tracks'][1]['track'] == 'Track 2'
-    assert collection[1]['tracks'][2]['track'] == 'Track 3'
+    assert collection[1]['artist'] == 'Artist 1'
+    assert collection[1]['tracks'][0]['track'] == 'Track 3'
+    assert collection[2]['artist'] == 'Artist 2'
+    assert collection[2]['tracks'][0]['track'] == 'Track 1'
+    assert collection[2]['tracks'][1]['track'] == 'Track 2'
+    assert collection[2]['tracks'][2]['track'] == 'Track 3'
 
     result = tracker_cli.run(['local-tracks'])
     result.assert_success()
 
     collection = result.json()
-    print(collection)
     assert collection[0]['artist'] == 'Artist 1'
     assert collection[0]['track'] == 'Track 1'
     assert collection[1]['artist'] == 'Artist 2'
