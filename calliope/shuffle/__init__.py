@@ -60,6 +60,6 @@ def shuffle(playlist, count):
     corpus = copy.copy(list(playlist))
     random.shuffle(corpus)
     if count:
-        corpus = corpus.items[0:count]
+        corpus = corpus[0:count]
 
     return corpus
