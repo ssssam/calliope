@@ -124,7 +124,7 @@ class TrackerClient():
         else:
             return {}
 
-    def tracks(self, track_search_text=None):
+    def tracks(self, filter_artist_name=None, track_search_text=None):
         '''Return a list of tracks.'''
 
         if track_search_text:
@@ -134,6 +134,12 @@ class TrackerClient():
         else:
             track_pattern = " "
 
+        if filter_artist_name:
+            artist_pattern = 'FILTER (LCASE(?artist_name) = "%s")' % \
+                Tracker.sparql_escape_string(filter_artist_name.lower())
+        else:
+            artist_pattern =" "
+
         query_tracks = """
         SELECT
             ?track_title ?track_url ?artist_name
@@ -142,11 +148,11 @@ class TrackerClient():
               dc:title ?track_title ;
               nie:url ?track_url ;
               nmm:performer ?artist .
-            %s
+            %s %s
             ?artist nmm:artistName ?artist_name .
         }
         ORDER BY ?track_title ?artist_name
-        """ % track_pattern
+        """ % (track_pattern, artist_pattern)
 
         tracks = self.query(query_tracks)
         while tracks.next():
@@ -368,6 +374,15 @@ def execute_sparql(tracker, query):
     while cursor.next():
         values = [str(cursor.get_string(i)[0]) for i in range(0, cursor.get_n_columns())]
         print(", ".join(values))
+
+
+def expand_tracks(tracker, playlist):
+    for item in playlist:
+        if 'track' in item or 'tracks' in item:
+            yield item
+        else:
+            tracks = tracker.tracks(filter_artist_name=item['artist'])
+            yield from tracks
 
 
 def scan(tracker, path):

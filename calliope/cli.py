@@ -387,6 +387,15 @@ def cmd_tracker_annotate(context, playlist):
     calliope.playlist.write(output, sys.stdout)
 
 
+@tracker_cli.command(name='expand-tracks')
+@click.argument('playlist', type=click.File(mode='r'))
+@click.pass_context
+def cmd_tracker_expand_tracks(context, playlist):
+    '''Convert any 'artist' or 'album' type playlist items into 'track' items'''
+    result = calliope.tracker.expand_tracks(context.obj.tracker.client, calliope.playlist.read(playlist))
+    calliope.playlist.write(result, sys.stdout)
+
+
 @tracker_cli.command(name='local-albums')
 @click.option('--artist', nargs=1, type=str,
               help="Limit to albums by the given artist")

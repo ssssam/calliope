@@ -73,6 +73,35 @@ def test_annotate_locations(tracker_cli, tmpdir, musicdir):
     assert output_playlist[0]['tracker.url'] == expected_url
 
 
+def test_expand_tracks(tracker_cli, tmpdir, musicdir):
+    result = tracker_cli.run(['scan', musicdir])
+    result.assert_success()
+
+    input_playlist = [
+        {
+            'artist': 'Artist 1',
+            'track': 'Track 1',
+        },
+        {
+            'artist': 'Artist 2',
+        }
+    ]
+
+    result = tracker_cli.run(['expand-tracks', '-'], input_playlist=input_playlist)
+    result.assert_success()
+
+    output_playlist = result.json()
+    assert output_playlist[0]['artist'] == 'Artist 1'
+    assert output_playlist[0]['track'] == 'Track 1'
+    assert output_playlist[1]['artist'] == 'Artist 2'
+    assert output_playlist[1]['track'] == 'Track 1'
+    assert output_playlist[2]['artist'] == 'Artist 2'
+    assert output_playlist[2]['track'] == 'Track 2'
+    assert output_playlist[3]['artist'] == 'Artist 2'
+    assert output_playlist[3]['track'] == 'Track 3'
+    assert len(output_playlist) == 4
+
+
 def test_scan_show(tracker_cli, tmpdir, musicdir):
     result = tracker_cli.run(['scan', musicdir])
     result.assert_success()
