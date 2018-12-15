@@ -377,7 +377,7 @@ def scan(tracker, path):
         raise RuntimeError("Scanning specific directories is only possible when "
                            "using the app-specific Tracker domain.")
 
-    loop = GLib.MainLoop.new(None, 0)
+    loop = trackerappdomain.MainLoop()
 
     def progress_callback(status, progress, remaining_time):
         sys.stderr.write("Status: {}, {}, {}\n".format(status, progress, remaining_time))
@@ -385,6 +385,5 @@ def scan(tracker, path):
     def idle_callback():
         loop.quit()
 
-    with trackerappdomain.glib_excepthook(loop):
-        app_domain.index_location_async(path, progress_callback, idle_callback)
-        loop.run()
+    app_domain.index_location_async(path, progress_callback, idle_callback)
+    loop.run_checked()
