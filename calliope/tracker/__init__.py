@@ -145,7 +145,7 @@ class TrackerClient():
             %s
             ?artist nmm:artistName ?artist_name .
         }
-        ORDER BY ?track_title
+        ORDER BY ?track_title ?artist_name
         """ % track_pattern
 
         tracks = self.query(query_tracks)
