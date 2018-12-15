@@ -124,7 +124,7 @@ class TrackerClient():
         else:
             return {}
 
-    def search_tracks(self, track_search_text=None):
+    def tracks(self, track_search_text=None):
         '''Return a list of tracks.'''
 
         if track_search_text:
