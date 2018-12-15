@@ -37,16 +37,26 @@ def musicdir(tmpdir):
     template_path = os.path.join(os.path.dirname(__file__), 'data', 'empty.ogg')
     tmpdir.ensure('musicdir', dir=True)
 
-    for artist in ['Artist 1', 'Artist 2']:
-        for track in ['Track 1', 'Track 2', 'Track 3']:
-            filename = '{} - {}.ogg'.format(artist, track)
-            path = tmpdir.join('musicdir', filename)
-            shutil.copy(template_path, path)
+    def create(artist, title, album=None, tracknumber=None):
+        filename = '{} - {}.ogg'.format(artist, title)
+        path = tmpdir.join('musicdir', filename)
+        shutil.copy(template_path, path)
 
-            template = mutagen.oggvorbis.OggVorbis(path)
-            template.tags['PERFORMER'] = artist
-            template.tags['TITLE'] = track
-            template.save()
+        template = mutagen.oggvorbis.OggVorbis(path)
+        template.tags['PERFORMER'] = artist
+        template.tags['TITLE'] = title
+        if album:
+            template.tags['ALBUM'] = album
+        if tracknumber:
+            template.tags['TRACKNUMBER'] = str(tracknumber)
+        template.save()
+
+    create('Artist 1', 'Track 1')
+    create('Artist 1', 'Track 2')
+    create('Artist 1', 'Track 3')
+    create('Artist 2', 'Track 1')
+    create('Artist 2', 'Track 2')
+    create('Artist 2', 'Track 3')
 
     return str(tmpdir.join('musicdir'))
 
