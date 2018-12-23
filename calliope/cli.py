@@ -189,7 +189,7 @@ def cmd_lastfm_history_scrobbles(context):
 @click.option('--min-listens', default=1, metavar='N',
               help="show only tracks that were played N times")
 @click.pass_context
-def cmd_lastfm_history_scrobbles(context, min_listens):
+def cmd_lastfm_history_tracks(context, min_listens):
     lastfm_history = context.obj.lastfm_history
     tracks = lastfm_history.tracks(min_listens=min_listens)
     calliope.playlist.write(tracks, sys.stdout)
