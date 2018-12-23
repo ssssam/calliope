@@ -168,7 +168,7 @@ def cmd_lastfm_top_artists(context, count, time_range, include):
 def lastfm_history_cli(context, sync, user):
     context.obj.lastfm = calliope.lastfm.LastfmContext(user=user)
 
-    lastfm_history = calliope.lastfm.history.load(user)
+    lastfm_history = calliope.lastfm.history.load(context.obj.lastfm.user)
     if sync:
         lastfm_history.sync()
 
