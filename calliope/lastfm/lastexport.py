@@ -92,7 +92,9 @@ def connect_server(server, username, startpage, sleep_func=time.sleep, tracktype
             break
         except Exception as e:
             last_exc = e
-            log.warning("Exception occured, retrying in %ds: %s", interval, e)
+            log.warning("Exception occured while fetching last.fm listen "
+                        "history: %s. Retrying in %ds. Use --no-sync to disable "
+                        "network access.", e, interval)
             sleep_func(interval)
     else:
         log.error("Failed to open page %s", urlvars['page'])
