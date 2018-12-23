@@ -97,7 +97,6 @@ def connect_server(server, username, startpage, sleep_func=time.sleep, tracktype
                         "network access.", e, interval)
             sleep_func(interval)
     else:
-        log.error("Failed to open page %s", urlvars['page'])
         raise last_exc
 
     response = f.read()

@@ -23,6 +23,7 @@ import os
 import re
 import sqlite3
 import time
+import urllib
 
 import calliope.lastfm.lastexport
 
@@ -107,30 +108,34 @@ class _LastfmHistory:
 
         log.debug("Newest play: %i", newest_play)
 
-        gen = calliope.lastfm.lastexport.get_tracks(
-            'last.fm', self.username, tracktype='recenttracks')
+        try:
+            gen = calliope.lastfm.lastexport.get_tracks(
+                'last.fm', self.username, tracktype='recenttracks')
 
-        page_size = None
-        total_pages = 0
-        for page, total_pages, tracks in gen:
-            if tracks is None:
-                # This can happen when a fetch request times out.
-                # The 'lastexport' will eventually raise an exception
-                # after retrying a few times.
-                continue
+            page_size = None
+            total_pages = 0
+            for page, total_pages, tracks in gen:
+                if tracks is None:
+                    # This can happen when a fetch request times out.
+                    # The 'lastexport' will eventually raise an exception
+                    # after retrying a few times.
+                    continue
 
-            log.debug("Received page %i/%i", page, total_pages)
-            top_datetime = int(tracks[0][0])
+                log.debug("Received page %i/%i", page, total_pages)
+                top_datetime = int(tracks[0][0])
 
-            page_size = page_size or len(tracks)
+                page_size = page_size or len(tracks)
 
-            if top_datetime <= newest_play:
-                log.debug("Caught up with stored plays.")
-                break
+                if top_datetime <= newest_play:
+                    log.debug("Caught up with stored plays.")
+                    break
 
-            for scrobble in tracks:
-                self.intern_scrobble(scrobble)
-            self.store.commit()
+                for scrobble in tracks:
+                    self.intern_scrobble(scrobble)
+                self.store.commit()
+        except urllib.error.URLError as e:
+            raise RuntimeError("Unable to sync lastfm history due to network "
+                               "error: {}".format(e.args[0]))
 
         last_stored_page = stored_plays / page_size
         if last_stored_page < total_pages - 1:
