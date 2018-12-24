@@ -6,6 +6,16 @@ Analysing someone's listen history
 The ``cpe lastfm-history`` command can provide a record of songs that you have
 listened to. It has some tools to help analyse this data as well.
 
+Arists which you discovered this year
+-------------------------------------
+
+.. code:: bash
+
+   cpe lastfm-history artists --first-play-since='1 year ago'
+
+You may want to use `--min-listens=3` to filter out things you only played once
+or twice.
+
 Music which you haven't listened to for over a year
 ---------------------------------------------------
 

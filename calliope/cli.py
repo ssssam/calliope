@@ -185,6 +185,40 @@ def cmd_lastfm_history_scrobbles(context):
     calliope.playlist.write(tracks, sys.stdout)
 
 
+@lastfm_history_cli.command(name='artists',
+                            help="Query artists from the listening history")
+@click.option('--first-play-before', metavar='DATE',
+              help="show artists that were first played before DATE")
+@click.option('--first-play-since', metavar='DATE',
+              help="show artists that were first played on or after DATE")
+@click.option('--last-play-before', metavar='DATE',
+              help="show artists that were last played before DATE")
+@click.option('--last-play-since', metavar='DATE',
+              help="show artists that were last played on or after DATE")
+@click.option('--min-listens', default=1, metavar='N',
+              help="show only artists that were played N times")
+@click.pass_context
+def cmd_lastfm_history_artists(context, first_play_before, first_play_since,
+                               last_play_before, last_play_since, min_listens):
+    lastfm_history = context.obj.lastfm_history
+
+    if first_play_before is not None:
+        first_play_before = dateparser.parse(first_play_before)
+    if first_play_since is not None:
+        first_play_since = dateparser.parse(first_play_since)
+    if last_play_before is not None:
+        last_play_before = dateparser.parse(last_play_before)
+    if last_play_since is not None:
+        last_play_since = dateparser.parse(last_play_since)
+
+    artists = lastfm_history.artists(
+        first_play_before=first_play_before,
+        first_play_since=first_play_since,
+        last_play_before=last_play_before,
+        last_play_since=last_play_since,
+        min_listens=min_listens)
+    calliope.playlist.write(artists, sys.stdout)
+
 @lastfm_history_cli.command(name='tracks',
                             help="Query tracks from the listening history")
 @click.option('--first-play-before', metavar='DATE',
