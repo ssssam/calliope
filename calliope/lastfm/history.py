@@ -196,6 +196,52 @@ class _LastfmHistory:
                 item['musicbrainz.track'] = trackmbid
             yield item
 
+    def artists(self, first_play_before=None, first_play_since=None,
+               last_play_before=None, last_play_since=None, min_listens=1):
+        '''Return artists from the lastfm history.
+
+        The keyword arguments can be used to filter the returned results.
+
+        '''
+
+        sql = 'SELECT COUNT(artistname) AS playcount, artistname, ' + \
+              '       artistmbid, MIN(datetime) AS first_play, MAX(datetime) AS last_play' + \
+              '  FROM ( SELECT artistname, artistmbid, datetime FROM imports_lastfm ) ' + \
+              '  GROUP BY artistname'
+
+        sql_filters = []
+        if min_listens > 1:
+            sql_filters.append('playcount > {}'.format(min_listens))
+        if first_play_before:
+            sql_filters.append('first_play < {}'.format(first_play_before.timestamp()))
+        if first_play_since:
+            sql_filters.append('first_play >= {}'.format(first_play_since.timestamp()))
+        if last_play_before:
+            sql_filters.append('last_play < {}'.format(last_play_before.timestamp()))
+        if last_play_since:
+            sql_filters.append('last_play >= {}'.format(last_play_since.timestamp()))
+
+        if sql_filters:
+            sql += ' HAVING ' + ' AND '.join(sql_filters)
+
+        sql_order = 'ORDER BY artistname'
+        sql = sql + ' ' + sql_order
+
+        log.debug("SQL: %s", sql)
+        cursor = self.store.cursor()
+        cursor.execute(sql)
+        for row in cursor:
+            playcount, artistname, artistmbid, first_play, last_play = row
+            item = {
+                'artist': artistname,
+                'lastfm.playcount': playcount,
+                'lastfm.first_play': datetime.datetime.fromtimestamp(first_play).isoformat(),
+                'lastfm.last_play': datetime.datetime.fromtimestamp(last_play).isoformat(),
+            }
+            if artistmbid:
+                item['musicbrainz.artist'] = artistmbid
+            yield item
+
     def tracks(self, first_play_before=None, first_play_since=None,
                last_play_before=None, last_play_since=None, min_listens=1):
         '''Return tracks from the lastfm history.
