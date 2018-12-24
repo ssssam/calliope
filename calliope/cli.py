@@ -21,6 +21,7 @@ This module provides the public command line interface for Calliope.
 '''
 
 import click
+import dateparser
 import xdg.BaseDirectory
 
 import logging
@@ -186,12 +187,36 @@ def cmd_lastfm_history_scrobbles(context):
 
 @lastfm_history_cli.command(name='tracks',
                             help="Query tracks from the listening history")
+@click.option('--first-play-before', metavar='DATE',
+              help="show tracks that were first played before DATE")
+@click.option('--first-play-since', metavar='DATE',
+              help="show tracks that were first played on or after DATE")
+@click.option('--last-play-before', metavar='DATE',
+              help="show tracks that were last played before DATE")
+@click.option('--last-play-since', metavar='DATE',
+              help="show tracks that were last played on or after DATE")
 @click.option('--min-listens', default=1, metavar='N',
               help="show only tracks that were played N times")
 @click.pass_context
-def cmd_lastfm_history_tracks(context, min_listens):
+def cmd_lastfm_history_tracks(context, first_play_before, first_play_since,
+                              last_play_before, last_play_since, min_listens):
     lastfm_history = context.obj.lastfm_history
-    tracks = lastfm_history.tracks(min_listens=min_listens)
+
+    if first_play_before is not None:
+        first_play_before = dateparser.parse(first_play_before)
+    if first_play_since is not None:
+        first_play_since = dateparser.parse(first_play_since)
+    if last_play_before is not None:
+        last_play_before = dateparser.parse(last_play_before)
+    if last_play_since is not None:
+        last_play_since = dateparser.parse(last_play_since)
+
+    tracks = lastfm_history.tracks(
+        first_play_before=first_play_before,
+        first_play_since=first_play_since,
+        last_play_before=last_play_before,
+        last_play_since=last_play_since,
+        min_listens=min_listens)
     calliope.playlist.write(tracks, sys.stdout)
 
 

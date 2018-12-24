@@ -18,6 +18,7 @@
 import xdg.BaseDirectory
 import yoyo
 
+import datetime
 import logging
 import os
 import re
@@ -195,28 +196,56 @@ class _LastfmHistory:
                 item['musicbrainz.track'] = trackmbid
             yield item
 
-    def tracks(self, min_listens=1):
-        '''Return tracks from the lastfm history.'''
+    def tracks(self, first_play_before=None, first_play_since=None,
+               last_play_before=None, last_play_since=None, min_listens=1):
+        '''Return tracks from the lastfm history.
+
+        The keyword arguments can be used to filter the returned results.
+
+        '''
+
         # last.fm doesn't give us a single unique identifier for the tracks, so
         # we construct one by concatenating the two fields that are guaranteed
         # to be present for every track (which are 'artistname' and 'trackname').
         sql = 'SELECT COUNT(trackid) AS playcount, trackname, artistname, albumname, ' + \
-              '       artistmbid, trackmbid, albummbid ' + \
+              '       artistmbid, trackmbid, albummbid, MIN(datetime) AS first_play, ' + \
+              '       MAX(datetime) AS last_play' + \
               '  FROM ( SELECT (artistname || \',\' || trackname) AS trackid, trackname, artistname, ' + \
-              '                albumname, trackmbid, artistmbid, albummbid ' + \
+              '                albumname, trackmbid, artistmbid, albummbid, datetime ' + \
               '           FROM imports_lastfm ) ' + \
-              '  GROUP BY trackid HAVING playcount > ? ' + \
-              '  ORDER BY trackid'
+              '  GROUP BY trackid'
+
+        sql_filters = []
+        if min_listens > 1:
+            sql_filters.append('playcount > {}'.format(min_listens))
+        if first_play_before:
+            sql_filters.append('first_play < {}'.format(first_play_before.timestamp()))
+        if first_play_since:
+            sql_filters.append('first_play >= {}'.format(first_play_since.timestamp()))
+        if last_play_before:
+            sql_filters.append('last_play < {}'.format(last_play_before.timestamp()))
+        if last_play_since:
+            sql_filters.append('last_play >= {}'.format(last_play_since.timestamp()))
+
+        if sql_filters:
+            sql += ' HAVING ' + ' AND '.join(sql_filters)
+
+        sql_order = 'ORDER BY trackid'
+        sql = sql + ' ' + sql_order
+
+        log.debug("SQL: %s", sql)
         cursor = self.store.cursor()
-        cursor.execute(sql, [min_listens])
+        cursor.execute(sql)
         for row in cursor:
             playcount, trackname, artistname, albumname, trackmbid, \
-                artistmbid, albummbid = row
+                artistmbid, albummbid, first_play, last_play = row
             item = {
                 'artist': artistname,
                 'album': albumname,
                 'track': trackname,
-                'lastfm.playcount': playcount
+                'lastfm.playcount': playcount,
+                'lastfm.first_play': datetime.datetime.fromtimestamp(first_play).isoformat(),
+                'lastfm.last_play': datetime.datetime.fromtimestamp(last_play).isoformat(),
             }
             if artistmbid:
                 item['musicbrainz.artist'] = artistmbid
