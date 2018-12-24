@@ -211,7 +211,7 @@ class _LastfmHistory:
 
         sql_filters = []
         if min_listens > 1:
-            sql_filters.append('playcount > {}'.format(min_listens))
+            sql_filters.append('playcount >= {}'.format(min_listens))
         if first_play_before:
             sql_filters.append('first_play < {}'.format(first_play_before.timestamp()))
         if first_play_since:
@@ -263,7 +263,7 @@ class _LastfmHistory:
 
         sql_filters = []
         if min_listens > 1:
-            sql_filters.append('playcount > {}'.format(min_listens))
+            sql_filters.append('playcount >= {}'.format(min_listens))
         if first_play_before:
             sql_filters.append('first_play < {}'.format(first_play_before.timestamp()))
         if first_play_since:
