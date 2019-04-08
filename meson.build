@@ -28,7 +28,7 @@ endif
 
 install_requires = [
   'click',
-  'dateparser',
+  'parsedatetime',
   'pyxdg',
 ]
 

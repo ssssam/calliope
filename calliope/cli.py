@@ -21,7 +21,7 @@ This module provides the public command line interface for Calliope.
 '''
 
 import click
-import dateparser
+import parsedatetime
 import xdg.BaseDirectory
 
 import logging
@@ -202,14 +202,16 @@ def cmd_lastfm_history_artists(context, first_play_before, first_play_since,
                                last_play_before, last_play_since, min_listens):
     lastfm_history = context.obj.lastfm_history
 
+    cal = parsedatetime.Calendar()
+
     if first_play_before is not None:
-        first_play_before = dateparser.parse(first_play_before)
+        first_play_before = cal.parse(first_play_before)
     if first_play_since is not None:
-        first_play_since = dateparser.parse(first_play_since)
+        first_play_since = cal.parse(first_play_since)
     if last_play_before is not None:
-        last_play_before = dateparser.parse(last_play_before)
+        last_play_before = cal.parse(last_play_before)
     if last_play_since is not None:
-        last_play_since = dateparser.parse(last_play_since)
+        last_play_since = cal.parse(last_play_since)
 
     artists = lastfm_history.artists(
         first_play_before=first_play_before,
@@ -236,14 +238,16 @@ def cmd_lastfm_history_tracks(context, first_play_before, first_play_since,
                               last_play_before, last_play_since, min_listens):
     lastfm_history = context.obj.lastfm_history
 
+    cal = parsedatetime.Calendar()
+
     if first_play_before is not None:
-        first_play_before = dateparser.parse(first_play_before)
+        first_play_before = cal.parse(first_play_before)
     if first_play_since is not None:
-        first_play_since = dateparser.parse(first_play_since)
+        first_play_since = cal.parse(first_play_since)
     if last_play_before is not None:
-        last_play_before = dateparser.parse(last_play_before)
+        last_play_before = cal.parse(last_play_before)
     if last_play_since is not None:
-        last_play_since = dateparser.parse(last_play_since)
+        last_play_since = cal.parse(last_play_since)
 
     tracks = lastfm_history.tracks(
         first_play_before=first_play_before,
