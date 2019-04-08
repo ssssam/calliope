@@ -89,7 +89,7 @@ if get_option('testsuite')
   endif
 endif
 
-pylint = find_program('pylint')
+pylint = find_program('pylint-3', 'pylint')
 
 pytest = find_program('pytest-3')
 
