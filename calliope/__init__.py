@@ -61,7 +61,6 @@ else:
     from . import shuffle
     from . import stat
     from . import sync
-    from . import web
 
 
     # Some modules can be switched on/off using `meson configure` when Calliope
