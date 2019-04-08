@@ -1,13 +1,13 @@
 .. _listen_history:
 
 Analysing your listen history
-==================================
+=============================
 
 The ``cpe lastfm-history`` command can provide a record of songs that you have
 listened to. It has some tools to help analyse this data as well.
 
 Artists which you discovered this year
--------------------------------------
+--------------------------------------
 
 .. code:: bash
 
