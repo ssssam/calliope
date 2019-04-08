@@ -25,7 +25,6 @@ import parsedatetime
 import xdg.BaseDirectory
 
 import logging
-import mock
 import os
 import sys
 
@@ -307,7 +306,8 @@ def spotify_cli(context, token, user):
         # This is for testing; as we currently run Calliope as a subprocess
         # from the test suite (due to trackerappdomain bugs when run multiple
         # times in the same process) we can't use mock.patch().
-        context.obj.spotify = mock.MagicMock()
+        import unittest.mock
+        context.obj.spotify = unittest.mock.MagicMock()
     else:
         context.obj.spotify = calliope.spotify.SpotifyContext(user=user)
         context.obj.spotify.authenticate(token)
