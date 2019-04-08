@@ -1,5 +1,7 @@
 gnome = import('gnome')
 
+glib = dependency('glib-2.0')
+
 sources = [
     '__init__.py',
     'app.py',
