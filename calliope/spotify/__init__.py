@@ -17,7 +17,7 @@
 
 
 import spotipy
-import spotipy.util as util
+import spotipy.util
 
 import click
 
@@ -55,7 +55,7 @@ class SpotifyContext():
 
             scope = 'user-top-read'
             try:
-                token = util.prompt_for_user_token(
+                token = spotipy.util.prompt_for_user_token(
                     self.user, scope, client_id=client_id,
                     client_secret=client_secret, redirect_uri=redirect_uri)
             except spotipy.client.SpotifyException as e:
