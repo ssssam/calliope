@@ -1,7 +1,26 @@
 project('calliope',
         meson_version: '>= 0.46')
 
-if get_option('tracker')
+# Process the feature dependecies.
+#
+# We use the 'feature' option where possible because it allows users to
+# easy opt-in to every feature (set auto_features=enabled) or opt-out of
+# every feature (set auto_features=disabled).
+#
+# Since Meson doesn't natively support Python module dependencies yet
+# (see https://github.com/mesonbuild/meson/issues/2377), we have to 'decode'
+# the value of each option manually.
+#
+enable_lastfm = (get_option('lastfm').auto() or get_option('lastfm').enabled())
+enable_musicbrainz = (get_option('musicbrainz').auto() or get_option('musicbrainz').enabled())
+enable_play = (get_option('play').auto() or get_option('play').enabled())
+enable_spotify = (get_option('spotify').auto() or get_option('spotify').enabled())
+enable_suggest = (get_option('suggest').auto() or get_option('suggest').enabled())
+enable_tracker = (get_option('tracker').auto() or get_option('tracker').enabled())
+enable_viewer_app = (get_option('viewer').auto() or get_option('viewer').enabled())
+enable_web = (get_option('web').auto() or get_option('web').enabled())
+
+if enable_tracker
   subproject('tracker-app-domain')
 endif
 
@@ -32,23 +51,23 @@ install_requires = [
   'pyxdg',
 ]
 
-if get_option('lastfm')
+if enable_lastfm
   install_requires += ['yoyo-migrations']
 endif
 
-if get_option('musicbrainz')
+if enable_musicbrainz
   install_requires += ['musicbrainzngs']
 endif
 
-if get_option('spotify')
+if enable_spotify
   install_requires += ['spotipy']
 endif
 
-if get_option('suggest')
+if enable_suggest
   install_requires += ['lightfm']
 endif
 
-if get_option('web')
+if enable_web
   install_requires += ['jinja2']
 endif
 
@@ -101,13 +120,13 @@ localedir = join_paths(get_option('prefix'), get_option('localedir'))
 pkgdatadir = join_paths(get_option('prefix'), get_option('datadir'), 'tagcloud')
 
 cdata = configuration_data()
-cdata.set10('enable_lastfm', get_option('lastfm'))
-cdata.set10('enable_musicbrainz', get_option('musicbrainz'))
-cdata.set10('enable_play', get_option('play'))
-cdata.set10('enable_spotify', get_option('spotify'))
-cdata.set10('enable_suggest', get_option('suggest'))
-cdata.set10('enable_tracker', get_option('tracker'))
-cdata.set10('enable_web', get_option('web'))
+cdata.set10('enable_lastfm', enable_lastfm)
+cdata.set10('enable_musicbrainz', enable_musicbrainz)
+cdata.set10('enable_play', enable_play)
+cdata.set10('enable_spotify', enable_spotify)
+cdata.set10('enable_suggest', enable_suggest)
+cdata.set10('enable_tracker', enable_tracker)
+cdata.set10('enable_web', enable_web)
 cdata.set('localedir', localedir)
 cdata.set('pkgdatadir', pkgdatadir)
 cdata.set('pythonsitepackagesdir', python.get_install_dir(pure: false))
@@ -119,7 +138,7 @@ run_from_source_tree = find_program('scripts/run_from_source_tree', required: tr
 
 subdir('calliope')
 
-if get_option('viewer')
+if enable_viewer_app
   subdir('apps/viewer')
 endif
 
@@ -131,7 +150,7 @@ if get_option('docs')
   subdir('docs')
 endif
 
-if get_option('lastfm')
+if enable_lastfm
   # Install the bundled lastfmclient library.
   #
   # Theoretically this could conflict with an existing user-installed version,

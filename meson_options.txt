@@ -1,16 +1,16 @@
-option('lastfm', type: 'boolean', value: 'true',
+option('lastfm', type: 'feature', value: 'auto',
        description: 'Enable Last.fm integration (requires Python "lastfmclient" library)')
-option('musicbrainz', type: 'boolean', value: 'true',
+option('musicbrainz', type: 'feature', value: 'auto',
        description: 'Enable Musicbrainz integration (requires Python "musicbrainzngs" library)')
-option('play', type: 'boolean', value: 'true',
+option('play', type: 'feature', value: 'auto',
        description: 'Enable `play` command (requires GStreamer & PyGObject)')
-option('spotify', type: 'boolean', value: 'true',
+option('spotify', type: 'feature', value: 'auto',
        description: 'Enable Spotify integration (requires Python "spotipy" library)')
-option('suggest', type: 'boolean', value: 'true',
+option('suggest', type: 'feature', value: 'auto',
        description: 'Enable recommendation engine (requires Python "lightfm" library)')
-option('tracker', type: 'boolean', value: 'true',
+option('tracker', type: 'feature', value: 'auto',
        description: 'Enable Tracker integration (requires Tracker & PyGObject)')
-option('web', type: 'boolean', value: 'true',
+option('web', type: 'feature', value: 'auto',
        description: 'Enable world wide web integration (requires Python "jinja2" library)')
 
 option('docs', type: 'boolean', value: 'true',
@@ -18,5 +18,5 @@ option('docs', type: 'boolean', value: 'true',
 option('testsuite', type: 'boolean', value: 'true',
        description: 'Enable automated test suite (requires Python "mutagen" library)')
 
-option('viewer', type: 'boolean', value: 'true',
+option('viewer', type: 'feature', value: 'auto',
        description: 'Enable playlist viewer app (requires GTK+ and PyGObject)')

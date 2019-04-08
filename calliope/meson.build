@@ -35,34 +35,31 @@ subdir('shuffle')
 subdir('stat')
 subdir('sync')
 
-if get_option('lastfm')
+if enable_lastfm
   subdir('lastfm')
 endif
 
-if get_option('musicbrainz')
+if enable_musicbrainz
   subdir('musicbrainz')
 endif
 
-if get_option('play')
+if enable_play
   subdir('play')
 endif
 
-if get_option('spotify')
+if enable_spotify
   subdir('spotify')
 endif
 
-if get_option('suggest')
+if enable_suggest
   subdir('suggest')
 endif
 
-if get_option('tracker')
+if enable_tracker
   subdir('tracker')
 endif
 
-if get_option('web')
+if enable_web
   subdir('web')
-endif
-
-if get_option('web')
   subdir('data/web/templates')
 endif
