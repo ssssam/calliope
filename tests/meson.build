@@ -1,3 +1,6 @@
+run_target('pylint',
+  command: [run_from_source_tree, top_source_dir, top_build_dir, pylint.path(), '--rcfile', join_paths(top_source_dir, 'pylintrc')] + calliope_module_sources)
+
 tests = [
   'test_cache.py',
   'test_cli.py',

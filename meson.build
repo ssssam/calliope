@@ -87,11 +87,11 @@ if get_option('testsuite')
   if modules_check.returncode() != 0
     error('Test suite dependency requirements are not satisfied:\n' + modules_check.stderr().strip())
   endif
+
+  pylint = find_program('pylint-3', 'pylint')
+
+  pytest = find_program('pytest-3')
 endif
-
-pylint = find_program('pylint-3', 'pylint')
-
-pytest = find_program('pytest-3')
 
 ###############################################################################
 # Configuration
@@ -123,10 +123,9 @@ if get_option('viewer')
   subdir('apps/viewer')
 endif
 
-run_target('pylint',
-  command: [run_from_source_tree, top_source_dir, top_build_dir, pylint.path(), '--rcfile', join_paths(top_source_dir, 'pylintrc')] + calliope_module_sources)
-
-subdir('tests')
+if get_option('testsuite')
+  subdir('tests')
+endif
 
 if get_option('docs')
   subdir('docs')
