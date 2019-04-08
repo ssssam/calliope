@@ -1,5 +1,5 @@
 project('calliope',
-        meson_version: '>= 0.46')
+        meson_version: '>= 0.47')
 
 # Process the feature dependecies.
 #
