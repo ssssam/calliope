@@ -24,52 +24,6 @@ class PlaylistError(RuntimeError):
     pass
 
 
-class PlaylistKind(enum.Enum):
-    COLLECTION = 0
-    PLAYLIST = 1
-
-
-def process_playlist(yaml_parsed):
-    if 'collection' in yaml_parsed:
-        kind = PlaylistKind.COLLECTION
-        items = yaml_parsed['collection'] or []
-    elif 'playlist' in yaml_parsed:
-        kind = PlaylistKind.PLAYLIST
-        items = yaml_parsed['playlist'] or []
-    elif 'list' in yaml_parsed:
-        kind = PlaylistKind.PLAYLIST
-        items = yaml_parsed['list'] or []
-    else:
-        raise RuntimeError ("Expected 'playlist' or 'collection' entry")
-
-    return kind, items
-
-
-class Playlist():
-    '''A playlist is a set of songs.
-
-    A 'collection' is also considered to be a playlist, but one where order
-    isn't important.
-
-    '''
-    def __init__(self, yaml_parsed=None):
-        if not yaml_parsed:
-            self.kind = PlaylistKind.PLAYLIST
-            self.items = []
-        else:
-            self.kind, self.items = process_playlist(yaml_parsed)
-
-        for i, item in enumerate(self.items):
-            if isinstance(item, str):
-                self.items[i] = {'track': item}
-
-    def __iter__(self):
-        return iter(self.items)
-
-    def append(self, playlist):
-        self.items += playlist.items
-
-
 class Item(dict):
     '''Represents a single item in a Calliope playlist.'''
     def __init__(self, data):
