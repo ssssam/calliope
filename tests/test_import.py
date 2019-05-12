@@ -36,7 +36,7 @@ def test_basic(cli):
 
     assert result.exit_code == 0
 
-    items = list(calliope.playlist.read(io.StringIO(result.output)))
+    items = list(calliope.playlist.read(io.BytesIO(result.output.encode('utf-8'))))
 
     assert items == [
         {'location': 'file:///media/Music/Song%201.mp3', 'track': 'Song 1'},

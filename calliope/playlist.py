@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import splitstream
+
 import enum
 import json
 import sys
@@ -55,23 +57,6 @@ class Item(dict):
                 yield track_merged
 
 
-# Adapted from https://stackoverflow.com/questions/6886283/how-i-can-i-lazily-read-multiple-json-values-from-a-file-stream-in-python/7795029
-def _iterload(f, cls=json.JSONDecoder, **kwargs):
-    decoder = cls(**kwargs)
-
-    while True:
-        line = f.readline()
-
-        if len(line) == 0:
-            break
-
-        idx = json.decoder.WHITESPACE.match(line, 0).end()
-        while idx < len(line):
-            obj, end = decoder.raw_decode(line, idx)
-            yield obj
-            idx = json.decoder.WHITESPACE.match(line, end).end()
-
-
 def read(stream):
     '''Parses a playlist from the given stream.
 
@@ -93,11 +78,17 @@ def read(stream):
             playlist = list(calliope.playlist.read(f))
 
     '''
-    for json_object in _iterload(stream):
-        if isinstance(json_object, dict):
-            yield Item(json_object)
+    for text in splitstream.splitfile(stream, format='json'):
+        try:
+            json_document = json.loads(text)
+        except ValueError as e:
+            raise PlaylistError from e
+        if isinstance(json_document, dict):
+            yield Item(json_document)
+        elif isinstance(json_document, list):
+            yield from (Item(item) for item in json_document)
         else:
-            raise PlaylistError("Expected JSON object, got {}".format(type(json_object).__name__))
+            raise PlaylistError("Expected JSON object, got {}".format(type(json_document).__name__))
 
 
 def write(items, stream):

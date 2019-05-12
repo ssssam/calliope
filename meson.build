@@ -49,6 +49,7 @@ install_requires = [
   'click',
   'parsedatetime',
   'pyxdg',
+  'splitstream',
 ]
 
 if enable_lastfm
