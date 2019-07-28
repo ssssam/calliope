@@ -41,9 +41,9 @@ def convert_to_cue(playlist):
 def convert_to_m3u(playlist):
     output_text = []
     for i, item in enumerate(playlist):
-        if 'url' in item:
-            output_text.append(item['url'])
+        if 'location' in item:
+            output_text.append(item['location'])
         else:
-            raise RuntimeError("The 'url' field must be set for all entries "
+            raise RuntimeError("The 'location' field must be set for all entries "
                                 "in order to create an M3U playlist")
     return '\n'.join(output_text)

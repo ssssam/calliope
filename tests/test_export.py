@@ -41,8 +41,8 @@ def test_export_cue(cli):
 
 def test_export_m3u(cli):
     input_tracks = [
-        { 'artist': 'Test1', 'url': 'file:///test1' },
-        { 'artist': 'Test2', 'url': 'file:///test2' }
+        { 'artist': 'Test1', 'location': 'file:///test1' },
+        { 'artist': 'Test2', 'location': 'file:///test2' }
     ]
 
     expected_output = '\n'.join([
