@@ -69,7 +69,7 @@ def cmd_diff(context, playlist1, playlist2):
 
 
 @cli.command(name='export')
-@click.option('-f', '--format', type=click.Choice(['cue', 'm3u']), default='m3u')
+@click.option('-f', '--format', type=click.Choice(['cue', 'm3u', 'jspf', 'xspf']), default='m3u')
 @click.argument('playlist', nargs=1, type=click.File('r'))
 @click.pass_context
 def cmd_export(context, format, playlist):
@@ -79,6 +79,10 @@ def cmd_export(context, format, playlist):
         print(calliope.export.convert_to_cue(calliope.playlist.read(playlist)))
     elif format == 'm3u':
         print(calliope.export.convert_to_m3u(calliope.playlist.read(playlist)))
+    elif format == 'jspf':
+        print(calliope.export.convert_to_jspf(calliope.playlist.read(playlist)))
+    elif format == 'xspf':
+        print(calliope.export.convert_to_xspf(calliope.playlist.read(playlist)))
     else:
         raise NotImplementedError("Unsupport format: %s" % format)
 

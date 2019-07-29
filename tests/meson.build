@@ -6,7 +6,8 @@ tests = [
   'test_cli.py',
   'test_core.py',
   'test_export.py',
-  'test_import.py',
+  'test_import_pls.py',
+  'test_import_xspf_jspf.py',
   'test_tracker.py',
 ]
 

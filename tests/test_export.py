@@ -1,5 +1,5 @@
 # Calliope
-# Copyright (C) 2018  Sam Thursfield <sam@afuera.me.uk>
+# Copyright (C) 2018-2019  Sam Thursfield <sam@afuera.me.uk>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,8 +41,8 @@ def test_export_cue(cli):
 
 def test_export_m3u(cli):
     input_tracks = [
-        { 'artist': 'Test1', 'url': 'file:///test1' },
-        { 'artist': 'Test2', 'url': 'file:///test2' }
+        { 'artist': 'Test1', 'location': 'file:///test1' },
+        { 'artist': 'Test2', 'location': 'file:///test2' }
     ]
 
     expected_output = '\n'.join([
@@ -51,6 +51,63 @@ def test_export_m3u(cli):
     ])
 
     result = cli.run(['export', '--format=m3u', '-'], input='\n'.join(json.dumps(track) for track in input_tracks))
+
+    assert result.exit_code == 0
+    assert result.output.strip() == expected_output
+
+
+def test_export_jspf(cli):
+    input_tracks = [
+        { 'artist': 'Test1', 'location': 'file:///test1',
+           'playlist.title': 'Test playlist' },
+        { 'artist': 'Test2', 'location': 'file:///test2' }
+    ]
+
+    expected_output = """{
+    "playlist": {
+        "title": "Test playlist",
+        "track": [
+            {
+                "location": "file:///test1",
+                "creator": "Test1"
+            },
+            {
+                "location": "file:///test2",
+                "creator": "Test2"
+            }
+        ]
+    }
+}"""
+
+    result = cli.run(['export', '--format=jspf', '-'], input='\n'.join(json.dumps(track) for track in input_tracks))
+
+    assert result.exit_code == 0
+    assert result.output.strip() == expected_output
+
+
+def test_export_xspf(cli):
+    input_tracks = [
+        { 'artist': 'Test1', 'location': 'file:///test1',
+           'playlist.title': 'Test playlist' },
+        { 'artist': 'Test2', 'location': 'file:///test2' }
+    ]
+
+    expected_output = """<?xml version="1.0" ?>
+<playlist version="1" xmlns="http://xspf.org/ns/0/">
+	<title>Test playlist</title>
+	<trackList>
+		<track>
+			<location>file:///test1</location>
+			<creator>Test1</creator>
+		</track>
+		<track>
+			<location>file:///test2</location>
+			<creator>Test2</creator>
+		</track>
+	</trackList>
+</playlist>"""
+
+    result = cli.run(['export', '--format=xspf', '-'], input='\n'.join(json.dumps(track) for track in input_tracks))
 
     assert result.exit_code == 0
     assert result.output.strip() == expected_output

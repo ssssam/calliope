@@ -21,6 +21,7 @@ The following fields have specific meanings:
  * ``artist``: Name of the main 'artist'
  * ``track``: Title of the track.
  * ``album``: Title of the album.
+ * ``location``: A URL describing where the content can be found.
 
 By convention, individual tools should add service-specific fields by prepending
 the name of the service and a dot to the fieldname. For example, a track

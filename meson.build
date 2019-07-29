@@ -49,6 +49,7 @@ install_requires = [
   'click',
   'parsedatetime',
   'pyxdg',
+  'pyyaml',
   'splitstream',
 ]
 
