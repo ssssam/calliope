@@ -1,5 +1,6 @@
 project('calliope',
-        meson_version: '>= 0.47')
+        version: '1',
+        meson_version: '>= 0.50')
 
 # Process the feature dependecies.
 #
@@ -132,6 +133,7 @@ cdata.set10('enable_web', enable_web)
 cdata.set('localedir', localedir)
 cdata.set('pkgdatadir', pkgdatadir)
 cdata.set('pythonsitepackagesdir', python.get_install_dir(pure: false))
+cdata.set('version', meson.project_version())
 
 top_source_dir = meson.current_source_dir()
 top_build_dir = meson.current_build_dir()
@@ -139,6 +141,7 @@ top_build_dir = meson.current_build_dir()
 run_from_source_tree = find_program('scripts/run_from_source_tree', required: true)
 
 subdir('calliope')
+subdir('data')
 
 if enable_viewer_app
   subdir('apps/viewer')
