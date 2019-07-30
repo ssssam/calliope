@@ -54,7 +54,7 @@ def convert_to_m3u(playlist):
     return '\n'.join(output_text)
 
 
-def convert_to_jspf(playlist):
+def convert_to_jspf(playlist, title=None):
     doc = {}
 
     # We honour playlist metadata if we find it on the first playlist entry.
@@ -67,7 +67,10 @@ def convert_to_jspf(playlist):
         if calliope_property in calliope_entry:
             jspf_entry[jspf_property] = convert_fn(calliope_entry[calliope_property])
 
-    calliope_to_jspf(first_entry, doc, 'playlist.title', 'title')
+    if title:
+        jspf_entry['title'] = title
+    else:
+        calliope_to_jspf(first_entry, doc, 'playlist.title', 'title')
     calliope_to_jspf(first_entry, doc, 'playlist.creator', 'creator')
     calliope_to_jspf(first_entry, doc, 'playlist.annotation', 'annotation')
     calliope_to_jspf(first_entry, doc, 'playlist.info', 'info')
@@ -102,7 +105,7 @@ def convert_to_jspf(playlist):
     }, indent=4)
 
 
-def convert_to_xspf(playlist):
+def convert_to_xspf(playlist, title=None):
     NAMESPACE = 'http://xspf.org/ns/0/'
 
     # Avoid namespace prefixes. VLC doesn't like it, according to
@@ -127,7 +130,10 @@ def convert_to_xspf(playlist):
             sub_element = xml.etree.ElementTree.SubElement(element, namespaced_tag(xspf_tag))
             sub_element.text = convert_fn(entry[calliope_property])
 
-    calliope_to_xspf(first_entry, root, 'playlist.title', 'title')
+    if title:
+        xml.etree.ElementTree.SubElement(root, namespaced_tag('title')).text = title
+    else:
+        calliope_to_xspf(first_entry, root, 'playlist.title', 'title')
     calliope_to_xspf(first_entry, root, 'playlist.creator', 'creator')
     calliope_to_xspf(first_entry, root, 'playlist.annotation', 'annotation')
     calliope_to_xspf(first_entry, root, 'playlist.info', 'info')

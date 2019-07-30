@@ -70,19 +70,25 @@ def cmd_diff(context, playlist1, playlist2):
 
 @cli.command(name='export')
 @click.option('-f', '--format', type=click.Choice(['cue', 'm3u', 'jspf', 'xspf']), default='xspf')
+@click.option('-t', '--title', type=str,
+              help="Set title of playlist")
 @click.argument('playlist', nargs=1, type=click.File('r'))
 @click.pass_context
-def cmd_export(context, format, playlist):
+def cmd_export(context, format, title, playlist):
     '''Convert to a different playlist format'''
 
     if format == 'cue':
+        if title:
+            raise RuntimeError("CUE format does not support setting a title.")
         print(calliope.export.convert_to_cue(calliope.playlist.read(playlist)))
     elif format == 'm3u':
+        if title:
+            raise RuntimeError("M3U format does not support setting a title.")
         print(calliope.export.convert_to_m3u(calliope.playlist.read(playlist)))
     elif format == 'jspf':
-        print(calliope.export.convert_to_jspf(calliope.playlist.read(playlist)))
+        print(calliope.export.convert_to_jspf(calliope.playlist.read(playlist), title=title))
     elif format == 'xspf':
-        print(calliope.export.convert_to_xspf(calliope.playlist.read(playlist)))
+        print(calliope.export.convert_to_xspf(calliope.playlist.read(playlist), title=title))
     else:
         raise NotImplementedError("Unsupport format: %s" % format)
 
