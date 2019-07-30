@@ -58,7 +58,10 @@ def convert_to_jspf(playlist):
     doc = {}
 
     # We honour playlist metadata if we find it on the first playlist entry.
-    first_entry = next(playlist)
+    try:
+        first_entry = next(playlist)
+    except StopIteration:
+        raise RuntimeError("Tried to export an empty playlist.")
 
     def calliope_to_jspf(calliope_entry, jspf_entry, calliope_property, jspf_property, convert_fn=str):
         if calliope_property in calliope_entry:
@@ -114,7 +117,10 @@ def convert_to_xspf(playlist):
     root.set('version', '1')
 
     # We honour playlist metadata if we find it on the first playlist entry.
-    first_entry = next(playlist)
+    try:
+        first_entry = next(playlist)
+    except StopIteration:
+        raise RuntimeError("Tried to export an empty playlist.")
 
     def calliope_to_xspf(entry, element, calliope_property, xspf_tag, convert_fn=str):
         if calliope_property in entry:
