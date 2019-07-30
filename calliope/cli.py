@@ -69,7 +69,7 @@ def cmd_diff(context, playlist1, playlist2):
 
 
 @cli.command(name='export')
-@click.option('-f', '--format', type=click.Choice(['cue', 'm3u', 'jspf', 'xspf']), default='m3u')
+@click.option('-f', '--format', type=click.Choice(['cue', 'm3u', 'jspf', 'xspf']), default='xspf')
 @click.argument('playlist', nargs=1, type=click.File('r'))
 @click.pass_context
 def cmd_export(context, format, playlist):
