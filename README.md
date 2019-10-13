@@ -7,36 +7,4 @@ o888     88   ooooooo    888   888  oooo   ooooooo  ooooooooo    ooooooooo8
                                                     o888
 ```
 
-Calliope provides various utilities for working with playlists and
-collections of music.
-
-[![CircleCI Status](https://circleci.com/gh/ssssam/calliope.svg?style=shield&circle-token=:circle-ci-badge-token)](https://circleci.com/gh/ssssam/calliope)
-
-# The basics
-
-All Calliope commands operate on *playlists*, which are represented as text.
-Here is an example of a simple Calliope playlist:
-
-    - artist: The Mighty Mighty Bosstones
-      track: The Impression That I Get
-    - artist: Less Than Jake
-      track: Gainesville Rock City
-
-This playlist uses a standard format called [YAML](http://yaml.org/) which is
-simple for people to read and write. The Calliope tools don't understand this
-format directly, instead they use a simpler format called
-[JSON](https://json.org/). It's simple to convert between the two formats using
-a tool called [yq](https://github.com/kislyuk/yq).
-
-Calliope commands are designed to be combined with each other, with the
-data processing tools [jq](https://stedolan.github.io/jq/) and
-[yq](https://github.com/kislyuk/yq), and with other UNIX shell tools.
-Most commands default to reading playlists on stdin and writing processed
-playlists on stdout.
-
-Run `cpe` to see the list of commands available.
-
-# Use cases
-
-Look in the `docs/` subdirectory for a list of example use cases for
-Calliope. This is not an exhaustive list -- many more things are possible.
+Calliope is now hosted at https://gitlab.com/samthursfield/calliope/.
